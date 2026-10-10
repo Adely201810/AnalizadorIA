@@ -1,0 +1,213 @@
+{
+  "descripcion": "Suite de evaluación (ground truth) para el pipeline Text-to-SQL de FitZone. Los valores esperados se calcularon ejecutando directamente el SQL de referencia contra la base de datos sembrada con `python seeder/seed.py --seed 42` (parámetros por defecto). Si el seeder se corre con otros parámetros/semilla, hay que regenerar este archivo con eval/compute_ground_truth.py.",
+  "generado_con_seed": 42,
+  "preguntas": [
+    {
+      "id": "q1_altas_enero",
+      "pregunta": "¿Cuántos clientes se dieron de alta en enero de 2025?",
+      "categoria": "clientes",
+      "sql_referencia": "SELECT COUNT(*) FROM clientes WHERE strftime('%Y-%m', fecha_alta) = '2025-01'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 325,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "325 clientes se dieron de alta en enero de 2025."
+    },
+    {
+      "id": "q2_mes_max_luz",
+      "pregunta": "¿Cuál fue el mes con mayor gasto en luz durante 2025?",
+      "categoria": "gastos",
+      "sql_referencia": "SELECT strftime('%m', fecha), monto FROM gastos_operativos WHERE subcategoria='luz' ORDER BY monto DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["julio", "07", "jul"],
+      "valor_esperado_numero": 5562.12,
+      "tolerancia_pct": 0.02,
+      "respuesta_esperada_texto": "Julio de 2025, con un gasto en luz de $5,562.12 MXN (mes con un pico atípico por falla de A/C)."
+    },
+    {
+      "id": "q3_retencion_q2",
+      "pregunta": "¿Cuál es la tasa de retención del segundo trimestre de 2025?",
+      "categoria": "membresias",
+      "sql_referencia": "SELECT tasa_retencion FROM vw_retencion_churn_trimestral WHERE trimestre=2",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 0.7694,
+      "tolerancia_abs": 0.01,
+      "unidad": "fracción (0-1); equivale a 76.94%",
+      "respuesta_esperada_texto": "Aproximadamente 76.94% (0.7694)."
+    },
+    {
+      "id": "q4_churn_q4",
+      "pregunta": "¿Cuál es la tasa de churn (cancelación) del cuarto trimestre de 2025?",
+      "categoria": "membresias",
+      "sql_referencia": "SELECT tasa_churn FROM vw_retencion_churn_trimestral WHERE trimestre=4",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 0.274,
+      "tolerancia_abs": 0.01,
+      "unidad": "fracción (0-1); equivale a 27.4%",
+      "respuesta_esperada_texto": "Aproximadamente 27.4% (0.274)."
+    },
+    {
+      "id": "q5_membresias_anual",
+      "pregunta": "¿Cuántas membresías de tipo anual se contrataron en 2025?",
+      "categoria": "membresias",
+      "sql_referencia": "SELECT COUNT(*) FROM membresias WHERE tipo='anual'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 297,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "297 membresías de tipo anual."
+    },
+    {
+      "id": "q6_mes_max_ingreso_neto",
+      "pregunta": "¿Cuál fue el mes con mayores ingresos netos en 2025?",
+      "categoria": "financiero",
+      "sql_referencia": "SELECT mes, ingreso_neto FROM vw_ingresos_netos_mensuales ORDER BY ingreso_neto DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["enero", "2025-01", "01"],
+      "valor_esperado_numero": 944347.86,
+      "tolerancia_pct": 0.02,
+      "respuesta_esperada_texto": "Enero de 2025, con un ingreso neto aproximado de $944,347.86 MXN."
+    },
+    {
+      "id": "q7_clientes_redes",
+      "pregunta": "¿Cuántos clientes fueron adquiridos por el canal de redes sociales?",
+      "categoria": "marketing",
+      "sql_referencia": "SELECT COUNT(*) FROM clientes WHERE canal_adquisicion='redes_sociales'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 623,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "623 clientes."
+    },
+    {
+      "id": "q8_producto_mas_vendido",
+      "pregunta": "¿Cuál fue el producto o servicio más vendido por cantidad en 2025?",
+      "categoria": "inventario",
+      "sql_referencia": "SELECT p.nombre, SUM(v.cantidad) AS total FROM ventas v JOIN productos p ON p.id=v.producto_id GROUP BY p.id ORDER BY total DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["evaluación física", "evaluacion fisica"],
+      "valor_esperado_numero": 680,
+      "tolerancia_pct": 0.05,
+      "respuesta_esperada_texto": "Evaluación física, con 680 unidades vendidas."
+    },
+    {
+      "id": "q9_sesiones_yoga",
+      "pregunta": "¿Cuántas sesiones de la clase de Yoga se impartieron en 2025?",
+      "categoria": "clases",
+      "sql_referencia": "SELECT COUNT(*) FROM sesiones_clase s JOIN clases_catalogo c ON c.id=s.clase_id WHERE c.nombre='Yoga'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 156,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "156 sesiones de Yoga."
+    },
+    {
+      "id": "q10_instructor_mas_sesiones",
+      "pregunta": "¿Qué instructor impartió más sesiones de clase en 2025?",
+      "categoria": "personal",
+      "sql_referencia": "SELECT i.nombre, i.apellido, COUNT(*) AS n FROM sesiones_clase s JOIN instructores i ON i.id=s.instructor_id GROUP BY i.id ORDER BY n DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["maría josé ponce", "maria jose ponce", "ponce"],
+      "valor_esperado_numero": 522,
+      "tolerancia_pct": 0.05,
+      "respuesta_esperada_texto": "María José Ponce, con 522 sesiones impartidas."
+    },
+    {
+      "id": "q11_calificacion_promedio",
+      "pregunta": "¿Cuál es la calificación promedio (NPS) de las encuestas de satisfacción en 2025?",
+      "categoria": "satisfaccion",
+      "sql_referencia": "SELECT ROUND(AVG(calificacion),2) FROM encuestas_satisfaccion",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 8.03,
+      "tolerancia_abs": 0.15,
+      "respuesta_esperada_texto": "Aproximadamente 8.03."
+    },
+    {
+      "id": "q12_tickets_abiertos",
+      "pregunta": "¿Cuántos tickets de soporte siguen abiertos actualmente?",
+      "categoria": "satisfaccion",
+      "sql_referencia": "SELECT COUNT(*) FROM tickets_soporte WHERE estado='abierto'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 26,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "26 tickets abiertos."
+    },
+    {
+      "id": "q13_cliente_mayor_ltv",
+      "pregunta": "¿Qué cliente tiene el mayor LTV (valor de vida del cliente) aproximado?",
+      "categoria": "financiero",
+      "sql_referencia": "SELECT cliente_id, nombre, apellido, ltv_aproximado FROM vw_ltv_cliente ORDER BY ltv_aproximado DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["fernando iglesias", "248"],
+      "valor_esperado_numero": 20576.98,
+      "tolerancia_pct": 0.05,
+      "respuesta_esperada_texto": "Fernando Iglesias (cliente_id 248), con un LTV aproximado de $20,576.98 MXN."
+    },
+    {
+      "id": "q14_cancel_economicos",
+      "pregunta": "¿Cuántas membresías se cancelaron por motivos económicos en 2025?",
+      "categoria": "membresias",
+      "sql_referencia": "SELECT COUNT(*) FROM membresias WHERE motivo_cancelacion='Motivos económicos'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 161,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "161 membresías."
+    },
+    {
+      "id": "q15_total_nomina",
+      "pregunta": "¿Cuál fue el gasto total en nómina durante 2025?",
+      "categoria": "gastos",
+      "sql_referencia": "SELECT ROUND(SUM(monto),2) FROM gastos_operativos WHERE subcategoria='nomina_general'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 1203155.25,
+      "tolerancia_pct": 0.02,
+      "respuesta_esperada_texto": "Aproximadamente $1,203,155.25 MXN."
+    },
+    {
+      "id": "q16_checkins_enero",
+      "pregunta": "¿Cuántos check-ins (asistencias) hubo en enero de 2025?",
+      "categoria": "clases",
+      "sql_referencia": "SELECT COUNT(*) FROM checkins WHERE strftime('%Y-%m', fecha)='2025-01'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 3399,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "3,399 check-ins."
+    },
+    {
+      "id": "q17_tasa_noshow",
+      "pregunta": "¿Cuál es la tasa de no-shows en las reservaciones de clases de 2025?",
+      "categoria": "clases",
+      "sql_referencia": "SELECT ROUND(1.0 * SUM(CASE WHEN estado='no_show' THEN 1 ELSE 0 END) / COUNT(*), 4) FROM reservaciones",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 0.1823,
+      "tolerancia_abs": 0.01,
+      "unidad": "fracción (0-1); equivale a 18.23%",
+      "respuesta_esperada_texto": "Aproximadamente 18.23% (0.1823)."
+    },
+    {
+      "id": "q18_productos_suplemento",
+      "pregunta": "¿Cuántos productos hay en el catálogo dentro de la categoría de suplementos?",
+      "categoria": "inventario",
+      "sql_referencia": "SELECT COUNT(*) FROM productos WHERE categoria='suplemento'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 6,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "6 productos."
+    },
+    {
+      "id": "q19_costo_mantenimiento_correctivo",
+      "pregunta": "¿Cuál fue el costo total de las órdenes de mantenimiento correctivo en 2025?",
+      "categoria": "gastos",
+      "sql_referencia": "SELECT ROUND(SUM(costo),2) FROM ordenes_mantenimiento WHERE tipo='correctivo'",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 131254.30,
+      "tolerancia_pct": 0.03,
+      "respuesta_esperada_texto": "Aproximadamente $131,254.30 MXN."
+    },
+    {
+      "id": "q20_evento_septiembre",
+      "pregunta": "¿Qué evento especial del gimnasio (no feriado nacional) se realizó en septiembre de 2025?",
+      "categoria": "calendario",
+      "sql_referencia": "SELECT nombre_evento, fecha FROM calendario_eventos WHERE tipo='evento_gimnasio' AND strftime('%m',fecha)='09'",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["aniversario"],
+      "respuesta_esperada_texto": "Aniversario del gimnasio, el 15 de septiembre de 2025."
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "descripcion": "Suite de evaluación (ground truth) para el pipeline Text-to-SQL sobre el dataset Olist. Los valores esperados se calcularon ejecutando directamente el SQL de referencia contra db/olist.db, cargada con `python seeder/load_olist_csv.py` a partir de los 9 CSV públicos de data/olist/ (dataset real, no sintético -- si se recarga con una versión distinta del dataset hay que regenerar este archivo con eval/compute_ground_truth.py --dataset olist).",
+  "cargado_con": "python seeder/load_olist_csv.py",
+  "preguntas": [
+    {
+      "id": "q1_pedidos_totales",
+      "pregunta": "¿Cuántos pedidos hay en total en la base de datos?",
+      "categoria": "pedidos",
+      "sql_referencia": "SELECT COUNT(*) FROM orders",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 99441,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "99,441 pedidos en total."
+    },
+    {
+      "id": "q2_categoria_mas_ingresos",
+      "pregunta": "¿Qué categoría de producto (en inglés) generó más ingresos totales (suma de price de order_items)?",
+      "categoria": "ventas",
+      "sql_referencia": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, ROUND(SUM(oi.price),2) AS total FROM order_items oi JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY total DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["health_beauty", "beleza_saude"],
+      "valor_esperado_numero": 1258681.34,
+      "tolerancia_pct": 0.02,
+      "respuesta_esperada_texto": "health_beauty (belleza y salud), con ingresos totales de aproximadamente R$1,258,681.34."
+    },
+    {
+      "id": "q3_pct_clientes_recurrentes",
+      "pregunta": "¿Qué porcentaje de clientes únicos (customer_unique_id) hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "categoria": "clientes",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN num_pedidos>1 THEN 1 ELSE 0 END) / COUNT(*), 2) FROM vw_clientes_recurrentes",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 3.04,
+      "tolerancia_abs": 0.3,
+      "unidad": "porcentaje (0-100), no fracción",
+      "respuesta_esperada_texto": "Aproximadamente 3.04% de los clientes únicos hicieron más de un pedido válido; el 96.96% restante compró una sola vez."
+    },
+    {
+      "id": "q4_categorias_mas_compra_unica",
+      "pregunta": "¿Qué categorías de producto tienen mayor proporción de clientes que le compraron una sola vez (entre las categorías con al menos 50 clientes)?",
+      "categoria": "clientes",
+      "sql_referencia": "WITH compras_categoria AS (SELECT v.categoria_ingles AS categoria, v.customer_unique_id, COUNT(DISTINCT v.order_id) AS pedidos_en_categoria FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.categoria_ingles, v.customer_unique_id) SELECT categoria, COUNT(*) AS clientes_totales, ROUND(100.0*SUM(CASE WHEN pedidos_en_categoria=1 THEN 1 ELSE 0 END)/COUNT(*),2) AS pct_compra_unica FROM compras_categoria GROUP BY categoria HAVING clientes_totales >= 50 ORDER BY pct_compra_unica DESC LIMIT 5",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["tablets_printing_image", "small_appliances_home_oven_and_coffee", "fixed_telephony", "fashion_underwear_beach", "costruction_tools_tools"],
+      "valor_esperado_numero": 100.0,
+      "tolerancia_pct": 0.01,
+      "respuesta_esperada_texto": "Varias categorías empatan con 100% de clientes de compra única (ej. tablets_printing_image, fixed_telephony, fashion_underwear_beach), reflejo de que la recompra en Olist es muy baja en general (ver q3)."
+    },
+    {
+      "id": "q5_retraso_baja_calificacion",
+      "pregunta": "¿Los pedidos entregados con retraso tienen una calificación promedio más baja que los que llegan a tiempo?",
+      "categoria": "satisfaccion",
+      "sql_referencia": "SELECT ROUND(AVG(CASE WHEN entrega_con_retraso=1 THEN review_score_promedio END),2) AS calif_con_retraso, ROUND(AVG(CASE WHEN entrega_con_retraso=0 THEN review_score_promedio END),2) AS calif_a_tiempo FROM vw_entregas_retrasos WHERE review_score_promedio IS NOT NULL",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 2.57,
+      "tolerancia_abs": 0.1,
+      "unidad": "calificación promedio (escala 1-5) de pedidos CON retraso -- comparar contra 4.29 de los pedidos a tiempo",
+      "respuesta_esperada_texto": "Sí: los pedidos con retraso tienen una calificación promedio de ~2.57, muy por debajo del ~4.29 de los pedidos entregados a tiempo."
+    },
+    {
+      "id": "q6_metodo_pago_mayor_venta_promedio",
+      "pregunta": "¿Qué método de pago deja el mayor valor promedio de venta por pedido?",
+      "categoria": "pagos",
+      "sql_referencia": "SELECT payment_type, ROUND(AVG(total_pedido),2) AS promedio FROM (SELECT order_id, payment_type, SUM(payment_value) AS total_pedido FROM order_payments GROUP BY order_id, payment_type) sub GROUP BY payment_type ORDER BY promedio DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["credit_card", "tarjeta de crédito", "tarjeta de credito"],
+      "valor_esperado_numero": 163.94,
+      "tolerancia_pct": 0.02,
+      "respuesta_esperada_texto": "credit_card (tarjeta de crédito), con un valor promedio de venta por pedido de aproximadamente R$163.94."
+    },
+    {
+      "id": "q7_estado_mas_pedidos_entregados",
+      "pregunta": "¿Cuál es el estado (customer_state) con más pedidos entregados?",
+      "categoria": "geografia",
+      "sql_referencia": "SELECT c.customer_state, COUNT(*) AS total FROM orders o JOIN customers c ON c.customer_id=o.customer_id WHERE o.order_status='delivered' GROUP BY c.customer_state ORDER BY total DESC LIMIT 1",
+      "tipo_verificacion": "texto",
+      "contiene_cualquiera": ["SP", "São Paulo", "Sao Paulo"],
+      "valor_esperado_numero": 40501,
+      "tolerancia_pct": 0.01,
+      "respuesta_esperada_texto": "SP (São Paulo), con 40,501 pedidos entregados."
+    },
+    {
+      "id": "q8_tiempo_promedio_entrega",
+      "pregunta": "¿Cuál es el tiempo promedio de entrega, en días, de los pedidos entregados?",
+      "categoria": "entregas",
+      "sql_referencia": "SELECT ROUND(AVG(julianday(order_delivered_customer_date)-julianday(order_purchase_timestamp)),2) FROM orders WHERE order_delivered_customer_date IS NOT NULL",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 12.56,
+      "tolerancia_pct": 0.03,
+      "unidad": "días",
+      "respuesta_esperada_texto": "Aproximadamente 12.56 días en promedio, desde la compra hasta la entrega al cliente."
+    },
+    {
+      "id": "q9_pedidos_sin_entrega",
+      "pregunta": "¿Cuántos pedidos no tienen fecha de entrega registrada (no fueron entregados al cliente)?",
+      "categoria": "entregas",
+      "sql_referencia": "SELECT COUNT(*) FROM orders WHERE order_delivered_customer_date IS NULL",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 2965,
+      "tolerancia_abs": 0,
+      "respuesta_esperada_texto": "2,965 pedidos no tienen fecha de entrega al cliente registrada (incluye cancelados, no disponibles y en tránsito al cierre del dataset)."
+    },
+    {
+      "id": "q10_ticket_promedio_pedido",
+      "pregunta": "¿Cuál es el ticket promedio (precio + flete) por pedido?",
+      "categoria": "ventas",
+      "sql_referencia": "SELECT ROUND(AVG(total_pedido),2) FROM (SELECT order_id, SUM(price+freight_value) AS total_pedido FROM order_items GROUP BY order_id)",
+      "tipo_verificacion": "numero",
+      "valor_esperado": 160.58,
+      "tolerancia_pct": 0.02,
+      "unidad": "BRL",
+      "respuesta_esperada_texto": "Aproximadamente R$160.58 por pedido, sumando precio de los productos y flete."
+    }
+  ]
+}

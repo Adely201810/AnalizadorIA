@@ -1,0 +1,47 @@
+{
+  "nota": "Resumen para presentación: estado tras corregir el bug de regex en eval/run_eval.py y exponer valores categóricos reales en llm/schema_context.py. No se corrió la suite completa de 20 por falta de tiempo; se corrieron solo las 11 que habían fallado en eval/eval_results_20260911_132833.json.",
+  "resultado_corrida_original_reportado": "9/20 (45%) -- INFLADO por bug de regex",
+  "resultado_corrida_original_real": "11/20 (55%) -- descontando q16 y q19 que ya estaban correctas pero mal calificadas",
+  "resultado_tras_correcciones": "15/20 (75%) -- 9 que ya pasaban + 6 de las 11 relanzadas",
+  "archivo_detalle_completo": "eval/eval_rerun_failed_20260911_135003.json",
+  "preguntas_corregidas": [
+    {"id": "q7_clientes_redes", "causa_original": "modelo generó canal_adquisicion='Redes Sociales', la BD guarda 'redes_sociales'", "arreglado_por": "valores categoricos reales en schema_context.py"},
+    {"id": "q15_total_nomina", "causa_original": "modelo buscó subcategoria LIKE '%nómina%' (con acento), la BD guarda 'nomina_general'", "arreglado_por": "valores categoricos reales en schema_context.py"},
+    {"id": "q18_productos_suplemento", "causa_original": "modelo consultó la tabla equivocada (clases_catalogo) en vez de productos", "arreglado_por": "valores categoricos reales en schema_context.py (productos.categoria ahora visible)"},
+    {"id": "q9_sesiones_yoga", "causa_original": "SQL referenciaba clases_catalogo.fecha_inicio, columna inexistente", "arreglado_por": "no atribuible con certeza a un fix puntual; variabilidad del modelo entre corridas"},
+    {"id": "q16_checkins_enero", "causa_original": "respuesta del modelo ya era correcta (3399); bug de regex en el evaluador truncaba numeros de 4+ digitos sin comas a 3 digitos", "arreglado_por": "fix de regex en eval/run_eval.py"},
+    {"id": "q19_costo_mantenimiento_correctivo", "causa_original": "respuesta del modelo ya era correcta (131254.30); mismo bug de regex", "arreglado_por": "fix de regex en eval/run_eval.py"}
+  ],
+  "preguntas_que_siguen_fallando": [
+    {
+      "id": "q2_mes_max_luz",
+      "estado": "inconcluso, no es un fallo funcional",
+      "causa": "Ollama no respondio dentro de 120s (timeout). Probable saturacion de CPU por corridas de evaluacion consecutivas, no un problema del pipeline ni del prompt.",
+      "recomendacion": "Reintentar en aislado; si persiste, subir OLLAMA_TIMEOUT."
+    },
+    {
+      "id": "q3_retencion_q2",
+      "estado": "fallo real, nuevo hallazgo",
+      "causa": "El SQL generado (WHERE trimestre=2 AND anio=2025) es correcto en intencion, pero la vista vw_retencion_churn_trimestral almacena `anio` como TEXT ('2025'), no INTEGER. En SQLite, TEXT '2025' nunca es igual a INTEGER 2025 (distinta clase de almacenamiento), asi que la comparacion siempre da 0 filas.",
+      "recomendacion": "Documentar en llm/schema_context.py que `anio` es TEXT en esa vista, o castear la columna a INTEGER en db/views.sql."
+    },
+    {
+      "id": "q4_churn_q4",
+      "estado": "fallo real, nuevo hallazgo",
+      "causa": "El modelo intento calcular el trimestre a mano con strftime('%q', fecha_inicio) -- SQLite NO soporta el especificador '%q' (no existe extraccion de trimestre nativa), asi que la funcion devuelve NULL silenciosamente y el filtro nunca matchea.",
+      "recomendacion": "Reforzar en NOTAS_TEXTO que SQLite no tiene extraccion de trimestre y que para eso siempre debe usarse vw_retencion_churn_trimestral en vez de calcularlo con strftime."
+    },
+    {
+      "id": "q6_mes_max_ingreso_neto",
+      "estado": "fallo real, no relacionado a los 2 fixes de hoy",
+      "causa": "El modelo sigue agregando un filtro WHERE strftime('%Y', fecha)='2025' sobre la vista vw_ingresos_netos_mensuales, que no tiene columna `fecha` (tiene `mes`), a pesar de que el esquema documenta las columnas correctas.",
+      "recomendacion": "Agregar una nota explicita: estas vistas ya estan acotadas a 2025 completo, no agregar filtros de fecha extra, usar las columnas tal como se documentan."
+    },
+    {
+      "id": "q20_evento_septiembre",
+      "estado": "fallo real, no relacionado a los 2 fixes de hoy",
+      "causa": "El modelo genero fecha='2025-09-01' (fecha exacta arbitraria) en vez de un rango de mes, mas una condicion redundante sin sentido (fecha BETWEEN fecha AND DATE('now')). El evento real es el 2025-09-15.",
+      "recomendacion": "Reforzar en NOTAS_TEXTO el patron strftime('%Y-%m', fecha)='2025-09' para busquedas por mes en vez de fecha exacta."
+    }
+  ]
+}

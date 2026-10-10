@@ -1,0 +1,120 @@
+{
+  "nota": "Re-corrida SOLO de las preguntas que fallaron en eval_results_20260911_132833.json, tras corregir el bug de regex en run_eval.py y agregar valores categoricos reales a schema_context.py.",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-09-11T13:50:03.969163",
+  "total_preguntas": 11,
+  "correctas": 6,
+  "precision_pct": 54.5,
+  "resultados": [
+    {
+      "id": "q2_mes_max_luz",
+      "pregunta": "¿Cuál fue el mes con mayor gasto en luz durante 2025?",
+      "sql_generado": null,
+      "sql_referencia": "SELECT strftime('%m', fecha), monto FROM gastos_operativos WHERE subcategoria='luz' ORDER BY monto DESC LIMIT 1",
+      "respuesta_modelo": null,
+      "error_pipeline": "Ollama no respondió en 120s. En CPU esto puede pasar con prompts largos; intenta con una pregunta más simple o sube OLLAMA_TIMEOUT.",
+      "correcto": false,
+      "detalle_calificacion": "Pipeline falló: Ollama no respondió en 120s. En CPU esto puede pasar con prompts largos; intenta con una pregunta más simple o sube OLLAMA_TIMEOUT."
+    },
+    {
+      "id": "q3_retencion_q2",
+      "pregunta": "¿Cuál es la tasa de retención del segundo trimestre de 2025?",
+      "sql_generado": "SELECT tasa_retencion\nFROM vw_retencion_churn_trimestral\nWHERE trimestre = 2 AND anio = 2025",
+      "sql_referencia": "SELECT tasa_retencion FROM vw_retencion_churn_trimestral WHERE trimestre=2",
+      "respuesta_modelo": "La tasa de retención del segundo trimestre de 2025 no se puede determinar porque no hay filas en el resultado.",
+      "error_pipeline": null,
+      "correcto": false,
+      "detalle_calificacion": "esperado≈0.7694, hallado=None"
+    },
+    {
+      "id": "q4_churn_q4",
+      "pregunta": "¿Cuál es la tasa de churn (cancelación) del cuarto trimestre de 2025?",
+      "sql_generado": "SELECT \n  CAST(SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) AS REAL) / \n  SUM(CASE WHEN estado = 'activa' THEN 1 ELSE 0 END) AS tasa_churn\nFROM \n  membresias\nWHERE \n  strftime('%Y', fecha_inicio) = '2025'\n  AND strftime('%q', fecha_inicio) = '4'",
+      "sql_referencia": "SELECT tasa_churn FROM vw_retencion_churn_trimestral WHERE trimestre=4",
+      "respuesta_modelo": "La tasa de churn del cuarto trimestre de 2025 es NULL, lo que significa que no hay membresías activas en ese período para calcular la tasa de cancelación.",
+      "error_pipeline": null,
+      "correcto": false,
+      "detalle_calificacion": "esperado≈0.274, hallado=None"
+    },
+    {
+      "id": "q6_mes_max_ingreso_neto",
+      "pregunta": "¿Cuál fue el mes con mayores ingresos netos en 2025?",
+      "sql_generado": "SELECT strftime('%Y-%m', fecha) AS mes, ingreso_neto\nFROM vw_ingresos_netos_mensuales\nWHERE strftime('%Y', fecha) = '2025'\nORDER BY ingreso_neto DESC\nLIMIT 1;",
+      "sql_referencia": "SELECT mes, ingreso_neto FROM vw_ingresos_netos_mensuales ORDER BY ingreso_neto DESC LIMIT 1",
+      "respuesta_modelo": null,
+      "error_pipeline": "No se pudo generar una consulta SQL válida tras 3 intento(s). Último error: Error de SQLite al ejecutar la consulta: no such column: fecha",
+      "correcto": false,
+      "detalle_calificacion": "Pipeline falló: No se pudo generar una consulta SQL válida tras 3 intento(s). Último error: Error de SQLite al ejecutar la consulta: no such column: fecha"
+    },
+    {
+      "id": "q7_clientes_redes",
+      "pregunta": "¿Cuántos clientes fueron adquiridos por el canal de redes sociales?",
+      "sql_generado": "SELECT COUNT(id) \nFROM clientes \nWHERE canal_adquisicion = 'redes_sociales'",
+      "sql_referencia": "SELECT COUNT(*) FROM clientes WHERE canal_adquisicion='redes_sociales'",
+      "respuesta_modelo": "Según los datos, 623 clientes fueron adquiridos a través del canal de redes sociales.",
+      "error_pipeline": null,
+      "correcto": true,
+      "detalle_calificacion": "esperado≈623, hallado=623.0"
+    },
+    {
+      "id": "q9_sesiones_yoga",
+      "pregunta": "¿Cuántas sesiones de la clase de Yoga se impartieron en 2025?",
+      "sql_generado": "SELECT COUNT(*) \nFROM sesiones_clase \nJOIN clases_catalogo ON sesiones_clase.clase_id = clases_catalogo.id \nWHERE clases_catalogo.nombre = 'Yoga' \nAND strftime('%Y', sesiones_clase.fecha) = '2025'",
+      "sql_referencia": "SELECT COUNT(*) FROM sesiones_clase s JOIN clases_catalogo c ON c.id=s.clase_id WHERE c.nombre='Yoga'",
+      "respuesta_modelo": "Se impartieron 156 sesiones de la clase de Yoga en 2025.",
+      "error_pipeline": null,
+      "correcto": true,
+      "detalle_calificacion": "esperado≈156, hallado=156.0"
+    },
+    {
+      "id": "q15_total_nomina",
+      "pregunta": "¿Cuál fue el gasto total en nómina durante 2025?",
+      "sql_generado": "SELECT COALESCE(SUM(monto), 0) AS gasto_total\nFROM gastos_operativos\nWHERE strftime('%Y', fecha) = '2025'\n  AND subcategoria = 'nomina_general'",
+      "sql_referencia": "SELECT ROUND(SUM(monto),2) FROM gastos_operativos WHERE subcategoria='nomina_general'",
+      "respuesta_modelo": "El gasto total en nómina durante 2025 fue de $1,203,155.25.",
+      "error_pipeline": null,
+      "correcto": true,
+      "detalle_calificacion": "esperado≈1203155.25, hallado=1203155.25"
+    },
+    {
+      "id": "q16_checkins_enero",
+      "pregunta": "¿Cuántos check-ins (asistencias) hubo en enero de 2025?",
+      "sql_generado": "SELECT COUNT(*) \nFROM checkins \nWHERE strftime('%Y-%m', fecha) = '2025-01'",
+      "sql_referencia": "SELECT COUNT(*) FROM checkins WHERE strftime('%Y-%m', fecha)='2025-01'",
+      "respuesta_modelo": "Hubo 3399 check-ins en enero de 2025.",
+      "error_pipeline": null,
+      "correcto": true,
+      "detalle_calificacion": "esperado≈3399, hallado=3399.0"
+    },
+    {
+      "id": "q18_productos_suplemento",
+      "pregunta": "¿Cuántos productos hay en el catálogo dentro de la categoría de suplementos?",
+      "sql_generado": "SELECT COUNT(*) \nFROM productos \nWHERE categoria = 'suplemento'",
+      "sql_referencia": "SELECT COUNT(*) FROM productos WHERE categoria='suplemento'",
+      "respuesta_modelo": "Hay 6 productos en el catálogo dentro de la categoría de suplementos.",
+      "error_pipeline": null,
+      "correcto": true,
+      "detalle_calificacion": "esperado≈6, hallado=6.0"
+    },
+    {
+      "id": "q19_costo_mantenimiento_correctivo",
+      "pregunta": "¿Cuál fue el costo total de las órdenes de mantenimiento correctivo en 2025?",
+      "sql_generado": "SELECT SUM(costo) \nFROM ordenes_mantenimiento \nWHERE tipo = 'correctivo' AND strftime('%Y', fecha) = '2025'",
+      "sql_referencia": "SELECT ROUND(SUM(costo),2) FROM ordenes_mantenimiento WHERE tipo='correctivo'",
+      "respuesta_modelo": "El costo total de las órdenes de mantenimiento correctivo en 2025 fue de 131254.3.",
+      "error_pipeline": null,
+      "correcto": true,
+      "detalle_calificacion": "esperado≈131254.3, hallado=131254.3"
+    },
+    {
+      "id": "q20_evento_septiembre",
+      "pregunta": "¿Qué evento especial del gimnasio (no feriado nacional) se realizó en septiembre de 2025?",
+      "sql_generado": "SELECT nombre_evento\nFROM calendario_eventos\nWHERE tipo = 'evento_gimnasio' AND fecha = '2025-09-01' AND fecha BETWEEN fecha AND DATE('now')",
+      "sql_referencia": "SELECT nombre_evento, fecha FROM calendario_eventos WHERE tipo='evento_gimnasio' AND strftime('%m',fecha)='09'",
+      "respuesta_modelo": "No se encontró ningún evento especial del gimnasio en septiembre de 2025.",
+      "error_pipeline": null,
+      "correcto": false,
+      "detalle_calificacion": "texto NO encontrado: ['aniversario']"
+    }
+  ]
+}
