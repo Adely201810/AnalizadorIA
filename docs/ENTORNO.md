@@ -1,6 +1,6 @@
 # Entorno de ejecución (Prerrequisito A)
 
-Fecha: 2026-10-10 · Estado: **PARCIAL**. Pasos 1-4 y 7 (dashboard) hechos y verificados. Pasos 5-6 (Ollama + modelo) **bloqueados por espacio en disco**. La prueba de `llm.cli` con Ollama sigue pendiente.
+Fecha: 2026-10-10 · Estado: **COMPLETO**. Pasos 1-8 hechos y verificados. Primera versión bloqueada por espacio en disco (ver historial en P5); retomado tras liberar espacio en C:.
 
 ## Hardware
 
@@ -8,9 +8,9 @@ Fecha: 2026-10-10 · Estado: **PARCIAL**. Pasos 1-4 y 7 (dashboard) hechos y ver
 |---|---|---|
 | CPU | AMD Ryzen 5 PRO 4650G with Radeon Graphics (6 núcleos / 12 hilos) | `Win32_Processor` |
 | RAM | 15.8 GB total; **3.06 GB libres** al momento de medir | `Win32_ComputerSystem`, `Win32_OperatingSystem` |
-| GPU | AMD Radeon RX 6600. WMI reporta `AdapterRAM` = 4095 MB, pero ese campo de 32 bits satura en 4 GB; la RX 6600 tiene 8 GB de especificación. **VRAM real no verificada** (pendiente de confirmar con Ollama). | `Win32_VideoController` |
+| GPU | AMD Radeon RX 6600. WMI reporta `AdapterRAM` = 4095 MB, pero ese campo de 32 bits satura en 4 GB; la RX 6600 tiene 8 GB de especificación. **Ollama (backend Vulkan) confirma 8.0 GiB totales / 7.2 GiB disponibles.** | `Win32_VideoController`, `server.log` de Ollama |
 | SO | Windows 11 Pro 10.0.26200 | `Win32_OperatingSystem` |
-| Disco | C: **5.13 GB libres** (6.2 GB antes de crear el venv y la BD); D: 3.13 GB libres | `Get-PSDrive` |
+| Disco | Al inicio: C: 6.2 GB libres. Tras liberar espacio: 26.72 GB. Tras instalar Ollama + modelo: **22.67 GB libres**. D: 3.13 GB | `Get-PSDrive` |
 
 ## Software
 
@@ -19,7 +19,9 @@ Fecha: 2026-10-10 · Estado: **PARCIAL**. Pasos 1-4 y 7 (dashboard) hechos y ver
 | Python | 3.14.3 (tags/v3.14.3:323c59a, MSC v.1944 64 bit) |
 | SQLite (módulo `sqlite3`) | 3.50.4 |
 | Paquetes | ver `requirements.lock.txt` (47 paquetes). Principales: SQLAlchemy 2.1.4, pandas 3.0.6, streamlit 1.65.0, plotly 7.1.0, matplotlib 3.11.2, reportlab 5.0.1, requests 2.34.2, Faker 40.43.0 |
-| Ollama | **no instalado** (última versión en winget: 0.40.2) |
+| Ollama | **0.40.2** en `%LOCALAPPDATA%\Programs\Ollama` (2.79 GB instalado). Modelos en `C:\Users\alexp\.ollama\models` (`OLLAMA_MODELS` no definida) |
+| Modelo | `llama3.1:8b-instruct-q4_K_M` (ID `46e0c10c039e`, 4.9 GB, Q4_K_M, 8.0B parámetros) |
+| Backend de inferencia | Vulkan sobre RX 6600 (ROCm descartado por Ollama: `AMD driver is too old`) |
 
 ## Comandos reproducibles (Windows, PowerShell)
 
@@ -41,6 +43,14 @@ py -3.14 -m venv $env:USERPROFILE\.venvs\analizadoria
 
 # 5. App
 & $env:USERPROFILE\.venvs\analizadoria\Scripts\python.exe -m streamlit run app.py
+
+# 6. Ollama (instalador oficial, por usuario, sin administrador). SHA256 esperado (manifiesto winget 0.40.2):
+#    e78ea4ffc8fdc1a0bbcb4f8404c7ee1bd0898ed3a65d9cc08d79eb2235cd5a9e
+#    Descarga: https://github.com/ollama/ollama/releases/download/v0.40.2/OllamaSetup.exe
+.\OllamaSetup.exe /VERYSILENT /NORESTART /SUPPRESSMSGBOXES
+ollama pull llama3.1:8b-instruct-q4_K_M
+ollama ps
+& $env:USERPROFILE\.venvs\analizadoria\Scripts\python.exe -m llm.cli "¿Cuántos pedidos hay en total?"
 ```
 
 Para los comandos de diagnóstico se usó `PYTHONDONTWRITEBYTECODE=1` (no escribir `__pycache__`) y `PYTHONIOENCODING=utf-8` (ver problema P1).
@@ -112,16 +122,77 @@ Los 10 valores coinciden con los de `eval/ground_truth_olist.json`.
 - *q4 del oráculo es inestable*: **9** categorías empatan en 100.0 % de compra única, y el `ORDER BY pct_compra_unica DESC LIMIT 5` elige 5 de ellas sin desempate, de forma arbitraria.
 - La tolerancia por defecto de `_comparar` es 0.5 (en R$ o en puntos porcentuales), bastante amplia para porcentajes.
 
-### Paso 5 — Ollama: **BLOQUEADO por espacio en disco**
+### Paso 4b — Corrección de la referencia q2 (decisión del usuario)
+Decisión: "Ingresos" = SUM(price) **excluyendo** pedidos `canceled`/`unavailable`. En `eval/ground_truth_olist.json`, q2 ahora une `orders` y filtra `order_status NOT IN ('canceled','unavailable')`; `valor_esperado_numero` pasa de 1258681.34 a **1255695.13**. También se añadió a la pregunta "sin contar pedidos cancelados o no disponibles" (decisión propia, para que pregunta y referencia digan lo mismo).
 
-| Descarga | Tamaño exacto | Fuente |
-|---|---|---|
-| Instalador `OllamaSetup.exe` v0.40.2 | 1,578,560,904 bytes (≈1.58 GB) | `Content-Length` de la descarga oficial; URL y SHA256 del manifiesto winget |
-| `llama3.1:8b-instruct-q4_K_M` (capa del modelo) | 4,920,738,944 bytes (≈4.92 GB / 4.58 GiB) | manifiesto de `registry.ollama.ai` |
+```
+q2_categoria_mas_ingresos        -> [('health_beauty', 1255695.13)]
+JSON valor_esperado_numero = 1255695.13
+SQL de referencia          = health_beauty 1255695.13
+pandas (CSV)               = 1255695.13
+Coinciden (al centavo): True
+```
 
-Solo la descarga suma ≈6.5 GB (más lo que ocupa Ollama una vez instalado), y en C: quedan 5.13 GB. En D: quedan 3.13 GB. **No se instaló nada.**
+Nota: la `tolerancia_pct` de q2 es 0.02 (±≈25,000 R$), así que el evaluador actual aceptaba igual el valor viejo y el nuevo. Se atacará en la Fase 3.
 
-### Paso 7 — Dashboard y CLI (sin Ollama)
+**Pendiente de OK del usuario — q4:** propuesta de exigir un mínimo de **500 pedidos válidos por categoría**. Con 300 desaparecen los empates y con 500 queda margen; el análisis de umbrales está en la conversación. No aplicado.
+
+### Paso 5 — Instalación de Ollama
+
+| Elemento | Tamaño |
+|---|---|
+| Instalador `OllamaSetup.exe` v0.40.2 (temporal, borrado tras instalar) | 1,578,560,904 bytes |
+| Ollama instalado | 2.79 GB |
+| Modelo `llama3.1:8b-instruct-q4_K_M` | 4,920,738,944 bytes |
+| **Ocupación permanente** | **≈7.71 GB** |
+
+- SHA256 del instalador verificado contra el manifiesto de winget: `e78ea4ff…5cd5a9e` (coincide).
+- Instalación por usuario, en modo silencioso, sin permisos de administrador. El servidor queda corriendo (`ollama app.exe` en la bandeja + `ollama.exe serve`).
+- GPU detectada (`server.log`):
+  ```
+  level=WARN source=amd.go:485 msg="AMD driver is too old. Update your AMD driver to enable GPU inference."
+  level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=Vulkan compute=0.0 name=Vulkan0 description="AMD Radeon RX 6600" libdirs=ollama,vulkan driver=0.0 pci_id="" type=discrete total="8.0 GiB" available="7.2 GiB"
+  ```
+  El aviso es de la vía ROCm; Ollama usa Vulkan y la GPU funciona (ver paso 6).
+- La descarga del modelo tardó ≈25 min (inicio 16:23:45 según `server.log`; terminó antes de las 16:49).
+
+### Paso 6 — Modelo funcionando
+
+```
+NAME                           ID              SIZE      MODIFIED
+llama3.1:8b-instruct-q4_K_M    46e0c10c039e    4.9 GB    5 seconds ago
+```
+
+Pregunta de prueba (`ollama run … --verbose`, primera carga del modelo):
+```
+SQL (Structured Query Language) es un lenguaje de programación de consulta
+de bases de datos utilizado para interactuar con las bases de datos.
+total duration:       41.6198441s
+load duration:        39.6848478s
+prompt eval count:    21 token(s)
+prompt eval duration: 1.068346s
+prompt eval rate:     19.66 tokens/s
+eval count:           31 token(s)
+eval duration:        853.64ms
+eval rate:            36.32 tokens/s
+```
+
+`ollama ps` tras esa prueba (contexto por defecto de Ollama):
+```
+NAME                           ID              SIZE      PROCESSOR    CONTEXT    RUNNER      UNTIL
+llama3.1:8b-instruct-q4_K_M    46e0c10c039e    5.3 GB    100% GPU     4096       llamacpp    4 minutes from now
+```
+
+Llamada desde Python con el cliente del proyecto (`llm/ollama_client.py`, `num_ctx=8192`; el cambio de contexto obliga a recargar el modelo):
+```
+modelo=llama3.1:8b-instruct-q4_K_M host=http://localhost:11434 num_ctx=8192 temperature=0.1
+is_available: True
+1ª llamada (incluye carga del modelo): 51.35 s -> '42'
+2ª llamada (modelo ya cargado): 2.15 s -> '42'
+```
+`/api/ps`: `"size": 5804392447`, `"size_vram": 5804392447`, `"context_length": 8192` → **todo el modelo en VRAM (5.8 GB)**.
+
+### Paso 7 — Dashboard y CLI
 - `streamlit run app.py`: el servidor arranca (`/_stcore/health` → `ok`).
 - Página **Dashboard**: carga métricas (Pedidos 99,441 · Clientes únicos 96,096 · Vendedores 3,095 · Productos 32,951 · 2016-09-04 → 2018-10-17), el botón del PDF, las 11 pestañas y la tabla "Las 10 preguntas del dueño". La consola del navegador muestra 2 errores `404` de recursos no identificados; el contenido carga igual.
 - Página **chat** (`app.py`) sin Ollama, pulsando una pregunta de ejemplo: muestra `No logro conectarme al motor de IA local (Ollama). Verifica que esté corriendo (ollama serve) e intenta de nuevo.`
@@ -130,6 +201,24 @@ Solo la descarga suma ≈6.5 GB (más lo que ocupa Ollama una vez instalado), y 
   ⚠ No se pudo conectar a Ollama en http://localhost:11434. Ejecuta 'ollama serve' e intenta de nuevo.
   [exit code: 1]
   ```
+- `python -m llm.cli "¿Cuántos pedidos hay en total?"` **con** Ollama (respuesta correcta: 99,441):
+  ```
+  Modelo: llama3.1:8b-instruct-q4_K_M | Ollama: http://localhost:11434
+
+
+  SQL generado:
+    SELECT COUNT(order_id) FROM orders
+
+  Filas obtenidas: 1
+
+  Respuesta:
+  Hay un total de 99,441 pedidos en el negocio. Esto se puede ver en el recuento de pedidos, que es 99,441.
+
+
+  real	0m51.566s
+  ```
+  `ollama ps` después: `5.8 GB    100% GPU     8192`. **El modelo corre 100 % en GPU.**
+  En `server.log` no hay ningún `starting llama-server` durante esta ejecución (no hubo recarga). Las tres llamadas a `/api/generate` duraron **4.18 s, 33.74 s y 3.44 s**. Por el orden del pipeline, deduzco que son clasificador, generación de SQL y síntesis; el log no lo etiqueta. La generación de SQL, con el system prompt de ≈12k caracteres del esquema, es el cuello de botella. Se medirá con detalle en la Fase 4.
 
 ## Decisiones tomadas por mi cuenta
 
@@ -137,6 +226,8 @@ Solo la descarga suma ≈6.5 GB (más lo que ocupa Ollama una vez instalado), y 
 - **D2. Se mantuvo Python 3.14.3**, porque todas las dependencias instalaron sin errores.
 - **D3. Lockfile como `requirements.lock.txt`** (pip freeze) en lugar de uv/poetry, para no añadir herramientas.
 - **D4. No se usó `--export-ddl`**, porque reescribiría `db/olist_schema.sql`, que está versionado.
+- **D5. Ollama se instaló con el `OllamaSetup.exe` oficial y no con `winget install`**: winget exige aceptar acuerdos de su catálogo, y se prefirió no aceptarlos en nombre del usuario. Se usó el mismo binario que referencia winget, con su SHA256 verificado.
+- **D6. Se mantuvo la ruta de modelos por defecto** (`C:\Users\alexp\.ollama\models`), porque `OLLAMA_MODELS` no estaba definida y en C: había espacio.
 
 ## Problemas encontrados
 
@@ -157,5 +248,8 @@ Solo la descarga suma ≈6.5 GB (más lo que ocupa Ollama una vez instalado), y 
   ```
   Total: 117.3 s. No se corrigió (fuera del alcance de este paso).
 - **P4.** `eval/compute_ground_truth.py` usa `engine.connect()` directamente, así que sin BD todavía crearía un archivo vacío. El arreglo pedido se limitó a `llm/schema_context.py`.
-- **P5. Espacio en disco** insuficiente para Ollama + modelo (paso 5).
-- **P6. Definición de "ingresos" inconsistente** entre el oráculo q2 y el resto del proyecto (paso 4). Es una decisión de negocio que hay que tomar.
+- **P5. Espacio en disco** (resuelto): en el primer intento C: tenía 5.13 GB libres, insuficientes. El usuario liberó espacio (26.72 GB libres) y se completó la instalación.
+- **P7.** `Start-Process -Wait` sobre el instalador no regresó: espera también a los procesos hijos, y el instalador deja `ollama app.exe` corriendo. La instalación terminó bien a las 16:16; el comando se detuvo a mano.
+- **P8.** Durante `ollama pull`, el tamaño de la carpeta de modelos engaña: el archivo `-partial` se reserva completo (4.58 GiB) desde el inicio. El avance real está en los `-partial-N` (JSON con `Completed`).
+- **P9. Latencia**: una pregunta simple por el CLI tarda ≈51 s con el modelo ya cargado; la carga en frío añade ≈40-50 s.
+- **P6. Definición de "ingresos" inconsistente** (resuelto por decisión del usuario, paso 4b). Siguen incluyendo pedidos cancelados q6 (método de pago) y q10 (ticket promedio); está pendiente de que el usuario decida si se les aplica la misma exclusión.
