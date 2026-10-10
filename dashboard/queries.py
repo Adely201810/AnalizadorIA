@@ -721,7 +721,10 @@ def q06(min_pedidos_categoria: int = 100) -> dict:
     try:
         sql_tipo = """
         WITH pagos_no_definidos_excluidos AS (
-            SELECT * FROM order_payments WHERE payment_type != 'not_defined'
+            SELECT op.* FROM order_payments op
+            JOIN orders o ON o.order_id = op.order_id
+            WHERE op.payment_type != 'not_defined'
+              AND o.order_status NOT IN ('canceled', 'unavailable')
         )
         SELECT
             payment_type,
@@ -739,10 +742,12 @@ def q06(min_pedidos_categoria: int = 100) -> dict:
 
         sql_pedido_pagos = """
         pedido_pagos AS (
-            SELECT order_id, SUM(payment_value) AS ticket_total, MAX(payment_installments) AS max_cuotas
-            FROM order_payments
-            WHERE payment_type != 'not_defined'
-            GROUP BY order_id
+            SELECT op.order_id, SUM(op.payment_value) AS ticket_total, MAX(op.payment_installments) AS max_cuotas
+            FROM order_payments op
+            JOIN orders o ON o.order_id = op.order_id
+            WHERE op.payment_type != 'not_defined'
+              AND o.order_status NOT IN ('canceled', 'unavailable')
+            GROUP BY op.order_id
         )"""
 
         sql_cuotas = f"""
@@ -821,7 +826,8 @@ def q06(min_pedidos_categoria: int = 100) -> dict:
         "parametros": {"min_pedidos_categoria": min_pedidos_categoria},
         "sql": "\n\n".join([sql_tipo, f"WITH {sql_pedido_pagos} SELECT * FROM pedido_pagos", sql_cuotas, sql_categorias_plazos]),
         "notas": (
-            "Se excluye payment_type = 'not_defined'. Los pagos se agregan primero "
+            "Se excluye payment_type = 'not_defined' y, como en todo el dashboard, los "
+            "pedidos canceled/unavailable. Los pagos se agregan primero "
             "por pedido (un pedido puede tener varias filas en order_payments, p.ej. "
             "voucher + tarjeta): ticket por método = suma de payment_value de ESE "
             "método dentro del pedido, promediado entre los pedidos que usaron ese "

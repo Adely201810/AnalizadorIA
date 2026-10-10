@@ -119,6 +119,76 @@ def _valores_sql() -> dict:
     }
 
 
+GROUND_TRUTH_PATH = Path(__file__).resolve().parent.parent / "eval" / "ground_truth_olist.json"
+
+
+def _categoria_como_vista(items: pd.DataFrame, products: pd.DataFrame, traduccion: pd.DataFrame) -> pd.Series:
+    """Igual que vw_ventas_pedido.categoria_ingles: COALESCE(inglés, portugués)."""
+    df = items.merge(products[["product_id", "product_category_name"]], on="product_id", how="left")
+    df = df.merge(traduccion, on="product_category_name", how="left")
+    return df["product_category_name_english"].fillna(df["product_category_name"])
+
+
+def recalcular_oraculo_con_pandas() -> dict:
+    """Recalcula con pandas, desde los CSV, el valor clave de las preguntas del
+    oráculo (eval/ground_truth_olist.json) que usan la definición de pedido
+    válido (excluye canceled/unavailable). Devuelve {id: (etiqueta, valor)}."""
+    orders, customers, order_items, products, traduccion = _cargar_csv()
+    payments = pd.read_csv(DATA_DIR / "olist_order_payments_dataset.csv")
+    validos = _pedidos_validos(orders, customers)
+    items = order_items.merge(validos[["order_id", "customer_unique_id"]], on="order_id", how="inner")
+    items["categoria"] = _categoria_como_vista(items, products, traduccion).values
+
+    out = {}
+
+    # q2: categoría con más ingresos (SUM(price) de pedidos válidos)
+    ingresos = items.groupby("categoria", dropna=False)["price"].sum().sort_values(ascending=False)
+    out["q2_categoria_mas_ingresos"] = (ingresos.index[0], round(float(ingresos.iloc[0]), 2))
+
+    # q4: % de clientes con 1 solo pedido en la categoría, categorías con >= 500
+    # pedidos válidos. Se excluyen productos sin categoría (decisión registrada en
+    # docs/DECISIONES.md), igual que el `categoria_ingles IS NOT NULL` del SQL.
+    con_cat = items[items["categoria"].notna()]
+    por_cliente = con_cat.groupby(["categoria", "customer_unique_id"])["order_id"].nunique()
+    pedidos_cat = con_cat.groupby("categoria")["order_id"].nunique()
+    pct = (por_cliente.eq(1).groupby(level=0).mean() * 100).round(2)
+    pct = pct[pedidos_cat.reindex(pct.index) >= 500].sort_values(ascending=False)
+    out["q4_categorias_mas_compra_unica"] = (", ".join(pct.index[:5]), float(pct.iloc[0]))
+
+    # q6: método de pago con mayor valor promedio por pedido (pedidos válidos)
+    pv = payments.merge(validos[["order_id"]], on="order_id", how="inner")
+    por_pedido_tipo = pv.groupby(["order_id", "payment_type"])["payment_value"].sum()
+    prom = por_pedido_tipo.groupby(level="payment_type").mean().round(2).sort_values(ascending=False)
+    out["q6_metodo_pago_mayor_venta_promedio"] = (prom.index[0], float(prom.iloc[0]))
+
+    # q10: ticket promedio (precio + flete) por pedido válido
+    total_pedido = (items["price"] + items["freight_value"]).groupby(items["order_id"]).sum()
+    out["q10_ticket_promedio_pedido"] = ("", round(float(total_pedido.mean()), 2))
+    return out
+
+
+def verificar_oraculo() -> list[str]:
+    """Compara los valores recalculados con pandas contra el valor guardado en
+    el oráculo. Devuelve líneas de reporte; tolerancia 0 (al centavo)."""
+    import json
+
+    gt = {i["id"]: i for i in json.loads(GROUND_TRUTH_PATH.read_text(encoding="utf-8"))["preguntas"]}
+    lineas = []
+    for qid, (etiqueta, valor) in recalcular_oraculo_con_pandas().items():
+        item = gt[qid]
+        esperado = item.get("valor_esperado", item.get("valor_esperado_numero"))
+        contiene = item.get("contiene_cualquiera", [])
+        if not etiqueta:
+            etiqueta_ok = True
+        elif ", " in etiqueta:  # top-N: el conjunto completo debe coincidir
+            etiqueta_ok = set(etiqueta.split(", ")) == set(contiene)
+        else:
+            etiqueta_ok = etiqueta in contiene
+        estado = "OK" if (round(valor, 2) == round(esperado, 2) and etiqueta_ok) else "DIFF"
+        lineas.append(f"[{estado}] {qid}: pandas={etiqueta + ' ' if etiqueta else ''}{valor} | oráculo={esperado}")
+    return lineas
+
+
 def _comparar(nombre: str, valor_pandas: float, valor_sql: float, tolerancia: float = 0.5) -> str:
     diff = abs(valor_pandas - valor_sql)
     estado = "OK" if diff <= tolerancia else "DIFF"
@@ -135,6 +205,10 @@ def main() -> None:
     print(_comparar("Ingresos categoría top (R$)", pandas_vals["ingresos_categoria_top"], sql_vals["ingresos_categoria_top"]))
     print(_comparar("% ingresos top 5 categorías", pandas_vals["pct_ingresos_top5_categorias"], sql_vals["pct_ingresos_top5_categorias"]))
     print(_comparar("% pedidos tardíos (global)", pandas_vals["pct_pedidos_tardios"], sql_vals["pct_pedidos_tardios"]))
+
+    print("\n=== Verificación pandas (CSV) vs oráculo (eval/ground_truth_olist.json) ===")
+    for linea in verificar_oraculo():
+        print(linea)
 
 
 if __name__ == "__main__":
