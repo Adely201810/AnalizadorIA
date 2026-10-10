@@ -14,14 +14,14 @@
     },
     {
       "id": "q2_categoria_mas_ingresos",
-      "pregunta": "¿Qué categoría de producto (en inglés) generó más ingresos totales (suma de price de order_items)?",
+      "pregunta": "¿Qué categoría de producto (en inglés) generó más ingresos totales (suma de price de order_items, sin contar pedidos cancelados o no disponibles)?",
       "categoria": "ventas",
-      "sql_referencia": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, ROUND(SUM(oi.price),2) AS total FROM order_items oi JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY total DESC LIMIT 1",
+      "sql_referencia": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, ROUND(SUM(oi.price),2) AS total FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY categoria ORDER BY total DESC LIMIT 1",
       "tipo_verificacion": "texto",
       "contiene_cualquiera": ["health_beauty", "beleza_saude"],
-      "valor_esperado_numero": 1258681.34,
+      "valor_esperado_numero": 1255695.13,
       "tolerancia_pct": 0.02,
-      "respuesta_esperada_texto": "health_beauty (belleza y salud), con ingresos totales de aproximadamente R$1,258,681.34."
+      "respuesta_esperada_texto": "health_beauty (belleza y salud), con ingresos totales de aproximadamente R$1,255,695.13."
     },
     {
       "id": "q3_pct_clientes_recurrentes",
