@@ -10,10 +10,28 @@ llm/ollama_client.py.
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from sqlalchemy import text
 
-from db.olist_database import engine
+from db.olist_database import DATABASE_URL, engine
 from db.olist_models import OlistBase as Base
+
+
+def _verificar_bd_existe() -> None:
+    """Con SQLite, `engine.connect()` crea un archivo vacío si la ruta no
+    existe, y los errores posteriores ("no such table") confunden. Se falla
+    antes, con un mensaje claro. No aplica a otros motores ni a `:memory:`."""
+    if not DATABASE_URL.startswith("sqlite:///"):
+        return
+    ruta = DATABASE_URL.replace("sqlite:///", "", 1)
+    if ruta in ("", ":memory:"):
+        return
+    if not Path(ruta).is_file():
+        raise FileNotFoundError(
+            f"No existe la base de datos {Path(ruta).resolve()}. Créala con: "
+            "python seeder/load_olist_csv.py"
+        )
 
 # Las vistas no forman parte de la metadata de SQLAlchemy (se crean con SQL
 # crudo en db/olist_views.sql), así que se documentan a mano aquí. NOMBRES_VISTAS
@@ -164,6 +182,7 @@ def get_esquema_real() -> dict[str, set[str]]:
     inexistentes ANTES de ejecutar el SQL."""
     global _CACHED_ESQUEMA
     if _CACHED_ESQUEMA is None:
+        _verificar_bd_existe()
         nombres = [t.name for t in Base.metadata.sorted_tables] + list(NOMBRES_VISTAS)
         esquema: dict[str, set[str]] = {}
         with engine.connect() as conn:
@@ -214,6 +233,7 @@ def get_known_names() -> set[str]:
 
 def build_schema_context() -> str:
     """Devuelve el esquema compacto en texto plano, listo para insertarse en el prompt del sistema."""
+    _verificar_bd_existe()
     lines = ["Tablas disponibles (SQLite):", ""]
     for table in Base.metadata.sorted_tables:
         cols = ", ".join(_column_line(c) for c in table.columns)

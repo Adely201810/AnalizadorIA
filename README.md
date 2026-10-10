@@ -17,9 +17,13 @@ del modelo.
 
 ## Inicio rápido
 
+**Versión de Python verificada: 3.14.3** (Windows 11). Las versiones exactas
+instaladas y probadas están en `requirements.lock.txt`; detalles del entorno en
+[docs/ENTORNO.md](docs/ENTORNO.md).
+
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.lock.txt          # versiones fijadas (o requirements.txt para rangos)
 
 python db/olist_init_db.py --export-ddl      # crea el esquema + vistas
 python seeder/load_olist_csv.py               # carga los 9 CSV de data/olist/
