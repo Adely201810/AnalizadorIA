@@ -37,8 +37,10 @@ Flujo (ver docs/DEPLOY.md para cómo levantarlo):
 from __future__ import annotations
 
 import logging
+import os
 import re
 import sqlite3
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -60,6 +62,9 @@ from llm.sql_guard import (
 from llm.sql_templates import Plantilla, detectar_plantillas, plantilla_fallback
 
 MAX_FILAS_EJECUTADAS = 500  # límite duro de filas leídas de la base de datos
+# Límite de tiempo de ejecución del SQL generado. La consulta de referencia más
+# lenta del oráculo tarda ~10 s; 60 s deja margen (docs/FASE_03.md).
+LIMITE_EJECUCION_S = float(os.environ.get("TEXT2SQL_LIMITE_EJECUCION_S", "60"))
 MAX_FILAS_PARA_SINTESIS = 50  # filas mostradas al modelo al sintetizar una consulta simple
 MAX_FILAS_POR_SUBCONSULTA = 15  # filas por sub-tabla en la síntesis integradora (pregunta abierta)
 
@@ -247,16 +252,35 @@ def _sqlite_path_from_url(database_url: str) -> str:
     return database_url.replace("sqlite:///", "", 1)
 
 
-def execute_readonly(sql: str, database_url: str = DATABASE_URL, max_rows: int = MAX_FILAS_EJECUTADAS):
-    """Ejecuta `sql` (ya validado como SELECT) contra SQLite en modo estrictamente solo-lectura."""
+def execute_readonly(
+    sql: str,
+    database_url: str = DATABASE_URL,
+    max_rows: int = MAX_FILAS_EJECUTADAS,
+    limite_s: float | None = LIMITE_EJECUCION_S,
+):
+    """Ejecuta `sql` (ya validado como SELECT) contra SQLite en modo estrictamente solo-lectura.
+
+    `limite_s` corta la consulta desde dentro de SQLite (progress handler) si
+    tarda más de esos segundos: un JOIN sin condición generado por el modelo
+    puede correr indefinidamente. `None` = sin límite (SQL de referencia)."""
     db_path = _sqlite_path_from_url(database_url)
     uri = f"file:{Path(db_path).resolve()}?mode=ro"
     conn = sqlite3.connect(uri, uri=True, timeout=10)
+    if limite_s:
+        fin = time.monotonic() + limite_s
+        conn.set_progress_handler(lambda: 1 if time.monotonic() > fin else 0, 100_000)
     try:
         cursor = conn.execute(sql)
         columnas = [d[0] for d in cursor.description] if cursor.description else []
         filas = cursor.fetchmany(max_rows)
         return columnas, filas
+    except sqlite3.OperationalError as exc:
+        if limite_s and "interrupted" in str(exc):
+            raise sqlite3.OperationalError(
+                f"la consulta superó el límite de {limite_s:g} s de ejecución "
+                "(revisa si hay un JOIN sin condición o un producto cartesiano)"
+            ) from exc
+        raise
     finally:
         conn.close()
 
@@ -527,13 +551,19 @@ def _generar_y_ejecutar(
     nombres_conocidos: set[str],
     max_retries: int,
     plantilla: Plantilla | None = None,
+    usar_plantillas: bool = True,
 ) -> _ResolucionSQL:
     """Orden de resolución de una (sub-)pregunta:
     1. Plantilla fija si una regla reconoce el patrón (no se consulta al modelo).
     2. SQL generado por el LLM, con sanitización de alias + validación semántica.
     3. Si el LLM falló tras el reintento, plantilla de respaldo sobre vistas
        precalculadas (solo para preguntas de vendedores). Un rechazo de SEGURIDAD
-       nunca cae a fallback."""
+       nunca cae a fallback.
+
+    Con `usar_plantillas=False` se saltan los pasos 1 y 3 (solo LLM), para
+    evaluar al modelo sin la ayuda de reglas fijas."""
+    if not usar_plantillas:
+        return _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, max_retries)
     if plantilla is None:
         detectadas = detectar_plantillas(pregunta)
         plantilla = detectadas[0] if detectadas else None
@@ -566,6 +596,7 @@ def _answer_open_question(
     nombres_conocidos: set[str],
     max_retries: int,
     plantillas: list[Plantilla] | None = None,
+    usar_plantillas: bool = True,
 ) -> Text2SQLResult:
     """`plantillas` (opcional, mismo largo que `sub_preguntas`): plantilla ya
     decidida por reglas para cada sub-pregunta (pregunta compuesta detectada
@@ -577,7 +608,10 @@ def _answer_open_question(
 
     for i, sub_pregunta in enumerate(sub_preguntas):
         plantilla = plantillas[i] if plantillas else None
-        r = _generar_y_ejecutar(client, sub_pregunta, schema_context, nombres_conocidos, max_retries, plantilla=plantilla)
+        r = _generar_y_ejecutar(
+            client, sub_pregunta, schema_context, nombres_conocidos, max_retries,
+            plantilla=plantilla, usar_plantillas=usar_plantillas,
+        )
         intentos_totales += r.intentos
         if r.sql:
             sqls.append(r.sql)
@@ -614,16 +648,23 @@ def _answer_open_question(
     return resultado
 
 
-def answer_question(pregunta: str, client: OllamaClient | None = None, max_retries: int = 2) -> Text2SQLResult:
+def answer_question(
+    pregunta: str,
+    client: OllamaClient | None = None,
+    max_retries: int = 2,
+    usar_plantillas: bool = True,
+) -> Text2SQLResult:
     """Orquesta el flujo completo. `max_retries` controla cuántas veces se le
     permite al modelo corregir su propia consulta tras un error de calidad o
-    ejecución (no de seguridad, que se rechaza siempre de inmediato)."""
+    ejecución (no de seguridad, que se rechaza siempre de inmediato).
+    `usar_plantillas=False` desactiva plantillas por reglas y fallback sobre
+    vistas (el SQL sale siempre del LLM); lo usa la evaluación del modelo."""
     client = client or OllamaClient()
     schema_context = get_schema_context()
     nombres_conocidos = get_known_names()
 
     # Patrones conocidos: las reglas deciden, sin gastar una llamada al clasificador.
-    plantillas = detectar_plantillas(pregunta)
+    plantillas = detectar_plantillas(pregunta) if usar_plantillas else []
     if len(plantillas) > 1:
         return _answer_open_question(
             pregunta, [p.subpregunta for p in plantillas], client, schema_context, nombres_conocidos,
@@ -632,12 +673,15 @@ def answer_question(pregunta: str, client: OllamaClient | None = None, max_retri
 
     sub_preguntas = None if plantillas else clasificar_pregunta(client, pregunta)
     if sub_preguntas:
-        return _answer_open_question(pregunta, sub_preguntas, client, schema_context, nombres_conocidos, max_retries)
+        return _answer_open_question(
+            pregunta, sub_preguntas, client, schema_context, nombres_conocidos, max_retries,
+            usar_plantillas=usar_plantillas,
+        )
 
     resultado = Text2SQLResult(pregunta=pregunta)
     r = _generar_y_ejecutar(
         client, pregunta, schema_context, nombres_conocidos, max_retries,
-        plantilla=plantillas[0] if plantillas else None,
+        plantilla=plantillas[0] if plantillas else None, usar_plantillas=usar_plantillas,
     )
     resultado.intentos = r.intentos
     resultado.sql = r.sql

@@ -31,7 +31,9 @@ def _engine_for(dataset: str):
     if dataset == "gimnasio":
         from db.database import engine
     else:
-        from db.olist_database import engine
+        from db.olist_database import engine, verificar_bd_existe
+
+        verificar_bd_existe()  # sin esto, engine.connect() crearía un olist.db vacío
     return engine
 
 

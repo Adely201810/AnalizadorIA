@@ -38,6 +38,23 @@ if DATABASE_URL.startswith("sqlite"):
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 
+def verificar_bd_existe(database_url: str = DATABASE_URL) -> None:
+    """Con SQLite, `engine.connect()` crea un archivo vacío si la ruta no
+    existe, y los errores posteriores ("no such table") confunden. Llamar a
+    esta función antes de conectar falla con un mensaje claro. No aplica a
+    otros motores ni a `:memory:`."""
+    if not database_url.startswith("sqlite:///"):
+        return
+    ruta = database_url.replace("sqlite:///", "", 1)
+    if ruta in ("", ":memory:"):
+        return
+    if not Path(ruta).is_file():
+        raise FileNotFoundError(
+            f"No existe la base de datos {Path(ruta).resolve()}. Créala con: "
+            "python seeder/load_olist_csv.py"
+        )
+
+
 def get_session():
     """Devuelve una nueva sesion de SQLAlchemy. El caller es responsable de cerrarla."""
     return SessionLocal()

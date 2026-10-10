@@ -10,28 +10,11 @@ llm/ollama_client.py.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 from sqlalchemy import text
 
-from db.olist_database import DATABASE_URL, engine
+from db.olist_database import engine
+from db.olist_database import verificar_bd_existe as _verificar_bd_existe
 from db.olist_models import OlistBase as Base
-
-
-def _verificar_bd_existe() -> None:
-    """Con SQLite, `engine.connect()` crea un archivo vacío si la ruta no
-    existe, y los errores posteriores ("no such table") confunden. Se falla
-    antes, con un mensaje claro. No aplica a otros motores ni a `:memory:`."""
-    if not DATABASE_URL.startswith("sqlite:///"):
-        return
-    ruta = DATABASE_URL.replace("sqlite:///", "", 1)
-    if ruta in ("", ":memory:"):
-        return
-    if not Path(ruta).is_file():
-        raise FileNotFoundError(
-            f"No existe la base de datos {Path(ruta).resolve()}. Créala con: "
-            "python seeder/load_olist_csv.py"
-        )
 
 # Las vistas no forman parte de la metadata de SQLAlchemy (se crean con SQL
 # crudo en db/olist_views.sql): sus columnas y tipos se leen de la base real

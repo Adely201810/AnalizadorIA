@@ -1,0 +1,307 @@
+{
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-10-10T17:32:26",
+  "configuracion": {
+    "max_retries": 2,
+    "usar_plantillas": false,
+    "temperature": 0.1,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json"
+  },
+  "recursos_ollama": {
+    "size_bytes": 5804392447,
+    "size_vram_bytes": 5804392447,
+    "pct_gpu": 100.0,
+    "context_length": 8192
+  },
+  "resumen": {
+    "total_preguntas": 10,
+    "correctas": 2,
+    "precision_pct": 20.0,
+    "textos_respaldados": 6,
+    "latencia_media_s": 36.88,
+    "latencia_max_s": 145.65,
+    "por_origen": {
+      "llm": 8,
+      "sin_origen": 2
+    }
+  },
+  "resultados": [
+    {
+      "id": "q1_pedidos_totales",
+      "pregunta": "¿Cuántos pedidos hay en total en la base de datos?",
+      "sql_generado": "SELECT COUNT(*) AS total_pedidos\nFROM orders",
+      "sql_referencia": "SELECT COUNT(*) FROM orders",
+      "filas_modelo": [
+        [
+          99441
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          99441
+        ]
+      ],
+      "respuesta_modelo": "Hay 99,441 pedidos en total en la base de datos. Esto se puede ver en el total de pedidos, que es 99,441.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 79.21,
+      "correcto": true,
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "texto_respaldado": true
+    },
+    {
+      "id": "q2_categoria_mas_ingresos",
+      "pregunta": "¿Qué categoría de producto (en inglés) generó más ingresos totales (suma de price de order_items, sin contar pedidos cancelados o no disponibles) y cuánto suman?",
+      "sql_generado": "SELECT categoria_ingles, SUM(ingresos) AS ingresos_totales\nFROM (\n  SELECT \n    t.product_category_name_english AS categoria_ingles,\n    SUM(v.price) AS ingresos\n  FROM products p\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  JOIN order_items oi ON oi.product_id = p.product_id\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN order_payments op ON op.order_id = o.order_id\n  JOIN vw_ventas_pedido v ON v.order_id = o.order_id\n  WHERE o.order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY categoria_ingles\n)\nGROUP BY categoria_ingles\nORDER BY ingresos_totales DESC\nLIMIT 1",
+      "sql_referencia": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, ROUND(SUM(oi.price),2) AS total FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY categoria ORDER BY total DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "bed_bath_table",
+          1495699.31
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "health_beauty",
+          1255695.13
+        ]
+      ],
+      "respuesta_modelo": "La categoría de producto que generó más ingresos totales es \"bed_bath_table\" y suman R$1,495,699.31.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 20.98,
+      "correcto": false,
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "texto_respaldado": true
+    },
+    {
+      "id": "q3_pct_clientes_recurrentes",
+      "pregunta": "¿Qué porcentaje de clientes únicos (customer_unique_id) hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT CAST(COUNT(DISTINCT customer_unique_id) AS REAL) * 100 / COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE es_recurrente = 1",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN num_pedidos>1 THEN 1 ELSE 0 END) / COUNT(*), 2) FROM vw_clientes_recurrentes",
+      "filas_modelo": [
+        [
+          100.0
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          3.04
+        ]
+      ],
+      "respuesta_modelo": "El 100% de los clientes únicos que hicieron más de un pedido válido son recurrentes. Esto se debe a que todos los clientes únicos que hicieron más de un pedido válido también son considerados recurrentes.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 14.58,
+      "correcto": false,
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "texto_respaldado": true
+    },
+    {
+      "id": "q4_categorias_mas_compra_unica",
+      "pregunta": "¿Qué 5 categorías de producto (con nombre de categoría) tienen mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT \n  COALESCE(t.product_category_name_english, p.product_category_name) AS categoria,\n  COUNT(DISTINCT c.customer_unique_id) AS clientes_unicos,\n  COUNT(DISTINCT oi.order_id) AS pedidos\nFROM \n  products p\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN order_items oi ON oi.order_id = o.order_id\n  JOIN customers c ON c.customer_id = o.customer_id\nWHERE \n  o.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY \n  categoria\nHAVING \n  COUNT(DISTINCT oi.order_id) >= 500\nORDER BY \n  clientes_unicos / pedidos DESC\nLIMIT 5",
+      "sql_referencia": "WITH validas AS (SELECT categoria_ingles AS categoria, customer_unique_id, order_id FROM vw_ventas_pedido WHERE order_status NOT IN ('canceled','unavailable') AND categoria_ingles IS NOT NULL), compras_categoria AS (SELECT categoria, customer_unique_id, COUNT(DISTINCT order_id) AS pedidos_en_categoria FROM validas GROUP BY categoria, customer_unique_id), pedidos_categoria AS (SELECT categoria, COUNT(DISTINCT order_id) AS pedidos FROM validas GROUP BY categoria) SELECT cc.categoria, pc.pedidos, COUNT(*) AS clientes_totales, ROUND(100.0*SUM(CASE WHEN cc.pedidos_en_categoria=1 THEN 1 ELSE 0 END)/COUNT(*),2) AS pct_compra_unica FROM compras_categoria cc JOIN pedidos_categoria pc ON pc.categoria = cc.categoria GROUP BY cc.categoria, pc.pedidos HAVING pc.pedidos >= 500 ORDER BY pct_compra_unica DESC LIMIT 5",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          "consoles_games",
+          1054,
+          1050,
+          99.62
+        ],
+        [
+          "electronics",
+          2543,
+          2533,
+          99.61
+        ],
+        [
+          "cool_stuff",
+          3616,
+          3600,
+          99.56
+        ],
+        [
+          "small_appliances",
+          622,
+          619,
+          99.52
+        ],
+        [
+          "construction_tools_construction",
+          746,
+          742,
+          99.46
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+      "origen": "llm",
+      "intentos": 2,
+      "latencia_s": 145.65,
+      "correcto": false,
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 5",
+      "texto_respaldado": false
+    },
+    {
+      "id": "q5_retraso_baja_calificacion",
+      "pregunta": "¿Los pedidos entregados con retraso tienen una calificación promedio más baja que los que llegan a tiempo?",
+      "sql_generado": "SELECT *\nFROM vw_entregas_retrasos\nWHERE entrega_con_retraso = 1\n\nSELECT *\nFROM vw_entregas_retrasos\nWHERE entrega_con_retraso = 0",
+      "sql_referencia": "SELECT ROUND(AVG(CASE WHEN entrega_con_retraso=1 THEN review_score_promedio END),2) AS calif_con_retraso, ROUND(AVG(CASE WHEN entrega_con_retraso=0 THEN review_score_promedio END),2) AS calif_a_tiempo FROM vw_entregas_retrasos WHERE review_score_promedio IS NOT NULL",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          2.57,
+          4.29
+        ]
+      ],
+      "respuesta_modelo": "No pude redactar un resumen confiable; revisa la tabla de resultados.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": null,
+      "intentos": 2,
+      "latencia_s": 46.25,
+      "correcto": false,
+      "motivo": "pipeline: la pregunta se descompuso en sub-consultas (no hay un resultado único que comparar)",
+      "texto_respaldado": false
+    },
+    {
+      "id": "q6_metodo_pago_mayor_venta_promedio",
+      "pregunta": "¿Qué método de pago deja el mayor valor promedio de venta por pedido (sin contar pedidos cancelados o no disponibles) y de cuánto es ese promedio?",
+      "sql_generado": "SELECT payment_type, AVG(payment_value) AS valor_promedio FROM order_payments GROUP BY payment_type ORDER BY valor_promedio DESC LIMIT 1\n\nSELECT AVG(review_score) AS promedio FROM order_reviews",
+      "sql_referencia": "SELECT payment_type, ROUND(AVG(total_pedido),2) AS promedio FROM (SELECT op.order_id, op.payment_type, SUM(op.payment_value) AS total_pedido FROM order_payments op JOIN orders o ON o.order_id = op.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY op.order_id, op.payment_type) sub GROUP BY payment_type ORDER BY promedio DESC LIMIT 1",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          "credit_card",
+          163.32
+        ]
+      ],
+      "respuesta_modelo": "No pude redactar un resumen confiable; revisa la tabla de resultados.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": null,
+      "intentos": 2,
+      "latencia_s": 16.88,
+      "correcto": false,
+      "motivo": "pipeline: la pregunta se descompuso en sub-consultas (no hay un resultado único que comparar)",
+      "texto_respaldado": false
+    },
+    {
+      "id": "q7_estado_mas_pedidos_entregados",
+      "pregunta": "¿Cuál es el estado (customer_state) con más pedidos entregados?",
+      "sql_generado": "SELECT customer_state, COUNT(*) AS pedidos_entregados\nFROM vw_entregas_retrasos\nWHERE order_status = 'delivered'\nGROUP BY customer_state\nORDER BY pedidos_entregados DESC\nLIMIT 1",
+      "sql_referencia": "SELECT c.customer_state, COUNT(*) AS total FROM orders o JOIN customers c ON c.customer_id=o.customer_id WHERE o.order_status='delivered' GROUP BY c.customer_state ORDER BY total DESC LIMIT 1",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          "SP",
+          40501
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: no such column: customer_state",
+      "origen": "llm",
+      "intentos": 2,
+      "latencia_s": 12.52,
+      "correcto": false,
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+      "texto_respaldado": false
+    },
+    {
+      "id": "q8_tiempo_promedio_entrega",
+      "pregunta": "¿Cuál es el tiempo promedio de entrega, en días, de los pedidos entregados?",
+      "sql_generado": "SELECT ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_estimated_delivery_date)), 2) AS dias_promedio\nFROM orders o\nWHERE o.order_status = 'delivered' AND o.order_delivered_customer_date IS NOT NULL",
+      "sql_referencia": "SELECT ROUND(AVG(julianday(order_delivered_customer_date)-julianday(order_purchase_timestamp)),2) FROM orders WHERE order_delivered_customer_date IS NOT NULL",
+      "filas_modelo": [
+        [
+          -11.18
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          12.56
+        ]
+      ],
+      "respuesta_modelo": "El tiempo promedio de entrega de los pedidos entregados es de aproximadamente -11,18 días. Esto se debe a que el promedio de días entre la fecha estimada de entrega y la fecha real de entrega es de -11,18 días.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 11.91,
+      "correcto": false,
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "texto_respaldado": true
+    },
+    {
+      "id": "q9_pedidos_sin_entrega",
+      "pregunta": "¿Cuántos pedidos no tienen fecha de entrega registrada (no fueron entregados al cliente)?",
+      "sql_generado": "SELECT COUNT(*) \nFROM orders \nWHERE order_delivered_customer_date IS NULL",
+      "sql_referencia": "SELECT COUNT(*) FROM orders WHERE order_delivered_customer_date IS NULL",
+      "filas_modelo": [
+        [
+          2965
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          2965
+        ]
+      ],
+      "respuesta_modelo": "Hay 2965 pedidos que no tienen fecha de entrega registrada. Esto significa que estos pedidos no fueron entregados al cliente.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 9.51,
+      "correcto": true,
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "texto_respaldado": true
+    },
+    {
+      "id": "q10_ticket_promedio_pedido",
+      "pregunta": "¿Cuál es el ticket promedio (precio + flete) por pedido, sin contar pedidos cancelados o no disponibles?",
+      "sql_generado": "SELECT AVG(price + freight_value) AS ticket_promedio\nFROM order_items\nWHERE order_id IN (SELECT order_id FROM orders WHERE order_status NOT IN ('canceled', 'unavailable'))",
+      "sql_referencia": "SELECT ROUND(AVG(total_pedido),2) FROM (SELECT oi.order_id, SUM(oi.price+oi.freight_value) AS total_pedido FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY oi.order_id)",
+      "filas_modelo": [
+        [
+          140.36919411958857
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          160.24
+        ]
+      ],
+      "respuesta_modelo": "El ticket promedio por pedido es de R$140.37. Esto se debe a que el promedio de los precios y fletes de los pedidos válidos es de aproximadamente R$140.37.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 11.34,
+      "correcto": false,
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "texto_respaldado": true
+    }
+  ]
+}
