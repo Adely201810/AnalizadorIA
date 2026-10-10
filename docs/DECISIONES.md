@@ -33,3 +33,9 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 ## D-04 (C) q2: la pregunta dice explícitamente "sin contar pedidos cancelados o no disponibles"
 - **Motivo:** que pregunta y referencia digan lo mismo; el modelo no debe adivinar la definición. Se aplicó igual a q6 y q10.
 - **Revertir:** quitar esa frase de las preguntas en `eval/ground_truth_olist.json`.
+
+## D-05 (C) Disyunción few-shot ↔ oráculo medida con Jaccard léxico
+- **Decisión:** un ejemplo few-shot es aceptable si su Jaccard con **toda** pregunta del oráculo es < 0.25 en texto y < 0.5 en SQL (`tests/test_fewshot_disjunto.py`). Los umbrales se calibraron con la matriz previa a la separación (duplicados: ≥ 0.294 / ≥ 0.667; resto: ≤ 0.167 / ≤ 0.389).
+- **Alternativas:** similitud por embeddings (requiere descargar un modelo) o solo revisión manual.
+- **Motivo:** es reproducible, no requiere descargas y separa con claridad los casos observados. Como no es una garantía semántica, se complementa con revisión manual.
+- **Revertir:** borrar el test; los ejemplos originales están en git (commit `0982d27`).

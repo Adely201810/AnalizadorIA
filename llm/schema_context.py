@@ -34,26 +34,27 @@ def _verificar_bd_existe() -> None:
         )
 
 # Las vistas no forman parte de la metadata de SQLAlchemy (se crean con SQL
-# crudo en db/olist_views.sql), así que se documentan a mano aquí. NOMBRES_VISTAS
+# crudo en db/olist_views.sql): sus columnas y tipos se leen de la base real
+# (ver _vista_line); aquí solo va la descripción de cada una. NOMBRES_VISTAS
 # se reusa para el validador de tablas conocidas (llm/sql_guard.py).
-NOMBRES_VISTAS = [
-    "vw_ventas_pedido",
-    "vw_clientes_recurrentes",
-    "vw_entregas_retrasos",
-    "vw_ingresos_por_categoria",
-    "vw_ingresos_por_vendedor",
-    "vw_retraso_por_rango",
-]
+VISTAS_DESCRIPCION = {
+    "vw_ventas_pedido": "grano: una fila por línea de pedido",
+    "vw_clientes_recurrentes": "excluye pedidos canceled/unavailable",
+    "vw_entregas_retrasos": "solo pedidos entregados",
+    "vw_ingresos_por_categoria": "excluye canceled/unavailable; categoria_ingles='sin_categoria' si el producto no tiene categoría",
+    "vw_ingresos_por_vendedor": "excluye canceled/unavailable",
+    "vw_retraso_por_rango": "rango_retraso: a_tiempo|1-3|4-7|8-14|15+ (días); usa `orden` para ordenar de a_tiempo a 15+",
+}
+NOMBRES_VISTAS = list(VISTAS_DESCRIPCION)
 
-VISTAS_TEXTO = """
-Vistas analíticas disponibles (úsalas en vez de recalcular a mano cuando aplique):
-- vw_ventas_pedido(order_id, order_item_id, customer_unique_id, customer_state, seller_id, seller_state, categoria_ingles, price, freight_value, order_status, order_purchase_timestamp, review_score_promedio) -- grano: una fila por línea de pedido
-- vw_clientes_recurrentes(customer_unique_id, num_pedidos, primera_compra, ultima_compra, gasto_total, es_recurrente) -- excluye pedidos canceled/unavailable
-- vw_entregas_retrasos(order_id, order_status, order_purchase_timestamp, order_estimated_delivery_date, order_delivered_customer_date, dias_retraso, entrega_con_retraso, review_score_promedio) -- solo pedidos entregados
-- vw_ingresos_por_categoria(categoria_ingles, pedidos, ingresos, flete_total, ratio_flete_ingresos) -- excluye canceled/unavailable; categoria_ingles='sin_categoria' si el producto no tiene categoría
-- vw_ingresos_por_vendedor(seller_id, seller_state, pedidos, ingresos, flete_total, ratio_flete_ingresos) -- excluye canceled/unavailable
-- vw_retraso_por_rango(rango_retraso, orden, pedidos, calificacion_promedio, pct_1_2_estrellas) -- rango_retraso: a_tiempo|1-3|4-7|8-14|15+ (días); usa `orden` para ordenar de a_tiempo a 15+
-""".strip()
+# Columnas de vistas cuyo tipo de almacenamiento no dice lo que significan
+# (SQLite no tiene BOOLEAN ni DATETIME nativos).
+TIPOS_SEMANTICOS_VISTAS = {
+    ("vw_clientes_recurrentes", "es_recurrente"): "INTEGER 0/1",
+    ("vw_entregas_retrasos", "entrega_con_retraso"): "INTEGER 0/1",
+    ("vw_clientes_recurrentes", "primera_compra"): "DATETIME",
+    ("vw_clientes_recurrentes", "ultima_compra"): "DATETIME",
+}
 
 NOTAS_TEXTO = """
 Notas importantes:
@@ -77,45 +78,63 @@ Notas importantes:
 - Responde con una sola sentencia SQL, sin punto y coma final si no es necesario.
 """.strip()
 
-EJEMPLOS_TEXTO = """
-Ejemplos de pregunta -> SQL correcto:
+# Ejemplos few-shot (conjunto de ENTRENAMIENTO). Deben ser disjuntos de las
+# preguntas de evaluación de eval/ground_truth_olist.json: lo comprueba
+# tests/test_fewshot_disjunto.py con eval/similitud.py.
+EJEMPLOS_FEW_SHOT: list[tuple[str, str]] = [
+    (
+        '¿Cuántos clientes tenemos?',
+        'SELECT COUNT(DISTINCT customer_unique_id) FROM customers',
+    ),
+    (
+        '¿Cuántos días tardan en promedio los clientes en recibir respuesta a su reseña?',
+        'SELECT ROUND(AVG(julianday(review_answer_timestamp) - julianday(review_creation_date)), 2) AS dias_promedio FROM order_reviews WHERE review_answer_timestamp IS NOT NULL',
+    ),
+    (
+        '¿Cuántos productos distintos hay en cada categoría (en inglés)?',
+        'SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, COUNT(*) AS productos FROM products p LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY productos DESC LIMIT 10',
+    ),
+    (
+        '¿Cuáles son mis clientes recurrentes?',
+        'SELECT * FROM vw_clientes_recurrentes WHERE es_recurrente = 1',
+    ),
+    (
+        '¿Cuántos vendedores hay en cada estado?',
+        'SELECT seller_state, COUNT(*) AS vendedores FROM sellers GROUP BY seller_state ORDER BY vendedores DESC',
+    ),
+    (
+        '¿Qué porcentaje de las reseñas es de 1 o 2 estrellas, por año de compra?',
+        "SELECT strftime('%Y', o.order_purchase_timestamp) AS anio, ROUND(100.0 * AVG(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END), 2) AS pct_1_2_estrellas FROM order_reviews rv JOIN orders o ON o.order_id = rv.order_id GROUP BY anio ORDER BY anio",
+    ),
+    (
+        '¿Desde cuántos días de demora empiezan a bajar las reseñas?',
+        'SELECT rango_retraso, calificacion_promedio, pct_1_2_estrellas FROM vw_retraso_por_rango ORDER BY orden',
+    ),
+    (
+        '¿En qué estados el flete pesa más sobre el precio de los productos?',
+        "SELECT v.customer_state, ROUND(SUM(v.freight_value) * 1.0 / SUM(v.price), 4) AS ratio_flete_precio FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.customer_state ORDER BY ratio_flete_precio DESC LIMIT 10",
+    ),
+    (
+        '¿En qué categorías el flete pesa más sobre lo que se cobra por el producto?',
+        'SELECT categoria_ingles, flete_total, ingresos, ratio_flete_ingresos FROM vw_ingresos_por_categoria ORDER BY ratio_flete_ingresos DESC LIMIT 10',
+    ),
+    (
+        '¿En qué combinaciones de estado y categoría el flete pesa más sobre el precio?',
+        "SELECT v.customer_state, v.categoria_ingles, ROUND(SUM(v.freight_value) * 1.0 / SUM(v.price), 4) AS ratio_flete_precio FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.customer_state, v.categoria_ingles HAVING COUNT(*) >= 30 ORDER BY ratio_flete_precio DESC LIMIT 10",
+    ),
+    (
+        '¿Qué categorías concentran el 80% de los ingresos?',
+        'SELECT categoria_ingles, ingresos FROM (SELECT categoria_ingles, ingresos, SUM(ingresos) OVER (ORDER BY ingresos DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - ingresos AS acumulado_previo, SUM(ingresos) OVER () AS total FROM vw_ingresos_por_categoria) WHERE acumulado_previo < 0.8 * total ORDER BY ingresos DESC',
+    ),
+    (
+        '¿Cuántos vendedores concentran el 80% de los ingresos?',
+        'SELECT COUNT(*) AS vendedores_que_forman_el_80pct FROM (SELECT seller_id, SUM(ingresos) OVER (ORDER BY ingresos DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - ingresos AS acumulado_previo, SUM(ingresos) OVER () AS total FROM vw_ingresos_por_vendedor) WHERE acumulado_previo < 0.8 * total',
+    ),
+]
 
-Pregunta: ¿Cuántos clientes tenemos?
-SQL: SELECT COUNT(DISTINCT customer_unique_id) FROM customers
-
-Pregunta: ¿Cuál es el retraso promedio de entrega, en días?
-SQL: SELECT ROUND(AVG(julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date)), 2) FROM orders WHERE order_delivered_customer_date IS NOT NULL
-
-Pregunta: ¿Qué categoría de producto genera más ingresos?
-SQL: SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, SUM(oi.price) AS total FROM order_items oi JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY total DESC LIMIT 1
-
-Pregunta: ¿Cuáles son mis clientes recurrentes?
-SQL: SELECT * FROM vw_clientes_recurrentes WHERE es_recurrente = 1
-
-Pregunta: ¿Qué categorías tienen más clientes que le compraron una sola vez?
-SQL: SELECT v.categoria_ingles, COUNT(DISTINCT v.customer_unique_id) AS clientes_de_una_compra FROM vw_ventas_pedido v JOIN vw_clientes_recurrentes r ON r.customer_unique_id = v.customer_unique_id WHERE r.es_recurrente = 0 GROUP BY v.categoria_ingles ORDER BY clientes_de_una_compra DESC LIMIT 10
-
-Pregunta: ¿Los pedidos con más retraso tienen peor calificación?
-SQL: SELECT rango_retraso, calificacion_promedio, pct_1_2_estrellas FROM vw_retraso_por_rango ORDER BY orden
-
-Pregunta: ¿Desde cuántos días de demora empiezan a bajar las reseñas?
-SQL: SELECT rango_retraso, calificacion_promedio, pct_1_2_estrellas FROM vw_retraso_por_rango ORDER BY orden
-
-Pregunta: ¿En qué estados el flete pesa más sobre el precio de los productos?
-SQL: SELECT v.customer_state, ROUND(SUM(v.freight_value) * 1.0 / SUM(v.price), 4) AS ratio_flete_precio FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.customer_state ORDER BY ratio_flete_precio DESC LIMIT 10
-
-Pregunta: ¿En qué categorías el flete pesa más sobre lo que se cobra por el producto?
-SQL: SELECT categoria_ingles, flete_total, ingresos, ratio_flete_ingresos FROM vw_ingresos_por_categoria ORDER BY ratio_flete_ingresos DESC LIMIT 10
-
-Pregunta: ¿En qué combinaciones de estado y categoría el flete pesa más sobre el precio?
-SQL: SELECT v.customer_state, v.categoria_ingles, ROUND(SUM(v.freight_value) * 1.0 / SUM(v.price), 4) AS ratio_flete_precio FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.customer_state, v.categoria_ingles HAVING COUNT(*) >= 30 ORDER BY ratio_flete_precio DESC LIMIT 10
-
-Pregunta: ¿Qué categorías concentran el 80% de los ingresos?
-SQL: SELECT categoria_ingles, ingresos FROM (SELECT categoria_ingles, ingresos, SUM(ingresos) OVER (ORDER BY ingresos DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - ingresos AS acumulado_previo, SUM(ingresos) OVER () AS total FROM vw_ingresos_por_categoria) WHERE acumulado_previo < 0.8 * total ORDER BY ingresos DESC
-
-Pregunta: ¿Cuántos vendedores concentran el 80% de los ingresos?
-SQL: SELECT COUNT(*) AS vendedores_que_forman_el_80pct FROM (SELECT seller_id, SUM(ingresos) OVER (ORDER BY ingresos DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - ingresos AS acumulado_previo, SUM(ingresos) OVER () AS total FROM vw_ingresos_por_vendedor) WHERE acumulado_previo < 0.8 * total
-""".strip()
+EJEMPLOS_TEXTO = "Ejemplos de pregunta -> SQL correcto:\n\n" + "\n\n".join(
+    f"Pregunta: {q}\nSQL: {sql}" for q, sql in EJEMPLOS_FEW_SHOT
+)
 
 
 def _valores_categoricos(table, col) -> list[str] | None:
@@ -156,6 +175,27 @@ def _valores_categoricos_texto() -> str | None:
     )
 
 
+def _tipo_corto(declarado: str) -> str:
+    """Tipo SQLite legible y corto a partir del tipo declarado (VARCHAR(32) ->
+    TEXT, NUMERIC(10, 2) -> NUMERIC, ...). '' si no hay tipo declarado."""
+    t = declarado.upper()
+    if not t:
+        return ""
+    if "INT" in t:
+        return "INTEGER"
+    if "BOOL" in t:
+        return "INTEGER 0/1"
+    if any(x in t for x in ("CHAR", "TEXT", "CLOB", "STRING")):
+        return "TEXT"
+    if "DATE" in t or "TIME" in t:
+        return "DATETIME"
+    if any(x in t for x in ("NUMERIC", "DECIMAL")):
+        return "NUMERIC"
+    if any(x in t for x in ("REAL", "FLOA", "DOUB")):
+        return "REAL"
+    return t
+
+
 def _column_line(col) -> str:
     parts = [col.name]
     if col.primary_key:
@@ -166,10 +206,40 @@ def _column_line(col) -> str:
         parts.append(f"FK->{target}")
     if col.nullable and not col.primary_key:
         parts.append("NULL?")
-    type_name = type(col.type).__name__.upper()
-    if type_name not in ("INTEGER", "BOOLEAN"):
-        parts.append(type_name)
+    parts.append(_tipo_corto(col.type.compile(dialect=engine.dialect)))
     return " ".join(parts)
+
+
+def _tipo_por_valor(valor) -> str:
+    if isinstance(valor, bool) or isinstance(valor, int):
+        return "INTEGER"
+    if isinstance(valor, float):
+        return "REAL"
+    return "TEXT"
+
+
+def _vista_line(nombre: str) -> str:
+    """`- vista(col TIPO, ...) -- descripción`. El tipo es el declarado en la
+    base; si la columna es una expresión sin tipo declarado, se infiere del
+    primer valor no nulo de una muestra (o de TIPOS_SEMANTICOS_VISTAS)."""
+    with engine.connect() as conn:
+        info = conn.execute(text(f"PRAGMA table_info({nombre})")).fetchall()
+        muestra = conn.execute(text(f"SELECT * FROM {nombre} LIMIT 200")).fetchall()
+    cols = []
+    for i, fila_info in enumerate(info):
+        col = fila_info[1]
+        tipo = TIPOS_SEMANTICOS_VISTAS.get((nombre, col)) or _tipo_corto(fila_info[2] or "")
+        if not tipo:
+            no_nulo = next((f[i] for f in muestra if f[i] is not None), None)
+            tipo = _tipo_por_valor(no_nulo) if no_nulo is not None else ""
+        cols.append(f"{col} {tipo}".strip())
+    return f"- {nombre}({', '.join(cols)}) -- {VISTAS_DESCRIPCION[nombre]}"
+
+
+def _vistas_texto() -> str:
+    lineas = ["Vistas analíticas disponibles (úsalas en vez de recalcular a mano cuando aplique):"]
+    lineas.extend(_vista_line(v) for v in NOMBRES_VISTAS)
+    return "\n".join(lineas)
 
 
 _CACHED_ESQUEMA: dict[str, set[str]] | None = None
@@ -239,7 +309,7 @@ def build_schema_context() -> str:
         cols = ", ".join(_column_line(c) for c in table.columns)
         lines.append(f"{table.name}({cols})")
     lines.append("")
-    lines.append(VISTAS_TEXTO)
+    lines.append(_vistas_texto())
     lines.append("")
     lines.append(_columnas_de_union_texto())
 

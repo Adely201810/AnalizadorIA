@@ -99,8 +99,8 @@ DE NEGOCIO CLARAMENTE DISTINTOS que conviene resolver por separado (ej. "compara
 desempeño de entregas", o "dame un panorama de ventas Y de entregas Y de satisfacción de clientes").
 
 La MAYORÍA de las preguntas se responden con una sola consulta, INCLUSO si mencionan dos datos (ej. \
-"¿qué categoría vende más y cuánto?" es UNA sola consulta: una columna trae la categoría, otra el \
-monto -- es el mismo tema). Solo divide cuando son temas de negocio distintos que normalmente saldrían \
+"¿qué vendedor tiene más pedidos y cuántos?" es UNA sola consulta: una columna trae el vendedor, otra el \
+número de pedidos -- es el mismo tema). Solo divide cuando son temas de negocio distintos que normalmente saldrían \
 de tablas o vistas distintas. Si tienes duda, NO dividas.
 
 Si la pregunta es simple (una sola consulta basta), tu respuesta completa debe ser EXACTAMENTE la \
@@ -110,13 +110,13 @@ Si la pregunta tiene 2 a 4 partes sobre temas claramente distintos, responde sol
 simple en su propia línea (sin numerarlas, sin la palabra UNA, sin explicaciones). Máximo 4 líneas.
 
 Ejemplo de pregunta simple (menciona dos datos, pero es un solo tema -> NO se divide):
-Pregunta: ¿Qué categoría de producto genera más ingresos y cuánto?
+Pregunta: ¿Qué vendedor tiene más pedidos y cuántos?
 Respuesta:
 UNA
 
 Ejemplo de pregunta simple (compara dos grupos DENTRO DEL MISMO tema -> NO se divide, se resuelve \
 agrupando/con CASE en una sola consulta):
-Pregunta: ¿Los pedidos con retraso tienen una calificación más baja que los que llegan a tiempo?
+Pregunta: ¿Los pedidos pagados en varias cuotas tienen un valor más alto que los pagados en una sola?
 Respuesta:
 UNA
 
