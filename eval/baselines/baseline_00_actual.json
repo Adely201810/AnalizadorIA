@@ -1,0 +1,131 @@
+{
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-10-10T17:07:35.585053",
+  "total_preguntas": 10,
+  "sql_correctas": 6,
+  "precision_sql_pct": 60.0,
+  "textos_confiables": 10,
+  "precision_texto_pct": 100.0,
+  "resultados": [
+    {
+      "id": "q1_pedidos_totales",
+      "pregunta": "¿Cuántos pedidos hay en total en la base de datos?",
+      "sql_generado": "SELECT COUNT(order_id) FROM orders",
+      "sql_referencia": "SELECT COUNT(*) FROM orders",
+      "respuesta_modelo": "Hay un total de 99,441 pedidos en la base de datos. Esto se debe a que hay 99,441 pedidos registrados.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": true,
+      "texto_confiable": true,
+      "detalle_calificacion": "esperado≈99441, hallado=99441.0"
+    },
+    {
+      "id": "q2_categoria_mas_ingresos",
+      "pregunta": "¿Qué categoría de producto (en inglés) generó más ingresos totales (suma de price de order_items, sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, SUM(oi.price) AS total\nFROM order_items oi\nJOIN products p ON p.product_id = oi.product_id\nLEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE oi.order_id NOT IN (SELECT order_id FROM orders WHERE order_status IN ('canceled', 'unavailable'))\nGROUP BY categoria\nORDER BY total DESC\nLIMIT 1",
+      "sql_referencia": "SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, ROUND(SUM(oi.price),2) AS total FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY categoria ORDER BY total DESC LIMIT 1",
+      "respuesta_modelo": "La categoría de producto que generó más ingresos totales es \"health_beauty\" con un total de R$1,255,695.13.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": true,
+      "texto_confiable": true,
+      "detalle_calificacion": "texto encontrado: ['health_beauty', 'beleza_saude'] | número OK (esperado≈1255695.13, hallado=1255695.13)"
+    },
+    {
+      "id": "q3_pct_clientes_recurrentes",
+      "pregunta": "¿Qué porcentaje de clientes únicos (customer_unique_id) hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT CAST(COUNT(DISTINCT customer_unique_id) AS REAL) * 100 / COUNT(DISTINCT customer_unique_id) \nFROM vw_clientes_recurrentes\nWHERE es_recurrente = 1",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN num_pedidos>1 THEN 1 ELSE 0 END) / COUNT(*), 2) FROM vw_clientes_recurrentes",
+      "respuesta_modelo": "El 100% de los clientes únicos que hicieron más de un pedido válido son recurrentes. Esto se debe a que el resultado muestra un valor de 100.0.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": false,
+      "texto_confiable": true,
+      "detalle_calificacion": "esperado≈3.04, hallado=None"
+    },
+    {
+      "id": "q4_categorias_mas_compra_unica",
+      "pregunta": "¿Qué 5 categorías de producto (con nombre de categoría) tienen mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT \n  COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, \n  COUNT(DISTINCT v.customer_unique_id) AS clientes_de_una_compra\nFROM \n  vw_ventas_pedido v \n  JOIN order_items oi ON oi.order_id = v.order_id \n  JOIN products p ON p.product_id = oi.product_id \n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name \nGROUP BY \n  categoria \nHAVING \n  COUNT(DISTINCT v.customer_unique_id) > 500 \nORDER BY \n  clientes_de_una_compra DESC \nLIMIT 5",
+      "sql_referencia": "WITH validas AS (SELECT categoria_ingles AS categoria, customer_unique_id, order_id FROM vw_ventas_pedido WHERE order_status NOT IN ('canceled','unavailable') AND categoria_ingles IS NOT NULL), compras_categoria AS (SELECT categoria, customer_unique_id, COUNT(DISTINCT order_id) AS pedidos_en_categoria FROM validas GROUP BY categoria, customer_unique_id), pedidos_categoria AS (SELECT categoria, COUNT(DISTINCT order_id) AS pedidos FROM validas GROUP BY categoria) SELECT cc.categoria, pc.pedidos, COUNT(*) AS clientes_totales, ROUND(100.0*SUM(CASE WHEN cc.pedidos_en_categoria=1 THEN 1 ELSE 0 END)/COUNT(*),2) AS pct_compra_unica FROM compras_categoria cc JOIN pedidos_categoria pc ON pc.categoria = cc.categoria GROUP BY cc.categoria, pc.pedidos HAVING pc.pedidos >= 500 ORDER BY pct_compra_unica DESC LIMIT 5",
+      "respuesta_modelo": "Las 5 categorías de producto con mayor proporción de clientes que les compraron una sola vez son: \"bed_bath_table\", \"health_beauty\", \"sports_leisure\", \"computers_accessories\" y \"furniture_decor\". Esto se debe a que estas categorías tienen un número significativo de clientes que solo han realizado una compra.",
+      "error_pipeline": null,
+      "intentos": 2,
+      "sql_correcto": false,
+      "texto_confiable": true,
+      "detalle_calificacion": "texto NO encontrado: ['consoles_games', 'electronics', 'cool_stuff', 'small_appliances', 'construction_tools_construction'] | número no encontrado (esperado≈99.62, hallado=None)"
+    },
+    {
+      "id": "q5_retraso_baja_calificacion",
+      "pregunta": "¿Los pedidos entregados con retraso tienen una calificación promedio más baja que los que llegan a tiempo?",
+      "sql_generado": "SELECT AVG(rv.review_score) AS calificacion_promedio_retraso, AVG(rv2.review_score) AS calificacion_promedio_atiempo\nFROM order_reviews rv\nJOIN orders o ON o.order_id = rv.order_id\nJOIN vw_entregas_retrasos vr ON vr.order_id = o.order_id\nJOIN order_reviews rv2 ON rv2.order_id = o.order_id\nWHERE vr.entrega_con_retraso = 1",
+      "sql_referencia": "SELECT ROUND(AVG(CASE WHEN entrega_con_retraso=1 THEN review_score_promedio END),2) AS calif_con_retraso, ROUND(AVG(CASE WHEN entrega_con_retraso=0 THEN review_score_promedio END),2) AS calif_a_tiempo FROM vw_entregas_retrasos WHERE review_score_promedio IS NOT NULL",
+      "respuesta_modelo": "No, los pedidos entregados con retraso y los que llegan a tiempo tienen la misma calificación promedio, que es de 2,57.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": true,
+      "texto_confiable": true,
+      "detalle_calificacion": "esperado≈2.57, hallado=2.566525260316236"
+    },
+    {
+      "id": "q6_metodo_pago_mayor_venta_promedio",
+      "pregunta": "¿Qué método de pago deja el mayor valor promedio de venta por pedido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT payment_type, AVG(payment_value) AS valor_promedio\nFROM order_payments\nJOIN orders ON orders.order_id = order_payments.order_id\nWHERE orders.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY payment_type\nORDER BY valor_promedio DESC\nLIMIT 1",
+      "sql_referencia": "SELECT payment_type, ROUND(AVG(total_pedido),2) AS promedio FROM (SELECT op.order_id, op.payment_type, SUM(op.payment_value) AS total_pedido FROM order_payments op JOIN orders o ON o.order_id = op.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY op.order_id, op.payment_type) sub GROUP BY payment_type ORDER BY promedio DESC LIMIT 1",
+      "respuesta_modelo": "No pude redactar un resumen confiable; revisa la tabla de resultados.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": true,
+      "texto_confiable": true,
+      "detalle_calificacion": "texto encontrado: ['credit_card', 'tarjeta de crédito', 'tarjeta de credito'] | número OK (esperado≈163.32, hallado=162.70393992490614)"
+    },
+    {
+      "id": "q7_estado_mas_pedidos_entregados",
+      "pregunta": "¿Cuál es el estado (customer_state) con más pedidos entregados?",
+      "sql_generado": "SELECT customer_state, COUNT(*) AS pedidos_entregados\nFROM orders\nWHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL\nGROUP BY customer_state\nORDER BY pedidos_entregados DESC\nLIMIT 1",
+      "sql_referencia": "SELECT c.customer_state, COUNT(*) AS total FROM orders o JOIN customers c ON c.customer_id=o.customer_id WHERE o.order_status='delivered' GROUP BY c.customer_state ORDER BY total DESC LIMIT 1",
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "intentos": 2,
+      "sql_correcto": true,
+      "texto_confiable": true,
+      "detalle_calificacion": "texto encontrado: ['SP', 'São Paulo', 'Sao Paulo'] | número no encontrado (esperado≈40501, hallado=None)"
+    },
+    {
+      "id": "q8_tiempo_promedio_entrega",
+      "pregunta": "¿Cuál es el tiempo promedio de entrega, en días, de los pedidos entregados?",
+      "sql_generado": "SELECT ROUND(AVG(julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date)), 2)\nFROM orders\nWHERE order_delivered_customer_date IS NOT NULL AND order_status = 'delivered'",
+      "sql_referencia": "SELECT ROUND(AVG(julianday(order_delivered_customer_date)-julianday(order_purchase_timestamp)),2) FROM orders WHERE order_delivered_customer_date IS NOT NULL",
+      "respuesta_modelo": "El tiempo promedio de entrega de los pedidos entregados es de aproximadamente -11,18 días. Esto se debe a que el promedio de entrega es negativo, lo que sugiere que la fecha de entrega se está calculando de manera incorrecta.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": false,
+      "texto_confiable": true,
+      "detalle_calificacion": "esperado≈12.56, hallado=None"
+    },
+    {
+      "id": "q9_pedidos_sin_entrega",
+      "pregunta": "¿Cuántos pedidos no tienen fecha de entrega registrada (no fueron entregados al cliente)?",
+      "sql_generado": "SELECT COUNT(*) \nFROM orders \nWHERE order_delivered_customer_date IS NULL",
+      "sql_referencia": "SELECT COUNT(*) FROM orders WHERE order_delivered_customer_date IS NULL",
+      "respuesta_modelo": "Hay 2965 pedidos que no tienen fecha de entrega registrada. Esto significa que estos pedidos no fueron entregados al cliente.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": true,
+      "texto_confiable": true,
+      "detalle_calificacion": "esperado≈2965, hallado=2965.0"
+    },
+    {
+      "id": "q10_ticket_promedio_pedido",
+      "pregunta": "¿Cuál es el ticket promedio (precio + flete) por pedido, sin contar pedidos cancelados o no disponibles?",
+      "sql_generado": "SELECT AVG(price + freight_value) \nFROM order_items \nWHERE order_id IN (SELECT order_id FROM orders WHERE order_status NOT IN ('canceled', 'unavailable'))",
+      "sql_referencia": "SELECT ROUND(AVG(total_pedido),2) FROM (SELECT oi.order_id, SUM(oi.price+oi.freight_value) AS total_pedido FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY oi.order_id)",
+      "respuesta_modelo": "El ticket promedio por pedido es de R$140.37. Esto se debe a que el promedio de la suma del precio y el flete de los pedidos es de 140.36919411958857.",
+      "error_pipeline": null,
+      "intentos": 1,
+      "sql_correcto": false,
+      "texto_confiable": true,
+      "detalle_calificacion": "esperado≈160.24, hallado=None"
+    }
+  ]
+}
