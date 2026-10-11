@@ -1,0 +1,672 @@
+{
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-10-10T19:34:37",
+  "configuracion": {
+    "n_intentos": 3,
+    "cadena_con_arbitro": true,
+    "feedback": "ninguno",
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.1,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json"
+  },
+  "recursos_ollama": {
+    "size_bytes": 5804392447,
+    "size_vram_bytes": 5804392447,
+    "pct_gpu": 100.0,
+    "context_length": 8192
+  },
+  "resumen": {
+    "juez_vs_arbitro": null,
+    "total_preguntas": 10,
+    "correctas": 0,
+    "precision_pct": 0.0,
+    "textos_respaldados": 3,
+    "latencia_media_s": 47.77,
+    "latencia_max_s": 167.39,
+    "por_origen": {
+      "llm": 7,
+      "sin_origen": 3
+    },
+    "clasificacion_final": {
+      "ok": 0,
+      "ejecucion": 4,
+      "semantico": 6,
+      "seguridad": 0,
+      "infra": 0
+    },
+    "clasificacion_por_intento": {
+      "ok": 0,
+      "ejecucion": 16,
+      "semantico": 14,
+      "seguridad": 0,
+      "infra": 0
+    }
+  },
+  "resultados": [
+    {
+      "id": "n01_pct_clientes_recurrentes",
+      "pregunta": "¿Qué porcentaje de los clientes únicos hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE num_pedidos > 1), 2) AS porcentaje",
+      "sql_referencia": "WITH p AS (SELECT c.customer_unique_id, COUNT(DISTINCT o.order_id) AS n FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY c.customer_unique_id) SELECT ROUND(100.0 * SUM(CASE WHEN n > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_recurrentes FROM p",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          3.04
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 32.41,
+      "correcto": false,
+      "clasificacion": "ejecucion",
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes), 2) AS porcentaje",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes), 2) AS porcentaje",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE num_pedidos > 1), 2) AS porcentaje",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": null,
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n02_calificacion_retraso_vs_a_tiempo",
+      "pregunta": "¿Cuál es la calificación promedio de los pedidos entregados con retraso y cuál la de los entregados a tiempo?",
+      "sql_generado": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_entregas_retrasos et\nJOIN order_reviews rv ON et.order_id = rv.order_id\nWHERE et.entrega_con_retraso = 1\n\nSELECT AVG(rv.review_score) AS calificacion_promedio\nFROM order_reviews rv\nJOIN orders o ON o.order_id = rv.order_id\nWHERE o.order_status = 'delivered' AND rv.review_score IS NOT NULL",
+      "sql_referencia": "WITH r AS (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id), e AS (SELECT o.order_id, CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date) THEN 1 ELSE 0 END AS tarde FROM orders o WHERE o.order_delivered_customer_date IS NOT NULL) SELECT ROUND(AVG(CASE WHEN e.tarde = 1 THEN r.calif END), 2) AS calif_con_retraso, ROUND(AVG(CASE WHEN e.tarde = 0 THEN r.calif END), 2) AS calif_a_tiempo FROM e JOIN r ON r.order_id = e.order_id",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          2.57,
+          4.29
+        ]
+      ],
+      "respuesta_modelo": "La calificación promedio de los pedidos entregados con retraso es de 2.57, mientras que la de los entregados a tiempo es de 4.16.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": null,
+      "intentos": 2,
+      "latencia_s": 21.36,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "pipeline: la pregunta se descompuso en sub-consultas (no hay un resultado único que comparar)",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_entregas_retrasos et\nJOIN order_reviews rv ON et.order_id = rv.order_id\nWHERE et.entrega_con_retraso = 1",
+          "tipo": "ok",
+          "detalle": null,
+          "subpregunta": "¿Cuál es la calificación promedio de los pedidos entregados con retraso?",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 1,
+          "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM order_reviews rv\nJOIN orders o ON o.order_id = rv.order_id\nWHERE o.order_status = 'delivered' AND rv.review_score IS NOT NULL",
+          "tipo": "ok",
+          "detalle": null,
+          "subpregunta": "¿Cuál es la calificación promedio de los pedidos entregados a tiempo?",
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n03_pct_ingresos_top5_categorias",
+      "pregunta": "¿Qué porcentaje de los ingresos (sin contar pedidos cancelados o no disponibles) concentran las 5 categorías de producto que más ingresos generan?",
+      "sql_generado": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name_english IN (v.categoria_ingles) THEN v.pedidos * v.price ELSE 0 END) / \n        SUM(CASE WHEN o.order_status NOT IN ('canceled', 'unavailable') THEN oi.price ELSE 0 END), 2) AS porcentaje\nFROM vw_ingresos_por_categoria v\nJOIN product_category_translation t ON t.product_category_name_english = v.categoria_ingles\nJOIN products p ON p.product_category_name = t.product_category_name\nJOIN order_items oi ON oi.product_id = p.product_id\nJOIN orders o ON o.order_id = oi.order_id",
+      "sql_referencia": "WITH cat AS (SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, SUM(oi.price) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY categoria) SELECT ROUND(100.0 * (SELECT SUM(ingresos) FROM (SELECT ingresos FROM cat ORDER BY ingresos DESC LIMIT 5)) / (SELECT SUM(ingresos) FROM cat), 2) AS pct_top5",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          39.82
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "La consulta usa columnas que no existen en la tabla indicada: 'v.price': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 39.76,
+      "correcto": false,
+      "clasificacion": "ejecucion",
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name_english IN (v.categoria_ingles) THEN v.pedidos * v.price ELSE 0 END) / \n        SUM(CASE WHEN o.order_status NOT IN ('canceled', 'unavailable') THEN oi.price ELSE 0 END), 2) AS porcentaje\nFROM vw_ingresos_por_categoria v\nJOIN product_category_translation t ON t.product_category_name_english = v.categoria_ingles\nJOIN products p ON p.product_category_name = t.product_category_name\nJOIN order_items oi ON oi.product_id = p.product_id\nJOIN orders o ON o.order_id = oi.order_id",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'v.price': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'v.price': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name_english IN (v.categoria_ingles) THEN v.pedidos * v.price ELSE 0 END) / \n        SUM(CASE WHEN o.order_status NOT IN ('canceled', 'unavailable') THEN oi.price ELSE 0 END), 2) AS porcentaje\nFROM vw_ingresos_por_categoria v\nJOIN product_category_translation t ON t.product_category_name_english = v.categoria_ingles\nJOIN products p ON p.product_category_name = t.product_category_name\nJOIN order_items oi ON oi.product_id = p.product_id\nJOIN orders o ON o.order_id = oi.order_id",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'v.price': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'v.price': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name_english IN (v.categoria_ingles) THEN v.pedidos * v.price ELSE 0 END) / \n        SUM(CASE WHEN o.order_status NOT IN ('canceled', 'unavailable') THEN oi.price ELSE 0 END), 2) AS porcentaje\nFROM vw_ingresos_por_categoria v\nJOIN product_category_translation t ON t.product_category_name_english = v.categoria_ingles\nJOIN products p ON p.product_category_name = t.product_category_name\nJOIN order_items oi ON oi.product_id = p.product_id\nJOIN orders o ON o.order_id = oi.order_id",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'v.price': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": null,
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n04_vendedores_mala_calificacion",
+      "pregunta": "¿Cuántos vendedores con al menos 30 pedidos válidos (sin contar cancelados o no disponibles) tienen una calificación promedio menor a 3.5, promediando la calificación de cada pedido?",
+      "sql_generado": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_entregas_retrasos \nWHERE dias_retraso > 0 AND review_score_promedio < 3.5",
+      "sql_referencia": "WITH ped AS (SELECT DISTINCT oi.seller_id, o.order_id FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable')), rev AS (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id), vend AS (SELECT ped.seller_id, COUNT(*) AS pedidos, AVG(rev.calif) AS calif FROM ped LEFT JOIN rev ON rev.order_id = ped.order_id GROUP BY ped.seller_id) SELECT COUNT(*) AS vendedores FROM vend WHERE pedidos >= 30 AND calif < 3.5",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          24
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 17.97,
+      "correcto": false,
+      "clasificacion": "ejecucion",
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_entregas_retrasos \nWHERE dias_retraso > 0 AND review_score_promedio < 3.5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_entregas_retrasos \nWHERE dias_retraso > 0 AND review_score_promedio < 3.5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_entregas_retrasos \nWHERE dias_retraso > 0 AND review_score_promedio < 3.5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+          "pista_siguiente": null,
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n05_estado_mayor_peso_flete",
+      "pregunta": "¿En qué estado del cliente pesa más el flete sobre el precio de los productos (flete total entre precio total, en pedidos válidos) y cuál es ese porcentaje?",
+      "sql_generado": "SELECT \n  c.customer_state, \n  ROUND(100.0 * COUNT(DISTINCT o.order_id) / (SELECT COUNT(DISTINCT order_id) FROM orders), 2) AS pedidos_validos\nFROM \n  customers c\n  JOIN orders o ON c.customer_id = o.customer_id\nWHERE \n  o.order_status = 'delivered'\nGROUP BY \n  c.customer_state\nORDER BY \n  pedidos_validos DESC\n\nSELECT \n  customer_state, \n  AVG(freight_value) AS flete_promedio, \n  AVG(price) AS precio_promedio\nFROM \n  vw_ventas_pedido\nWHERE \n  order_status = 'delivered'\nGROUP BY \n  customer_state",
+      "sql_referencia": "SELECT c.customer_state, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY c.customer_state ORDER BY pct_flete DESC LIMIT 1",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          "RR",
+          28.55
+        ]
+      ],
+      "respuesta_modelo": "El estado del cliente donde el flete pesa más sobre el precio de los productos es SP, con un porcentaje de pedidos válidos de 40,73%. Esto se debe a que el flete promedio en SP es de R$40,05 y el precio promedio es de R$175,07.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": null,
+      "intentos": 3,
+      "latencia_s": 41.33,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "pipeline: la pregunta se descompuso en sub-consultas (no hay un resultado único que comparar)",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  customer_state, \n  ROUND(100.0 * COUNT(DISTINCT order_id) / (SELECT COUNT(DISTINCT order_id) FROM orders), 2) AS pedidos_validos\nFROM \n  orders\nWHERE \n  order_status = 'delivered'\nGROUP BY \n  customer_state\nORDER BY \n  pedidos_validos DESC",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_state",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_state",
+          "subpregunta": "¿Cuál es el porcentaje de pedidos válidos por estado del cliente?",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n  c.customer_state, \n  ROUND(100.0 * COUNT(DISTINCT o.order_id) / (SELECT COUNT(DISTINCT order_id) FROM orders), 2) AS pedidos_validos\nFROM \n  customers c\n  JOIN orders o ON c.customer_id = o.customer_id\nWHERE \n  o.order_status = 'delivered'\nGROUP BY \n  c.customer_state\nORDER BY \n  pedidos_validos DESC",
+          "tipo": "ok",
+          "detalle": null,
+          "subpregunta": "¿Cuál es el porcentaje de pedidos válidos por estado del cliente?",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 1,
+          "sql": "SELECT \n  customer_state, \n  AVG(freight_value) AS flete_promedio, \n  AVG(price) AS precio_promedio\nFROM \n  vw_ventas_pedido\nWHERE \n  order_status = 'delivered'\nGROUP BY \n  customer_state",
+          "tipo": "ok",
+          "detalle": null,
+          "subpregunta": "¿Cuál es el promedio del flete total y del precio total en pedidos válidos por estado del cliente?",
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n06_metodo_pago_mas_usado",
+      "pregunta": "¿Qué método de pago se usa en más pedidos válidos (sin contar cancelados o no disponibles) y en cuántos pedidos?",
+      "sql_generado": "SELECT payment_type, COUNT(*) AS pedidos\nFROM order_payments\nJOIN orders ON order_payments.order_id = orders.order_id\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY payment_type\nORDER BY pedidos DESC\nLIMIT 1",
+      "sql_referencia": "SELECT op.payment_type, COUNT(DISTINCT op.order_id) AS pedidos FROM order_payments op JOIN orders o ON o.order_id = op.order_id WHERE o.order_status NOT IN ('canceled','unavailable') AND op.payment_type != 'not_defined' GROUP BY op.payment_type ORDER BY pedidos DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "credit_card",
+          75905
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "credit_card",
+          75618
+        ]
+      ],
+      "respuesta_modelo": "El método de pago más utilizado en nuestros pedidos válidos es el de tarjeta de crédito, y se utiliza en 75,905 pedidos.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 28.41,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT payment_type, COUNT(*) AS pedidos\nFROM order_payments\nJOIN orders ON order_payments.order_id = orders.order_id\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY payment_type\nORDER BY pedidos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT payment_type, COUNT(*) AS pedidos\nFROM order_payments\nJOIN orders ON order_payments.order_id = orders.order_id\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY payment_type\nORDER BY pedidos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT payment_type, COUNT(*) AS pedidos\nFROM order_payments\nJOIN orders ON order_payments.order_id = orders.order_id\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY payment_type\nORDER BY pedidos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": [
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        }
+      ]
+    },
+    {
+      "id": "n07_mes_mayores_ingresos",
+      "pregunta": "¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?",
+      "sql_generado": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n  SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status = 'delivered'\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+      "sql_referencia": "SELECT strftime('%Y-%m', o.order_purchase_timestamp) AS mes, ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY mes ORDER BY ingresos DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "2017-11",
+          987765.37
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "2017-11",
+          1003862.14
+        ]
+      ],
+      "respuesta_modelo": "El mes con más ingresos por ventas de pedidos válidos fue noviembre de 2017, con un total de R$987,765.37.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 32.22,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT strftime('%Y-%m', o.order_purchase_timestamp) AS mes, SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status = 'delivered'\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n  SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status = 'delivered'\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n  SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status = 'delivered'\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": [
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        }
+      ]
+    },
+    {
+      "id": "n08_categoria_mas_resenas_1_estrella",
+      "pregunta": "Considerando solo pedidos válidos, entre las categorías de producto con al menos 100 reseñas, ¿cuál tiene el mayor porcentaje de reseñas de 1 estrella y cuál es ese porcentaje?",
+      "sql_generado": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(CASE WHEN rv.review_score = 1 THEN 1 ELSE NULL END) / COUNT(DISTINCT rv.order_id), 2) AS pct_1_estrella\nFROM \n  order_reviews rv \n  JOIN order_items oi ON oi.order_id = rv.order_id \n  JOIN products p ON p.product_id = oi.product_id \n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name \nGROUP BY \n  t.product_category_name_english \nHAVING \n  COUNT(DISTINCT rv.order_id) >= 100 \nORDER BY \n  pct_1_estrella DESC \nLIMIT 1",
+      "sql_referencia": "WITH cp AS (SELECT DISTINCT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, oi.order_id FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable')) SELECT cp.categoria, ROUND(100.0 * SUM(CASE WHEN r.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella, COUNT(*) AS resenas FROM cp JOIN order_reviews r ON r.order_id = cp.order_id GROUP BY cp.categoria HAVING COUNT(*) >= 100 ORDER BY pct_1_estrella DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "fashion_male_clothing",
+          30.63
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "fashion_male_clothing",
+          22.73,
+          110
+        ]
+      ],
+      "respuesta_modelo": "La categoría de productos con el mayor porcentaje de reseñas de 1 estrella es la de \"fashion_male_clothing\" y ese porcentaje es del 30,63%.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 54.07,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(CASE WHEN rv.review_score = 1 THEN 1 ELSE NULL END) / COUNT(*), 2) AS pct_1_estrella\nFROM \n  order_reviews rv \n  JOIN order_items oi ON oi.order_id = rv.order_id \n  JOIN products p ON p.product_id = oi.product_id \n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name \nGROUP BY \n  t.product_category_name_english \nHAVING \n  COUNT(*) >= 100 \nORDER BY \n  pct_1_estrella DESC \nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(CASE WHEN rv.review_score = 1 THEN 1 ELSE NULL END) / COUNT(*), 2) AS pct_1_estrella\nFROM \n  order_reviews rv \n  JOIN order_items oi ON oi.order_id = rv.order_id \n  JOIN products p ON p.product_id = oi.product_id \n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name \nGROUP BY \n  t.product_category_name_english \nHAVING \n  COUNT(DISTINCT rv.order_id) >= 100 \nORDER BY \n  pct_1_estrella DESC \nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(CASE WHEN rv.review_score = 1 THEN 1 ELSE NULL END) / COUNT(DISTINCT rv.order_id), 2) AS pct_1_estrella\nFROM \n  order_reviews rv \n  JOIN order_items oi ON oi.order_id = rv.order_id \n  JOIN products p ON p.product_id = oi.product_id \n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name \nGROUP BY \n  t.product_category_name_english \nHAVING \n  COUNT(DISTINCT rv.order_id) >= 100 \nORDER BY \n  pct_1_estrella DESC \nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": [
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado de la consulta no es correcto. Genera una consulta distinta.",
+          "formas_censuradas": []
+        }
+      ]
+    },
+    {
+      "id": "n09_categorias_mas_compra_unica",
+      "pregunta": "¿Qué 5 categorías de producto (con nombre de categoría) tienen mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT \n  COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, \n  COUNT(DISTINCT c.customer_unique_id) AS clientes_unicos, \n  COUNT(DISTINCT oi.order_id) AS pedidos, \n  ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / COUNT(DISTINCT oi.order_id), 2) AS proporción\nFROM \n  products p \n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN customers c ON c.customer_id = o.customer_id\n  JOIN order_items oi ON oi.order_id = o.order_id\nWHERE \n  o.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY \n  categoria\nHAVING \n  COUNT(DISTINCT oi.order_id) >= 500\nORDER BY \n  proporción DESC\nLIMIT 5",
+      "sql_referencia": "WITH validas AS (SELECT categoria_ingles AS categoria, customer_unique_id, order_id FROM vw_ventas_pedido WHERE order_status NOT IN ('canceled','unavailable') AND categoria_ingles IS NOT NULL), compras_categoria AS (SELECT categoria, customer_unique_id, COUNT(DISTINCT order_id) AS pedidos_en_categoria FROM validas GROUP BY categoria, customer_unique_id), pedidos_categoria AS (SELECT categoria, COUNT(DISTINCT order_id) AS pedidos FROM validas GROUP BY categoria) SELECT cc.categoria, pc.pedidos, COUNT(*) AS clientes_totales, ROUND(100.0*SUM(CASE WHEN cc.pedidos_en_categoria=1 THEN 1 ELSE 0 END)/COUNT(*),2) AS pct_compra_unica FROM compras_categoria cc JOIN pedidos_categoria pc ON pc.categoria = cc.categoria GROUP BY cc.categoria, pc.pedidos HAVING pc.pedidos >= 500 ORDER BY pct_compra_unica DESC LIMIT 5",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          "consoles_games",
+          1054,
+          1050,
+          99.62
+        ],
+        [
+          "electronics",
+          2543,
+          2533,
+          99.61
+        ],
+        [
+          "cool_stuff",
+          3616,
+          3600,
+          99.56
+        ],
+        [
+          "small_appliances",
+          622,
+          619,
+          99.52
+        ],
+        [
+          "construction_tools_construction",
+          746,
+          742,
+          99.46
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+      "origen": "llm",
+      "intentos": 3,
+      "latencia_s": 167.39,
+      "correcto": false,
+      "clasificacion": "ejecucion",
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 5",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, \n  COUNT(DISTINCT customer_unique_id) AS clientes_unicos, \n  COUNT(DISTINCT order_id) AS pedidos, \n  ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT order_id), 2) AS proporción\nFROM \n  products p \n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY \n  categoria\nHAVING \n  COUNT(DISTINCT order_id) >= 500\nORDER BY \n  proporción DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n  COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, \n  COUNT(DISTINCT c.customer_unique_id) AS clientes_unicos, \n  COUNT(DISTINCT oi.order_id) AS pedidos, \n  ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / COUNT(DISTINCT oi.order_id), 2) AS proporción\nFROM \n  products p \n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN customers c ON c.customer_id = o.customer_id\n  JOIN order_items oi ON oi.order_id = o.order_id\nGROUP BY \n  categoria\nHAVING \n  COUNT(DISTINCT oi.order_id) >= 500\nORDER BY \n  proporción DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n  COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, \n  COUNT(DISTINCT c.customer_unique_id) AS clientes_unicos, \n  COUNT(DISTINCT oi.order_id) AS pedidos, \n  ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / COUNT(DISTINCT oi.order_id), 2) AS proporción\nFROM \n  products p \n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN customers c ON c.customer_id = o.customer_id\n  JOIN order_items oi ON oi.order_id = o.order_id\nWHERE \n  o.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY \n  categoria\nHAVING \n  COUNT(DISTINCT oi.order_id) >= 500\nORDER BY \n  proporción DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+          "pista_siguiente": null,
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n10_estado_mas_clientes_por_vendedor",
+      "pregunta": "Entre los estados con al menos 10 vendedores activos (vendedores ubicados en el estado con ventas en pedidos válidos), ¿cuál tiene más clientes únicos por vendedor y cuántos clientes por vendedor son?",
+      "sql_generado": "SELECT seller_state, COUNT(DISTINCT customer_unique_id) AS clientes FROM vw_ventas_pedido GROUP BY seller_state ORDER BY clientes DESC LIMIT 1\n\nSELECT COUNT(DISTINCT customer_unique_id) AS clientes_por_vendedor\nFROM vw_ingresos_por_vendedor\nWHERE pedidos = (\n  SELECT MAX(pedidos)\n  FROM vw_ingresos_por_vendedor\n  WHERE seller_state = (\n    SELECT seller_state\n    FROM vw_clientes_recurrentes\n    GROUP BY seller_state\n    ORDER BY COUNT(DISTINCT customer_unique_id) DESC\n    LIMIT 1\n  )\n)",
+      "sql_referencia": "WITH vv AS (SELECT c.customer_state, c.customer_unique_id, s.seller_state, oi.seller_id FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN customers c ON c.customer_id = o.customer_id JOIN sellers s ON s.seller_id = oi.seller_id WHERE o.order_status NOT IN ('canceled','unavailable')), ce AS (SELECT customer_state AS estado, COUNT(DISTINCT customer_unique_id) AS clientes FROM vv GROUP BY customer_state), ve AS (SELECT seller_state AS estado, COUNT(DISTINCT seller_id) AS vendedores FROM vv GROUP BY seller_state) SELECT ce.estado, ROUND(1.0 * ce.clientes / ve.vendedores, 2) AS clientes_por_vendedor, ce.clientes, ve.vendedores FROM ce JOIN ve ON ve.estado = ce.estado WHERE ve.vendedores >= 10 ORDER BY clientes_por_vendedor DESC LIMIT 1",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          "BA",
+          170.74,
+          3244,
+          19
+        ]
+      ],
+      "respuesta_modelo": "El estado con más clientes únicos por vendedor es São Paulo, con 68,227 clientes únicos por vendedor. No se pudo obtener el número de clientes por vendedor en el estado con más clientes únicos por vendedor.\n\nNota: no se pudo obtener el dato de: ¿Cuántos clientes por vendedor hay en el estado con más clientes únicos por vendedor?",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": null,
+      "intentos": 4,
+      "latencia_s": 42.77,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "pipeline: la pregunta se descompuso en sub-consultas (no hay un resultado único que comparar)",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT seller_state, COUNT(DISTINCT customer_unique_id) AS clientes FROM vw_ventas_pedido GROUP BY seller_state ORDER BY clientes DESC LIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "subpregunta": "¿Cuál es el estado con más clientes únicos por vendedor?",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 1,
+          "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS clientes_por_vendedor\nFROM vw_ingresos_por_vendedor\nWHERE pedidos = (\n  SELECT MAX(pedidos)\n  FROM vw_ingresos_por_vendedor\n  WHERE seller_state = (\n    SELECT seller_state\n    FROM vw_clientes_recurrentes\n    GROUP BY seller_state\n    ORDER BY COUNT(DISTINCT customer_unique_id) DESC\n    LIMIT 1\n  )\n)",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "subpregunta": "¿Cuántos clientes por vendedor hay en el estado con más clientes únicos por vendedor?",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS clientes_por_vendedor\nFROM vw_ingresos_por_vendedor\nWHERE pedidos = (\n  SELECT MAX(pedidos)\n  FROM vw_ingresos_por_vendedor\n  WHERE seller_state = (\n    SELECT seller_state\n    FROM vw_clientes_recurrentes\n    GROUP BY seller_state\n    ORDER BY COUNT(DISTINCT customer_unique_id) DESC\n    LIMIT 1\n  )\n)",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "subpregunta": "¿Cuántos clientes por vendedor hay en el estado con más clientes únicos por vendedor?",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS clientes_por_vendedor\nFROM vw_ingresos_por_vendedor\nWHERE pedidos = (\n  SELECT MAX(pedidos)\n  FROM vw_ingresos_por_vendedor\n  WHERE seller_state = (\n    SELECT seller_state\n    FROM vw_clientes_recurrentes\n    GROUP BY seller_state\n    ORDER BY COUNT(DISTINCT customer_unique_id) DESC\n    LIMIT 1\n  )\n)",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": null,
+          "subpregunta": "¿Cuántos clientes por vendedor hay en el estado con más clientes únicos por vendedor?",
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    }
+  ]
+}
