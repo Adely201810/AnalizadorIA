@@ -48,6 +48,8 @@ from typing import Callable
 _logger = logging.getLogger(__name__)
 
 from db.olist_database import DATABASE_URL
+from llm.bitacora import BitacoraEsquema, detalles_de_error
+from llm.juez import JuezLLM
 from llm.ollama_client import OllamaClient, OllamaError
 from llm.schema_context import get_esquema_real, get_known_names, get_schema_context
 from llm.sql_guard import (
@@ -255,6 +257,9 @@ class Text2SQLResult:
     detalle_error: str | None = None  # por qué se descartó el SQL del LLM (aunque luego se respondiera con un fallback)
     # Un dict por intento: {"intento", "sql", "tipo", "detalle"}; tipo en TIPOS_FALLO (ver clasificar_excepcion).
     intentos_detalle: list[dict] = field(default_factory=list)
+    # Chat libre (Fase 10): {"tiene_sentido": bool|None, "motivo": str} del juez-LLM.
+    # Revisa si el SQL TIENE SENTIDO para la pregunta; NO verifica que la cifra sea correcta.
+    revision_sensatez: dict | None = None
 
 
 # Clasificación de cada intento (Fase 2). "ok" = el SQL corrió y devolvió filas;
@@ -354,9 +359,14 @@ def generar_sql(
     schema_context: str,
     error_previo: str | None = None,
     sql_previo: str | None = None,
+    notas: str | None = None,
 ) -> str:
     system_prompt = SQL_SYSTEM_PROMPT_TEMPLATE.format(schema=schema_context)
     prompt = f"Pregunta: {pregunta}"
+    if notas:
+        # Va en el prompt de USUARIO: si fuera en el system, cada cambio de la
+        # bitácora invalidaría la caché del prefijo del esquema (docs/FASE_04.md).
+        prompt += f"\n\n{notas}"
     if error_previo and sql_previo:
         prompt += (
             f"\n\nYa intentaste responder con esta consulta:\n```sql\n{sql_previo}\n```"
@@ -466,6 +476,7 @@ def _generar_y_ejecutar_llm(
     nombres_conocidos: set[str],
     n_intentos: int,
     verificador: Verificador | None = None,
+    bitacora: BitacoraEsquema | None = None,
 ) -> _ResolucionSQL:
     """Hasta `n_intentos` intentos de generar_sql -> validar -> ejecutar (Fase 6).
 
@@ -481,6 +492,7 @@ def _generar_y_ejecutar_llm(
     esquema_real = get_esquema_real()
     sql_generado: str | None = None
     pista: str | None = None
+    notas = bitacora.texto_para_prompt() if bitacora else None
 
     def registrar(tipo: str, sql: str | None, detalle: str | None, **extra) -> None:
         resultado.intentos_detalle.append(
@@ -491,7 +503,9 @@ def _generar_y_ejecutar_llm(
         resultado.intentos = intento
         ultimo = intento == n_intentos
         try:
-            sql_generado = generar_sql(client, pregunta, schema_context, error_previo=pista, sql_previo=sql_generado)
+            sql_generado = generar_sql(
+                client, pregunta, schema_context, error_previo=pista, sql_previo=sql_generado, notas=notas,
+            )
         except OllamaError as exc:
             registrar(clasificar_excepcion(exc), None, str(exc))
             if not ultimo:
@@ -532,6 +546,8 @@ def _generar_y_ejecutar_llm(
             columnas, filas = execute_readonly(sql_validado)
         except (SQLQualityError, sqlite3.Error) as exc:
             error = str(exc) if isinstance(exc, SQLQualityError) else f"Error de SQLite al ejecutar la consulta: {exc}"
+            if bitacora is not None:
+                bitacora.registrar(detalles_de_error(exc, esquema_real), pregunta)
             registrar(clasificar_excepcion(exc), sql_validado, error, pista_siguiente=None if ultimo else error)
             sql_generado = sql_validado
             if not ultimo:
@@ -606,6 +622,7 @@ def _generar_y_ejecutar(
     plantilla: Plantilla | None = None,
     usar_plantillas: bool = True,
     verificador: Verificador | None = None,
+    bitacora: BitacoraEsquema | None = None,
 ) -> _ResolucionSQL:
     """Orden de resolución de una (sub-)pregunta:
     1. Plantilla fija si una regla reconoce el patrón (no se consulta al modelo).
@@ -617,7 +634,7 @@ def _generar_y_ejecutar(
     Con `usar_plantillas=False` se saltan los pasos 1 y 3 (solo LLM), para
     evaluar al modelo sin la ayuda de reglas fijas."""
     if not usar_plantillas:
-        return _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, n_intentos, verificador)
+        return _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, n_intentos, verificador, bitacora)
     if plantilla is None:
         detectadas = detectar_plantillas(pregunta)
         plantilla = detectadas[0] if detectadas else None
@@ -626,7 +643,7 @@ def _generar_y_ejecutar(
         if resuelto is not None:
             return resuelto
 
-    resultado = _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, n_intentos, verificador)
+    resultado = _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, n_intentos, verificador, bitacora)
     if resultado.mensaje_fijo == MENSAJE_PROBLEMA_TRAS_REINTENTO and not resultado.error_infra:
         respaldo = plantilla_fallback(pregunta)
         if respaldo is not None:
@@ -652,6 +669,7 @@ def _answer_open_question(
     n_intentos: int,
     plantillas: list[Plantilla] | None = None,
     usar_plantillas: bool = True,
+    bitacora: BitacoraEsquema | None = None,
 ) -> Text2SQLResult:
     """`plantillas` (opcional, mismo largo que `sub_preguntas`): plantilla ya
     decidida por reglas para cada sub-pregunta (pregunta compuesta detectada
@@ -665,7 +683,7 @@ def _answer_open_question(
         plantilla = plantillas[i] if plantillas else None
         r = _generar_y_ejecutar(
             client, sub_pregunta, schema_context, nombres_conocidos, n_intentos,
-            plantilla=plantilla, usar_plantillas=usar_plantillas,
+            plantilla=plantilla, usar_plantillas=usar_plantillas, bitacora=bitacora,
         )
         intentos_totales += r.intentos
         if r.sql:
@@ -713,6 +731,8 @@ def answer_question(
     n_intentos: int = N_INTENTOS_POR_DEFECTO,
     usar_plantillas: bool = True,
     verificador: Verificador | None = None,
+    bitacora: BitacoraEsquema | None = None,
+    juez_sensatez: JuezLLM | None = None,
 ) -> Text2SQLResult:
     """Orquesta el flujo completo.
 
@@ -722,7 +742,10 @@ def answer_question(
     seguridad corta siempre. `usar_plantillas=False` desactiva plantillas por
     reglas y fallback sobre vistas (el SQL sale siempre del LLM).
     `verificador` (Fase 9): ver `Verificador`; sin él, se acepta el primer SQL
-    que corre y devuelve filas. No se aplica a preguntas descompuestas."""
+    que corre y devuelve filas. No se aplica a preguntas descompuestas.
+    `bitacora` (Fase 10): registra errores de esquema y los recuerda en
+    preguntas futuras. `juez_sensatez` (Fase 10): el juez-LLM revisa si el SQL
+    final tiene sentido para la pregunta (no si la cifra es correcta)."""
     client = client or OllamaClient()
     schema_context = get_schema_context()
     nombres_conocidos = get_known_names()
@@ -732,21 +755,21 @@ def answer_question(
     if len(plantillas) > 1:
         return _answer_open_question(
             pregunta, [p.subpregunta for p in plantillas], client, schema_context, nombres_conocidos,
-            n_intentos, plantillas=plantillas,
+            n_intentos, plantillas=plantillas, bitacora=bitacora,
         )
 
     sub_preguntas = None if plantillas else clasificar_pregunta(client, pregunta)
     if sub_preguntas:
         return _answer_open_question(
             pregunta, sub_preguntas, client, schema_context, nombres_conocidos, n_intentos,
-            usar_plantillas=usar_plantillas,
+            usar_plantillas=usar_plantillas, bitacora=bitacora,
         )
 
     resultado = Text2SQLResult(pregunta=pregunta)
     r = _generar_y_ejecutar(
         client, pregunta, schema_context, nombres_conocidos, n_intentos,
         plantilla=plantillas[0] if plantillas else None, usar_plantillas=usar_plantillas,
-        verificador=verificador,
+        verificador=verificador, bitacora=bitacora,
     )
     resultado.intentos = r.intentos
     resultado.sql = r.sql
@@ -764,6 +787,10 @@ def answer_question(
     resultado.columnas = r.columnas
     resultado.filas = r.filas
     resultado.total_filas = len(r.filas)
+
+    if juez_sensatez is not None and r.sql and r.filas:
+        o = juez_sensatez.evaluar_sensatez(pregunta, r.sql)
+        resultado.revision_sensatez = {"tiene_sentido": o.valor, "motivo": o.motivo}
 
     if r.mensaje_fijo:
         resultado.respuesta = r.mensaje_fijo
@@ -821,6 +848,7 @@ def exportar_resultado_json(resultado: Text2SQLResult, pregunta: str, modelo: st
         "error": resultado.error or (None if resultado.filas else resultado.detalle_error),
         "origen": resultado.origen,
         "rechazo_llm": resultado.detalle_error if resultado.origen not in (None, "llm") else None,
+        "revision_sensatez_sql": resultado.revision_sensatez,
         "fuente": "llm_local",
         "modelo": modelo,
         "generado_en": datetime.now().isoformat(timespec="seconds"),

@@ -12,12 +12,15 @@ Uso:
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
+from llm.bitacora import BitacoraEsquema
+from llm.juez import JuezLLM, texto_revision
 from llm.ollama_client import OllamaClient
 from llm.text_to_sql import Text2SQLResult, answer_question, exportar_resultado_json
 
@@ -29,6 +32,18 @@ st.set_page_config(page_title="Olist — Asistente de datos", page_icon="📊", 
 @st.cache_resource
 def get_client() -> OllamaClient:
     return OllamaClient()
+
+
+@st.cache_resource
+def get_bitacora() -> BitacoraEsquema:
+    """Bitácora persistente de errores de esquema (runtime/bitacora_esquema.json)."""
+    return BitacoraEsquema()
+
+
+@st.cache_resource
+def get_juez() -> JuezLLM | None:
+    """Juez de sensatez del SQL (una llamada extra por pregunta). TEXT2SQL_JUEZ_CHAT=0 lo apaga."""
+    return None if os.environ.get("TEXT2SQL_JUEZ_CHAT", "1") == "0" else JuezLLM(get_client())
 
 
 @st.cache_data
@@ -101,6 +116,8 @@ def _render_detalle(mensaje: dict):
                     st.markdown("---")
         else:
             _render_tabla(mensaje["sql"], mensaje.get("columnas"), mensaje.get("filas"))
+        if mensaje.get("revision_sql"):
+            st.caption(texto_revision(mensaje["revision_sql"]))
         if mensaje.get("error_tecnico"):
             st.caption(f"Detalle técnico: {mensaje['error_tecnico']}")
 
@@ -143,7 +160,9 @@ def _procesar_pregunta(pregunta: str):
             return
 
         with st.spinner("Pensando..."):
-            resultado: Text2SQLResult = answer_question(pregunta, client=client)
+            resultado: Text2SQLResult = answer_question(
+                pregunta, client=client, bitacora=get_bitacora(), juez_sensatez=get_juez(),
+            )
 
         if resultado.error:
             mensaje = {
@@ -163,6 +182,7 @@ def _procesar_pregunta(pregunta: str):
                 "columnas": resultado.columnas,
                 "filas": resultado.filas,
                 "sub_consultas": resultado.sub_consultas,
+                "revision_sql": resultado.revision_sensatez,
             }
 
         datos_json = exportar_resultado_json(resultado, pregunta, client.model)

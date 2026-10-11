@@ -1,0 +1,84 @@
+
+=== 1. CONTROL: pregunta B sin bitácora ===
+Pregunta: ¿Cuántos clientes únicos hicieron al menos un pedido entregado?
+  intento 1: tipo=ok | error de esquema=False | detalle=''
+    SQL: SELECT COUNT(DISTINCT customer_unique_id) FROM customers JOIN orders ON customers.customer_id = orders.customer_id WHERE order_status = 'delivered' AND order_delivered_customer_date IS NOT NULL
+Filas: [(93350,)] | descompuesta: False
+
+=== 2. Pregunta A con bitácora (vacía al empezar) ===
+Pregunta: ¿Qué porcentaje de los clientes únicos hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?
+¿El 1.er prompt de SQL trae la bitácora?: False
+  intento 1: tipo=ejecucion | error de esquema=True | detalle='Error de SQLite al ejecutar la consulta: no such column: customer_unique_id'
+    SQL: SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes), 2) AS porcentaje
+  intento 2: tipo=ejecucion | error de esquema=True | detalle='Error de SQLite al ejecutar la consulta: no such column: customer_unique_id'
+    SQL: SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(*) FROM vw_clientes_recurrentes), 2) AS porcentaje
+Filas: [] | descompuesta: False
+
+Bitácora tras la pregunta A:
+[
+  {
+    "clave": "columna:*.customer_unique_id",
+    "mensaje": "La columna 'customer_unique_id' está en: customers, vw_clientes_recurrentes, vw_ventas_pedido.",
+    "veces": 2,
+    "primera": "2026-10-10T20:13:31",
+    "ultima": "2026-10-10T20:13:37",
+    "ejemplo_pregunta": "¿Qué porcentaje de los clientes únicos hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?"
+  }
+]
+
+=== 3. Pregunta B con bitácora ===
+Pregunta: ¿Cuántos clientes únicos hicieron al menos un pedido entregado?
+¿El 1.er prompt de SQL trae la bitácora?: True
+Fragmento inyectado:
+  Errores de esquema cometidos en consultas anteriores (no los repitas):
+  - La columna 'customer_unique_id' está en: customers, vw_clientes_recurrentes, vw_ventas_pedido.
+  intento 1: tipo=ok | error de esquema=False | detalle=''
+    SQL: SELECT COUNT(DISTINCT customer_unique_id) FROM vw_ventas_pedido WHERE order_status = 'delivered'
+Filas: [(93358,)] | descompuesta: False
+
+Bitácora al final:
+[
+  {
+    "clave": "columna:*.customer_unique_id",
+    "mensaje": "La columna 'customer_unique_id' está en: customers, vw_clientes_recurrentes, vw_ventas_pedido.",
+    "veces": 2,
+    "primera": "2026-10-10T20:13:31",
+    "ultima": "2026-10-10T20:13:37",
+    "ejemplo_pregunta": "¿Qué porcentaje de los clientes únicos hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?"
+  }
+]
+Bitácora de partida (la de la demo anterior): [('columna:*.customer_unique_id', 2)]
+
+=== 4. CONTROL: pregunta B2 sin bitácora ===
+Pregunta: ¿Qué porcentaje de los clientes únicos dejó al menos una reseña de 5 estrellas?
+  intento 1: tipo=ok | error de esquema=False | detalle=''
+    SQL: SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_reviews rv ON o.order_id = rv.order_id WHERE
+Filas: [(100.0,)] | descompuesta: False
+
+=== 5. Pregunta B2 con bitácora ===
+Pregunta: ¿Qué porcentaje de los clientes únicos dejó al menos una reseña de 5 estrellas?
+¿El 1.er prompt de SQL trae la bitácora?: True
+Fragmento inyectado:
+  Errores de esquema cometidos en consultas anteriores (no los repitas):
+  - La columna 'customer_unique_id' está en: customers, vw_clientes_recurrentes, vw_ventas_pedido.
+  intento 1: tipo=ok | error de esquema=False | detalle=''
+    SQL: SELECT ROUND(100.0 * COUNT(DISTINCT rv.order_id) / COUNT(DISTINCT c.customer_unique_id), 2) FROM customers c JOIN orders o ON c.customer_id = o.customer_id JOIN order_reviews rv ON o.order_id = rv.order_id WHERE rv.revie
+Filas: [(103.02,)] | descompuesta: False
+Bitácora al final: [('columna:*.customer_unique_id', 2)]
+Modelo: llama3.1:8b-instruct-q4_K_M | Ollama: http://localhost:11434
+
+
+SQL generado:
+  SELECT payment_type
+FROM order_payments
+GROUP BY payment_type
+ORDER BY COUNT(*) DESC
+LIMIT 1
+
+Filas obtenidas: 1
+
+Respuesta:
+No pude redactar un resumen confiable; revisa la tabla de resultados.
+
+Revisión automática del SQL (no comprueba la cifra): parece coherente. La consulta agrupa los pedidos por método de pago, ordena por la cantidad de pedidos en cada grupo en orden descendente y limita el resultado a un solo registro, que corresponde al método de pago más utilizado en pedidos válidos.
+

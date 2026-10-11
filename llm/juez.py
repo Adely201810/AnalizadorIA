@@ -105,3 +105,16 @@ class JuezLLM:
             return _leer_json(self._llamar(_SISTEMA_SENSATEZ, prompt, 120), "tiene_sentido")
         except OllamaError as exc:
             return OpinionJuez(None, f"juez no disponible: {exc}", "")
+
+
+def texto_revision(revision: dict | None) -> str | None:
+    """La revisión del juez NO es una verificación de la cifra: solo dice si el SQL
+    parece coherente con la pregunta. El texto lo deja explícito."""
+    if not revision:
+        return None
+    aviso = "Revisión automática del SQL (un segundo modelo revisó si la consulta tiene sentido para la pregunta; no comprueba que la cifra sea correcta)"
+    if revision.get("tiene_sentido") is True:
+        return f"🔎 {aviso}: parece coherente. {revision.get('motivo', '')}"
+    if revision.get("tiene_sentido") is False:
+        return f"⚠️ {aviso}: posible problema. {revision.get('motivo', '')}"
+    return f"🔎 {aviso}: no se pudo obtener una revisión."

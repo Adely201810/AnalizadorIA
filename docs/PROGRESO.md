@@ -11,9 +11,12 @@
 | C — Fase 3 | ✅ | `d5f096a` | **baseline_01: 2/10 (20 %)** sin plantillas. baseline_00 recalificado con el árbitro nuevo: 3/10. Límite de 60 s para el SQL del modelo (una consulta quedó colgada >10 min) | [FASE_03.md](FASE_03.md) |
 | D — Fase 2 | ✅ | `f23c019` | Clasificación por intento y final. Corrida real: ok 2 · ejecución 2 · **semántico 6** · seguridad 0 · infra 0. Seguridad (`DELETE` real) e infra (Ollama detenido) verificados con el modelo; 9/9 pruebas | [FASE_02.md](FASE_02.md) |
 | E — Fase 5 | ✅ | `cb20411` | Oráculo v2 = 10 necesidades del dashboard, 1 consulta cada una; **SQL 10/10 y pandas 10/10**; el dashboard muestra la respuesta de referencia en cada pestaña; few-shot sin métricas del oráculo | [FASE_05.md](FASE_05.md) |
-| F — Fase 4 | ✅ | (este commit) | Oráculo v2, sin plantillas: **llama3.1 8B 0/10 · qwen2.5-coder 7B 1/10 · llama3.2 3B 0/10**. Muestra demasiado chica para concluir (difieren en 1 pregunta). VRAM 5.80 / 5.12 / 3.09 GB. Causa de la latencia medida: 1.ª evaluación del esquema y generación de tokens (no la caché) | [FASE_04.md](FASE_04.md) |
-| G — Fases 6, 9, 7, 8 | pendiente | | | |
-| H — Fase 10 | pendiente | | | |
+| F — Fase 4 | ✅ | `646a6a5` | Oráculo v2, sin plantillas: **llama3.1 8B 0/10 · qwen2.5-coder 7B 1/10 · llama3.2 3B 0/10**. Muestra demasiado chica para concluir (difieren en 1 pregunta). VRAM 5.80 / 5.12 / 3.09 GB. Causa de la latencia medida: 1.ª evaluación del esquema y generación de tokens (no la caché) | [FASE_04.md](FASE_04.md) |
+| G — Fase 6 | ✅ | `a6b75fb` (código) · `226a928` | N intentos reales (antes máx. 2 fijos); juez-LLM separado. N=3: 1/10 | [FASE_06.md](FASE_06.md) |
+| G — Fase 9 | ✅ | `9a0b0ad` | Corte en el primer acierto (demostrado). ⚠ El caso real "falla→acierta" fue un **falso acierto por tolerancia** (3.01 vs 3.04, D-17) | [FASE_09.md](FASE_09.md) |
+| G — Fase 7 | ✅ | `266439f` | Pistas sin cifras + guarda; **0 fugas en 94 pistas reales**. Con/sin pista: 1/10 vs 0/10, **0 recuperaciones** tras rechazo en todas las configuraciones | [FASE_07.md](FASE_07.md) |
+| G — Fase 8 | ✅ | `8d85a08` | Veredicto = árbitro. Juez vs árbitro: 9/10 coinciden, **1 falso acierto**, 0 falsos rechazos (10 intentos) | [FASE_08.md](FASE_08.md) |
+| H — Fase 10 | ✅ | (este commit) | Juez de sensatez en el chat (texto: "no comprueba la cifra"); bitácora JSON propia con límites. Real: registra e inyecta; el efecto de evitar el error solo está probado con el cliente guionado | [FASE_10.md](FASE_10.md) |
 | I — Fase 11 | pendiente | | | |
 | J — Limpieza | pendiente | | | |
 

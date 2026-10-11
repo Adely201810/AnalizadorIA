@@ -13,6 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from llm.bitacora import BitacoraEsquema
+from llm.juez import JuezLLM
 from llm.ollama_client import OllamaClient
 from llm.text_to_sql import answer_question
 
@@ -24,6 +26,10 @@ def _print_resultado(resultado):
         return
     print(f"\nFilas obtenidas: {resultado.total_filas}")
     print(f"\nRespuesta:\n{resultado.respuesta}\n")
+    if resultado.revision_sensatez:
+        r = resultado.revision_sensatez
+        estado = {True: "parece coherente", False: "posible problema"}.get(r["tiene_sentido"], "sin revisión")
+        print(f"Revisión automática del SQL (no comprueba la cifra): {estado}. {r['motivo']}\n")
 
 
 def main():
@@ -32,10 +38,12 @@ def main():
         print(f"⚠ No se pudo conectar a Ollama en {client.host}. Ejecuta 'ollama serve' e intenta de nuevo.")
         sys.exit(1)
     print(f"Modelo: {client.model} | Ollama: {client.host}\n")
+    bitacora = BitacoraEsquema()
+    juez = JuezLLM(client)
 
     if len(sys.argv) > 1:
         pregunta = " ".join(sys.argv[1:])
-        resultado = answer_question(pregunta, client=client)
+        resultado = answer_question(pregunta, client=client, bitacora=bitacora, juez_sensatez=juez)
         _print_resultado(resultado)
         return
 
@@ -50,7 +58,7 @@ def main():
             continue
         if pregunta.lower() in ("salir", "exit", "quit"):
             break
-        resultado = answer_question(pregunta, client=client)
+        resultado = answer_question(pregunta, client=client, bitacora=bitacora, juez_sensatez=juez)
         _print_resultado(resultado)
 
 

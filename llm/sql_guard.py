@@ -59,9 +59,12 @@ class SQLQualityError(ValueError):
     (el SQL no correría) o "placeholder" / "dominio_join" (correría, pero
     respondería otra cosa). Lo usa la clasificación de fallos (Fase 2)."""
 
-    def __init__(self, mensaje: str, motivo: str = "otro"):
+    def __init__(self, mensaje: str, motivo: str = "otro", detalles: list[dict] | None = None):
         super().__init__(mensaje)
         self.motivo = motivo
+        # Para errores de esquema: [{"tipo": "columna", "tabla", "columna", "existe_en"}]
+        # o [{"tipo": "tabla", "nombre"}]. Los usa la bitácora (llm/bitacora.py).
+        self.detalles = detalles or []
 
 
 def _strip_comments_and_strings_for_keyword_scan(sql: str) -> str:
@@ -147,6 +150,7 @@ def check_tablas_conocidas(sql: str, nombres_conocidos: set[str]) -> None:
             f"La consulta referencia tabla(s)/vista(s) que no existen en el esquema: "
             f"{', '.join(desconocidos)}. Revisa los nombres exactos del esquema.",
             motivo="tabla_inexistente",
+            detalles=[{"tipo": "tabla", "nombre": n} for n in desconocidos],
         )
 
 
@@ -418,6 +422,7 @@ def check_columnas_existentes(sql: str, esquema: dict[str, set[str]]) -> None:
     mapa = _mapa_alias_a_tabla(tokens, esquema)
 
     problemas: list[str] = []
+    detalles: list[dict] = []
     for calificador, columna in _referencias_calificadas(tokens):
         destinos = mapa.get(calificador.lower())
         if not destinos or len(destinos) != 1:
@@ -432,11 +437,13 @@ def check_columnas_existentes(sql: str, esquema: dict[str, set[str]]) -> None:
                 else " Esa columna no existe en ninguna tabla ni vista del esquema."
             )
             problemas.append(f"'{calificador}.{columna}': la tabla/vista '{tabla}' no tiene la columna '{columna}'.{pista}")
+            detalles.append({"tipo": "columna", "tabla": tabla, "columna": columna.lower(), "existe_en": donde})
     if problemas:
         raise SQLQualityError(
             "La consulta usa columnas que no existen en la tabla indicada: " + " ".join(dict.fromkeys(problemas))
             + " Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
             motivo="columna_inexistente",
+            detalles=detalles,
         )
 
 

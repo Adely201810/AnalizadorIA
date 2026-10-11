@@ -7,3 +7,4 @@ db/gimnasio.db
 eval/eval_results_*.json
 .DS_Store
 logs/
+runtime/
