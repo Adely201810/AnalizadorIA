@@ -38,14 +38,14 @@ VISTAS_DESCRIPCION = {
     "vw_ingresos_por_vendedor": "excluye canceled/unavailable",
     "vw_retraso_por_rango": "rango_retraso: a_tiempo|1-3|4-7|8-14|15+ (días); usa `orden` para ordenar de a_tiempo a 15+",
 }
-# --- Etapa 2, Paso 3: mejoras con interruptor (APAGADAS por defecto; se encienden solo si el
-# A/B en DESARROLLO las justifica, ver docs/E2_PASO_3.md) ---
+# --- Etapa 2, Paso 3: mejoras con interruptor. Solo (b) quedó ENCENDIDA por defecto (A/B 5 -> 8.33,
+# D-25; TEXT2SQL_VISTA_VALIDOS=0 la apaga). c, d1, d2 y d3 empeoraron y siguen APAGADAS (docs/E2_PASO_3.md) ---
 #   (b)  TEXT2SQL_VISTA_VALIDOS=1      lista vw_pedidos_validos + regla de partir de ella
 #   (c)  TEXT2SQL_REGLA_DENOMINADOR=1  regla de denominadores + 2 few-shot genéricos
 #   (d1) TEXT2SQL_VISTAS_DOC=1         grano, uso y columnas que NO tiene cada vista
 #   (d2) TEXT2SQL_VISTAS_OCULTAS=a,b   quita esas vistas del contexto (y notas/ejemplos que las nombran)
 #   (d3) TEXT2SQL_REGLA_MULTIPLICIDAD=1 regla contra JOINs que multiplican filas + 1 few-shot genérico
-USAR_VISTA_VALIDOS = os.environ.get("TEXT2SQL_VISTA_VALIDOS", "0") == "1"
+USAR_VISTA_VALIDOS = os.environ.get("TEXT2SQL_VISTA_VALIDOS", "1") == "1"
 USAR_REGLA_DENOMINADOR = os.environ.get("TEXT2SQL_REGLA_DENOMINADOR", "0") == "1"
 USAR_VISTAS_DOC = os.environ.get("TEXT2SQL_VISTAS_DOC", "0") == "1"
 VISTAS_OCULTAS = {v.strip() for v in os.environ.get("TEXT2SQL_VISTAS_OCULTAS", "").split(",") if v.strip()}

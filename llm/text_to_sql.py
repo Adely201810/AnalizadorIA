@@ -69,8 +69,9 @@ MAX_FILAS_EJECUTADAS = 500  # límite duro de filas leídas de la base de datos
 # comportamiento efectivo anterior; configurable con TEXT2SQL_N_INTENTOS.
 N_INTENTOS_POR_DEFECTO = int(os.environ.get("TEXT2SQL_N_INTENTOS", "2"))
 # Etapa 2, Paso 3 (a): el clasificador puede partir en sub-consultas preguntas que se
-# resuelven con una sola. TEXT2SQL_CLASIFICADOR=0 lo desactiva (siempre una consulta).
-USAR_CLASIFICADOR_POR_DEFECTO = os.environ.get("TEXT2SQL_CLASIFICADOR", "1") != "0"
+# resuelven con una sola. Apagado por defecto desde el A/B (3/3/3 -> 5/5/5, D-25);
+# TEXT2SQL_CLASIFICADOR=1 lo vuelve a encender.
+USAR_CLASIFICADOR_POR_DEFECTO = os.environ.get("TEXT2SQL_CLASIFICADOR", "0") == "1"
 # Límite de tiempo de ejecución del SQL generado. La consulta de referencia más
 # lenta del oráculo tarda ~10 s; 60 s deja margen (docs/FASE_03.md).
 LIMITE_EJECUCION_S = float(os.environ.get("TEXT2SQL_LIMITE_EJECUCION_S", "60"))

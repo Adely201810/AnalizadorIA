@@ -133,6 +133,21 @@ class TestJuezParseo(unittest.TestCase):
         self.assertIsNone(j.opinar("p", "SELECT 1", ["x"], [(1,)]).valor)
         self.assertTrue(j.evaluar_sensatez("p", "SELECT 1").valor)
 
+# Etapa 2 (D-25): el clasificador está apagado por defecto. Los guiones de este archivo
+# empiezan con la respuesta del clasificador ("UNA"/sub-preguntas), así que se prueban
+# con él encendido, que sigue siendo un camino soportado (TEXT2SQL_CLASIFICADOR=1).
+import llm.text_to_sql as _tts
+
+_CLASIFICADOR_ANTES = _tts.USAR_CLASIFICADOR_POR_DEFECTO
+
+
+def setUpModule():
+    _tts.USAR_CLASIFICADOR_POR_DEFECTO = True
+
+
+def tearDownModule():
+    _tts.USAR_CLASIFICADOR_POR_DEFECTO = _CLASIFICADOR_ANTES
+
 
 if __name__ == "__main__":
     unittest.main()

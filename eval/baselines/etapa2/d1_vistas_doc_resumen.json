@@ -1,0 +1,63 @@
+{
+  "nombre": "d1_vistas_doc",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "configuracion": {
+    "n_intentos": 2,
+    "cadena_con_arbitro": false,
+    "feedback": null,
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.1,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json",
+    "conjunto": "desarrollo"
+  },
+  "archivos": [
+    "eval\\baselines\\etapa2\\d1_vistas_doc_r1.json",
+    "eval\\baselines\\etapa2\\d1_vistas_doc_r2.json",
+    "eval\\baselines\\etapa2\\d1_vistas_doc_r3.json"
+  ],
+  "preguntas": 20,
+  "aciertos": [
+    4,
+    5,
+    6
+  ],
+  "media": 5,
+  "minimo": 4,
+  "maximo": 6,
+  "pct_media": 25.0,
+  "wilson95_pct": [
+    15.8,
+    37.2
+  ],
+  "aciertos_por_pregunta": {
+    "n01_pct_clientes_recurrentes": 0,
+    "n02_calificacion_retraso_vs_a_tiempo": 0,
+    "n03_pct_ingresos_top5_categorias": 0,
+    "n04_vendedores_problematicos": 0,
+    "n05_estado_mayor_peso_flete": 3,
+    "n06_metodo_pago_mas_usado": 0,
+    "n07_mes_mayores_ingresos": 3,
+    "n08_categoria_mas_resenas_1_estrella": 0,
+    "n09_categorias_mas_compra_unica": 0,
+    "n10_estado_mas_clientes_por_vendedor": 0,
+    "x02_pct_entregas_con_retraso": 0,
+    "x03_flete_promedio_por_articulo": 0,
+    "x04_pct_resenas_5_estrellas": 3,
+    "x05_vendedor_mas_ingresos": 1,
+    "x07_calificacion_pedidos_bed_bath_table": 0,
+    "x10_categoria_precio_promedio_mas_alto": 0,
+    "x13_estado_mayor_gasto_promedio": 0,
+    "x17_top2_ciudades_vendedores": 0,
+    "x18_peso_promedio_furniture_decor": 2,
+    "x19_anio_mas_ingresos": 3
+  },
+  "clasificacion_total": {
+    "ejecucion": 15,
+    "semantico": 30,
+    "ok": 15
+  },
+  "respuestas_descompuestas": 0,
+  "latencia_media_s": 15.93
+}

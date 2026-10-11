@@ -1,0 +1,133 @@
+{
+  "final": {
+    "nombre": "b_vista_validos",
+    "env": {
+      "TEXT2SQL_CLASIFICADOR": "0",
+      "TEXT2SQL_VISTA_VALIDOS": "1"
+    }
+  },
+  "registro": [
+    {
+      "paso": "a_sin_clasificador",
+      "env": {
+        "TEXT2SQL_CLASIFICADOR": "0"
+      },
+      "aciertos": [
+        5,
+        5,
+        5
+      ],
+      "media": 5,
+      "decision": "punto de partida"
+    },
+    {
+      "paso": "b_vista_validos",
+      "env": {
+        "TEXT2SQL_CLASIFICADOR": "0",
+        "TEXT2SQL_VISTA_VALIDOS": "1"
+      },
+      "aciertos": [
+        8,
+        9,
+        8
+      ],
+      "media": 8.33,
+      "minimo": 8,
+      "wilson95_pct": [
+        30.1,
+        54.3
+      ],
+      "comparado_con": "a_sin_clasificador",
+      "media_anterior": 5,
+      "decision": "CONSERVADA"
+    },
+    {
+      "paso": "c_regla_denominador",
+      "env": {
+        "TEXT2SQL_CLASIFICADOR": "0",
+        "TEXT2SQL_VISTA_VALIDOS": "1",
+        "TEXT2SQL_REGLA_DENOMINADOR": "1"
+      },
+      "aciertos": [
+        6,
+        3,
+        6
+      ],
+      "media": 5,
+      "minimo": 3,
+      "wilson95_pct": [
+        15.8,
+        37.2
+      ],
+      "comparado_con": "b_vista_validos",
+      "media_anterior": 8.33,
+      "decision": "REVERTIDA"
+    },
+    {
+      "paso": "d1_vistas_doc",
+      "env": {
+        "TEXT2SQL_CLASIFICADOR": "0",
+        "TEXT2SQL_VISTA_VALIDOS": "1",
+        "TEXT2SQL_VISTAS_DOC": "1"
+      },
+      "aciertos": [
+        4,
+        5,
+        6
+      ],
+      "media": 5,
+      "minimo": 4,
+      "wilson95_pct": [
+        15.8,
+        37.2
+      ],
+      "comparado_con": "b_vista_validos",
+      "media_anterior": 8.33,
+      "decision": "REVERTIDA"
+    },
+    {
+      "paso": "d2_vistas_ocultas",
+      "env": {
+        "TEXT2SQL_CLASIFICADOR": "0",
+        "TEXT2SQL_VISTA_VALIDOS": "1",
+        "TEXT2SQL_VISTAS_OCULTAS": "vw_ingresos_por_vendedor,vw_ingresos_por_categoria,vw_clientes_recurrentes"
+      },
+      "aciertos": [
+        8,
+        6,
+        7
+      ],
+      "media": 7,
+      "minimo": 6,
+      "wilson95_pct": [
+        24.2,
+        47.6
+      ],
+      "comparado_con": "b_vista_validos",
+      "media_anterior": 8.33,
+      "decision": "REVERTIDA"
+    },
+    {
+      "paso": "d3_regla_multiplicidad",
+      "env": {
+        "TEXT2SQL_CLASIFICADOR": "0",
+        "TEXT2SQL_VISTA_VALIDOS": "1",
+        "TEXT2SQL_REGLA_MULTIPLICIDAD": "1"
+      },
+      "aciertos": [
+        5,
+        5,
+        4
+      ],
+      "media": 4.67,
+      "minimo": 4,
+      "wilson95_pct": [
+        14.4,
+        35.4
+      ],
+      "comparado_con": "b_vista_validos",
+      "media_anterior": 8.33,
+      "decision": "REVERTIDA"
+    }
+  ]
+}

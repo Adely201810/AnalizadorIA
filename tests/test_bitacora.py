@@ -99,6 +99,21 @@ class TestSensatezChat(unittest.TestCase):
         self.assertIn("no comprueba que la cifra sea correcta", texto)
         self.assertNotIn("verificad", texto.lower())
 
+# Etapa 2 (D-25): el clasificador está apagado por defecto. Los guiones de este archivo
+# empiezan con la respuesta del clasificador ("UNA"/sub-preguntas), así que se prueban
+# con él encendido, que sigue siendo un camino soportado (TEXT2SQL_CLASIFICADOR=1).
+import llm.text_to_sql as _tts
+
+_CLASIFICADOR_ANTES = _tts.USAR_CLASIFICADOR_POR_DEFECTO
+
+
+def setUpModule():
+    _tts.USAR_CLASIFICADOR_POR_DEFECTO = True
+
+
+def tearDownModule():
+    _tts.USAR_CLASIFICADOR_POR_DEFECTO = _CLASIFICADOR_ANTES
+
 
 if __name__ == "__main__":
     unittest.main()
