@@ -12,6 +12,7 @@ DROP VIEW IF EXISTS vw_entregas_retrasos;
 DROP VIEW IF EXISTS vw_ingresos_por_categoria;
 DROP VIEW IF EXISTS vw_ingresos_por_vendedor;
 DROP VIEW IF EXISTS vw_retraso_por_rango;
+DROP VIEW IF EXISTS vw_pedidos_validos;
 
 -- ----------------------------------------------------------------------------
 -- vw_ventas_pedido
@@ -182,3 +183,24 @@ FROM vw_entregas_retrasos
 WHERE order_status NOT IN ('canceled', 'unavailable')
 GROUP BY rango_retraso, orden
 ORDER BY orden;
+
+-- ----------------------------------------------------------------------------
+-- vw_pedidos_validos (etapa 2, Paso 3, mejora b)
+-- Una fila por pedido VÁLIDO (order_status NOT IN ('canceled','unavailable')),
+-- con el cliente único y su estado: partir de aquí evita olvidar el filtro.
+-- ----------------------------------------------------------------------------
+CREATE VIEW vw_pedidos_validos AS
+SELECT
+    o.order_id,
+    o.customer_id,
+    c.customer_unique_id,
+    c.customer_state,
+    o.order_status,
+    o.order_purchase_timestamp,
+    o.order_approved_at,
+    o.order_delivered_carrier_date,
+    o.order_delivered_customer_date,
+    o.order_estimated_delivery_date
+FROM orders o
+JOIN customers c ON c.customer_id = o.customer_id
+WHERE o.order_status NOT IN ('canceled', 'unavailable');

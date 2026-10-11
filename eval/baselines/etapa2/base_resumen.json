@@ -54,10 +54,10 @@
     "x19_anio_mas_ingresos": 3
   },
   "clasificacion_total": {
-    "ejecucion": 17,
-    "semantico": 34,
+    "ejecucion": 15,
+    "semantico": 36,
     "ok": 9
   },
   "respuestas_descompuestas": 15,
-  "latencia_media_s": 19.75
+  "latencia_media_s": 19.33
 }

@@ -1,0 +1,16 @@
+table customers 99441
+table geolocation 1000163
+table order_items 112650
+table order_payments 103886
+table order_reviews 99224
+table orders 99441
+table product_category_translation 71
+table products 32951
+table sellers 3095
+view vw_clientes_recurrentes 94990
+view vw_entregas_retrasos 96476
+view vw_ingresos_por_categoria 74
+view vw_ingresos_por_vendedor 3053
+view vw_pedidos_validos 98207
+view vw_retraso_por_rango 5
+view vw_ventas_pedido 112650

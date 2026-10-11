@@ -24,7 +24,10 @@ from pathlib import Path
 from eval.pistas import formas_de_valor, fugas, valores_de_referencia
 from eval.similitud import _normalizar, jaccard, tokens_sql, tokens_texto
 from llm.bitacora import BitacoraEsquema
-from llm.schema_context import EJEMPLOS_FEW_SHOT, get_schema_context
+from llm.schema_context import EJEMPLOS_DENOMINADOR, EJEMPLOS_FEW_SHOT, EJEMPLOS_MULTIPLICIDAD, get_schema_context
+
+# Incluye los few-shot de las mejoras con interruptor (Etapa 2, Paso 3) aunque estén apagados.
+TODOS_LOS_EJEMPLOS = list(dict.fromkeys(EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR + EJEMPLOS_MULTIPLICIDAD))
 from llm.text_to_sql import CLASIFICADOR_SYSTEM_PROMPT, SQL_SYSTEM_PROMPT_TEMPLATE
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -53,7 +56,7 @@ class TestSplit(unittest.TestCase):
 
 class TestPruebaNoSeFiltra(unittest.TestCase):
     def test_fewshot_lejos_de_prueba(self):
-        for pregunta, sql in EJEMPLOS_FEW_SHOT:
+        for pregunta, sql in TODOS_LOS_EJEMPLOS:
             for q in PRUEBA:
                 self.assertLess(jaccard(tokens_texto(pregunta), tokens_texto(q["pregunta"])), 0.25, (pregunta, q["id"]))
                 self.assertLess(jaccard(tokens_sql(sql), tokens_sql(q["sql_referencia"])), 0.5, (pregunta, q["id"]))

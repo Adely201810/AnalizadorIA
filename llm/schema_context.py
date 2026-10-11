@@ -10,6 +10,8 @@ llm/ollama_client.py.
 """
 from __future__ import annotations
 
+import os
+import re
 import sys
 from pathlib import Path
 
@@ -36,7 +38,39 @@ VISTAS_DESCRIPCION = {
     "vw_ingresos_por_vendedor": "excluye canceled/unavailable",
     "vw_retraso_por_rango": "rango_retraso: a_tiempo|1-3|4-7|8-14|15+ (días); usa `orden` para ordenar de a_tiempo a 15+",
 }
-NOMBRES_VISTAS = list(VISTAS_DESCRIPCION)
+# --- Etapa 2, Paso 3: mejoras con interruptor (APAGADAS por defecto; se encienden solo si el
+# A/B en DESARROLLO las justifica, ver docs/E2_PASO_3.md) ---
+#   (b)  TEXT2SQL_VISTA_VALIDOS=1      lista vw_pedidos_validos + regla de partir de ella
+#   (c)  TEXT2SQL_REGLA_DENOMINADOR=1  regla de denominadores + 2 few-shot genéricos
+#   (d1) TEXT2SQL_VISTAS_DOC=1         grano, uso y columnas que NO tiene cada vista
+#   (d2) TEXT2SQL_VISTAS_OCULTAS=a,b   quita esas vistas del contexto (y notas/ejemplos que las nombran)
+#   (d3) TEXT2SQL_REGLA_MULTIPLICIDAD=1 regla contra JOINs que multiplican filas + 1 few-shot genérico
+USAR_VISTA_VALIDOS = os.environ.get("TEXT2SQL_VISTA_VALIDOS", "0") == "1"
+USAR_REGLA_DENOMINADOR = os.environ.get("TEXT2SQL_REGLA_DENOMINADOR", "0") == "1"
+USAR_VISTAS_DOC = os.environ.get("TEXT2SQL_VISTAS_DOC", "0") == "1"
+VISTAS_OCULTAS = {v.strip() for v in os.environ.get("TEXT2SQL_VISTAS_OCULTAS", "").split(",") if v.strip()}
+USAR_REGLA_MULTIPLICIDAD = os.environ.get("TEXT2SQL_REGLA_MULTIPLICIDAD", "0") == "1"
+
+if USAR_VISTA_VALIDOS:
+    VISTAS_DESCRIPCION["vw_pedidos_validos"] = (
+        "UNA fila por pedido VÁLIDO (ya excluye canceled/unavailable), con customer_unique_id y customer_state"
+    )
+VISTAS_EN_PROMPT = [v for v in VISTAS_DESCRIPCION if v not in VISTAS_OCULTAS]
+# Para validar SQL se conocen todas las vistas que existen en la base, estén o no en el prompt.
+NOMBRES_VISTAS = list(dict.fromkeys(list(VISTAS_DESCRIPCION) + ["vw_pedidos_validos"]))
+
+# (d1) Para qué sirve cada vista y qué columnas NO tiene (las que el modelo le pedía por error).
+USO_VISTAS = {
+    "vw_ventas_pedido": "úsala para sumar/contar a nivel de artículo con categoría y estados ya unidos; trae TODOS los estatus (filtra order_status si la pregunta pide pedidos válidos)",
+    "vw_clientes_recurrentes": "YA AGREGADA: 1 fila por cliente único con sus pedidos válidos; solo sirve para preguntas por cliente",
+    "vw_entregas_retrasos": "1 fila por pedido entregado; para retrasos y su calificación",
+    "vw_ingresos_por_categoria": "YA AGREGADA: 1 fila por categoría con totales; no se filtra por estatus ni se vuelve a sumar price",
+    "vw_ingresos_por_vendedor": "YA AGREGADA: 1 fila por vendedor con totales; no se filtra por estatus ni se vuelve a sumar price",
+    "vw_retraso_por_rango": "YA AGREGADA: 1 fila por rango de días de retraso",
+    "vw_pedidos_validos": "1 fila por pedido válido; punto de partida para cualquier pregunta sobre pedidos válidos",
+}
+COLUMNAS_FRECUENTES = ["order_id", "order_status", "price", "freight_value", "customer_unique_id", "customer_state",
+                       "seller_id", "seller_city", "review_score", "order_purchase_timestamp"]
 
 # Columnas de vistas cuyo tipo de almacenamiento no dice lo que significan
 # (SQLite no tiene BOOLEAN ni DATETIME nativos).
@@ -118,6 +152,47 @@ EJEMPLOS_FEW_SHOT: list[tuple[str, str]] = [
         'SELECT product_id, COUNT(*) AS articulos, RANK() OVER (ORDER BY COUNT(*) DESC) AS posicion FROM order_items GROUP BY product_id ORDER BY posicion LIMIT 5',
     ),
 ]
+
+REGLA_VISTA_VALIDOS = (
+    "- PEDIDOS VÁLIDOS: cuando la pregunta hable de pedidos válidos (sin cancelados ni no disponibles), "
+    "parte de la vista vw_pedidos_validos en lugar de orders y únela por order_id a order_items, "
+    "order_payments u order_reviews. Así el filtro de estatus ya está aplicado y no hay que repetirlo."
+)
+REGLA_DENOMINADOR = (
+    "- PORCENTAJES: calcula numerador y denominador sobre el MISMO conjunto que nombra la pregunta, en una sola "
+    "consulta: AVG(CASE WHEN <condición> THEN 100.0 ELSE 0 END) sobre UNA fila por unidad (si la unidad es el "
+    "cliente o el pedido, agrega antes por esa unidad o usa COUNT(DISTINCT ...)). El universo de la pregunta va en el WHERE o en el FROM; la condición del "
+    "numerador va SOLO en el CASE. Si pones la condición del numerador en el WHERE, el resultado es 100 %."
+)
+REGLA_MULTIPLICIDAD = (
+    "- NO MULTIPLIQUES FILAS: order_items, order_payments y order_reviews tienen VARIAS filas por pedido. Si unes "
+    "dos de ellas (o una con otra tabla por order_id) cada pedido se repite y las sumas, promedios y conteos salen "
+    "inflados. Primero agrega cada tabla por order_id en una subconsulta o CTE (una fila por pedido) y después "
+    "únelas. Para contar pedidos, clientes o vendedores usa COUNT(DISTINCT ...), nunca COUNT(*) sobre un JOIN."
+)
+# Ejemplos genéricos (distintos de DESARROLLO y PRUEBA: tests/test_fewshot_disjunto.py y tests/test_heldout.py).
+EJEMPLOS_DENOMINADOR: list[tuple[str, str]] = [
+    (
+        'Entre los registros de geolocalización del estado PR, ¿qué parte (en por ciento) pertenece a la ciudad de curitiba?',
+        "SELECT ROUND(AVG(CASE WHEN geolocation_city = 'curitiba' THEN 100.0 ELSE 0 END), 2) AS pct FROM geolocation WHERE geolocation_state = 'PR'",
+    ),
+    (
+        'Entre los pagos hechos con tarjeta de crédito, ¿qué parte (en por ciento) se dividió en más de 6 cuotas?',
+        "SELECT ROUND(AVG(CASE WHEN payment_installments > 6 THEN 100.0 ELSE 0 END), 2) AS pct FROM order_payments WHERE payment_type = 'credit_card'",
+    ),
+]
+EJEMPLOS_MULTIPLICIDAD: list[tuple[str, str]] = [
+    (
+        '¿Cuánto se pagó en promedio por los pedidos que tienen exactamente 2 artículos?',
+        'WITH art AS (SELECT order_id, COUNT(*) AS n FROM order_items GROUP BY order_id), pag AS (SELECT order_id, SUM(payment_value) AS total FROM order_payments GROUP BY order_id) SELECT ROUND(AVG(pag.total), 2) AS pago_promedio FROM art JOIN pag ON pag.order_id = art.order_id WHERE art.n = 2',
+    ),
+]
+if VISTAS_OCULTAS:
+    EJEMPLOS_FEW_SHOT = [(q, s) for q, s in EJEMPLOS_FEW_SHOT if not any(v in s for v in VISTAS_OCULTAS)]
+if USAR_REGLA_DENOMINADOR:
+    EJEMPLOS_FEW_SHOT = EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR
+if USAR_REGLA_MULTIPLICIDAD:
+    EJEMPLOS_FEW_SHOT = EJEMPLOS_FEW_SHOT + EJEMPLOS_MULTIPLICIDAD
 
 EJEMPLOS_TEXTO = "Ejemplos de pregunta -> SQL correcto:\n\n" + "\n\n".join(
     f"Pregunta: {q}\nSQL: {sql}" for q, sql in EJEMPLOS_FEW_SHOT
@@ -225,7 +300,12 @@ def _vista_line(nombre: str) -> str:
 
 def _vistas_texto() -> str:
     lineas = ["Vistas analíticas disponibles (úsalas en vez de recalcular a mano cuando aplique):"]
-    lineas.extend(_vista_line(v) for v in NOMBRES_VISTAS)
+    for v in VISTAS_EN_PROMPT:
+        lineas.append(_vista_line(v))
+        if USAR_VISTAS_DOC:
+            cols = get_esquema_real().get(v, set())
+            faltan = [c for c in COLUMNAS_FRECUENTES if c not in cols]
+            lineas.append(f"    uso: {USO_VISTAS.get(v, '')}. NO tiene: {', '.join(faltan) or '(nada relevante)'}.")
     return "\n".join(lineas)
 
 
@@ -262,8 +342,9 @@ def _columnas_de_union_texto() -> str:
     lineas = [
         "Columnas de unión (JOIN) -- SOLO las tablas/vistas listadas tienen cada columna; en las demás NO existe:"
     ]
+    visibles = [t for t in esquema if not t.startswith("vw_") or t in VISTAS_EN_PROMPT]
     for col in COLUMNAS_UNION:
-        donde = [t for t in esquema if col in esquema[t]]
+        donde = [t for t in visibles if col in esquema[t]]
         lineas.append(f"- {col}: {', '.join(donde)}")
     lineas.append(
         "- Ejemplos de columnas que NO existen: orders.seller_id, orders.product_id, order_reviews.seller_id, "
@@ -288,6 +369,18 @@ def get_known_names() -> set[str]:
     return {t.name for t in Base.metadata.sorted_tables} | set(NOMBRES_VISTAS)
 
 
+def _sin_vistas_ocultas(linea: str) -> str:
+    """(d2) Quita de una nota las frases que nombran una vista oculta. Si la nombra la primera
+    frase, se quita la nota entera (las siguientes dependen de ella); '' si no queda nada."""
+    if not any(v in linea for v in VISTAS_OCULTAS):
+        return linea
+    frases = re.split(r"(?<=\.) ", linea.removeprefix("- "))
+    if any(v in frases[0] for v in VISTAS_OCULTAS):
+        return ""
+    quedan = [f for f in frases if not any(v in f for v in VISTAS_OCULTAS)]
+    return "- " + " ".join(quedan)
+
+
 def build_schema_context() -> str:
     """Devuelve el esquema compacto en texto plano, listo para insertarse en el prompt del sistema."""
     _verificar_bd_existe()
@@ -306,7 +399,16 @@ def build_schema_context() -> str:
         lines.append(valores_texto)
 
     lines.append("")
-    lines.append(NOTAS_TEXTO)
+    notas = NOTAS_TEXTO
+    if VISTAS_OCULTAS:
+        notas = "\n".join(_sin_vistas_ocultas(l) for l in notas.splitlines() if _sin_vistas_ocultas(l))
+    lines.append(notas)
+    if USAR_VISTA_VALIDOS:
+        lines.append(REGLA_VISTA_VALIDOS)
+    if USAR_REGLA_DENOMINADOR:
+        lines.append(REGLA_DENOMINADOR)
+    if USAR_REGLA_MULTIPLICIDAD:
+        lines.append(REGLA_MULTIPLICIDAD)
     lines.append("")
     lines.append(EJEMPLOS_TEXTO)
     return "\n".join(lines)

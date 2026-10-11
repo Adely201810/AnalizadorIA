@@ -16,7 +16,10 @@ import unittest
 from pathlib import Path
 
 from eval.similitud import jaccard, preguntas_oraculo, tokens_sql, tokens_texto
-from llm.schema_context import EJEMPLOS_FEW_SHOT, get_schema_context
+from llm.schema_context import EJEMPLOS_DENOMINADOR, EJEMPLOS_FEW_SHOT, EJEMPLOS_MULTIPLICIDAD, get_schema_context
+
+# Incluye los few-shot de las mejoras con interruptor (Etapa 2, Paso 3) aunque estén apagados.
+TODOS_LOS_EJEMPLOS = list(dict.fromkeys(EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR + EJEMPLOS_MULTIPLICIDAD))
 from llm.text_to_sql import CLASIFICADOR_SYSTEM_PROMPT
 
 UMBRAL_TEXTO = 0.25
@@ -26,13 +29,13 @@ DB_PATH = Path(__file__).resolve().parent.parent / "db" / "olist.db"
 
 class TestFewShotDisjunto(unittest.TestCase):
     def test_preguntas_fewshot_lejos_del_oraculo(self):
-        for pregunta, _ in EJEMPLOS_FEW_SHOT:
+        for pregunta, _ in TODOS_LOS_EJEMPLOS:
             for q in preguntas_oraculo():
                 j = jaccard(tokens_texto(pregunta), tokens_texto(q["pregunta"]))
                 self.assertLess(j, UMBRAL_TEXTO, f"{pregunta!r} ~ {q['id']} (texto {j:.3f})")
 
     def test_sql_fewshot_lejos_del_oraculo(self):
-        for pregunta, sql in EJEMPLOS_FEW_SHOT:
+        for pregunta, sql in TODOS_LOS_EJEMPLOS:
             for q in preguntas_oraculo():
                 j = jaccard(tokens_sql(sql), tokens_sql(q["sql_referencia"]))
                 self.assertLess(j, UMBRAL_SQL, f"{pregunta!r} ~ {q['id']} (SQL {j:.3f})")
@@ -48,7 +51,7 @@ class TestFewShotDisjunto(unittest.TestCase):
     def test_sql_fewshot_ejecuta_y_devuelve_filas(self):
         conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
         try:
-            for pregunta, sql in EJEMPLOS_FEW_SHOT:
+            for pregunta, sql in TODOS_LOS_EJEMPLOS:
                 filas = conn.execute(sql).fetchall()
                 self.assertGreater(len(filas), 0, pregunta)
         finally:

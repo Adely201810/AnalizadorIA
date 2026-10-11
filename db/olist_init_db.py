@@ -45,7 +45,7 @@ def create_views():
     print(
         "Vistas analíticas creadas: vw_ventas_pedido, vw_clientes_recurrentes, "
         "vw_entregas_retrasos, vw_ingresos_por_categoria, vw_ingresos_por_vendedor, "
-        "vw_retraso_por_rango"
+        "vw_retraso_por_rango, vw_pedidos_validos"
     )
 
 
