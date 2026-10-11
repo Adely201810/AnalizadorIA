@@ -157,6 +157,24 @@ MENSAJE_PROBLEMA_TRAS_REINTENTO = (
     "haya sido la correcta. ¿Podrías reformular la pregunta?"
 )
 
+PREFIJO_NEGATIVA_MODELO = "El modelo no generó una consulta SQL; respondió con texto: "
+# Texto que ve el usuario del chat según `Text2SQLResult.tipo_error` (Etapa 2, Paso 4).
+MENSAJES_ERROR_CHAT = {
+    "seguridad": ("Rechacé la consulta que generó el modelo porque no era una lectura segura "
+                  "(solo se permiten consultas SELECT). No se ejecutó nada en la base de datos."),
+    "negativa_modelo": ("El modelo no generó una consulta SQL para esta pregunta (respondió con texto). "
+                        "No se ejecutó nada. ¿Puedes reformularla, por ejemplo nombrando la métrica que buscas?"),
+    "infra": "No pude conectar con el modelo de lenguaje (Ollama). Revisa que el servidor esté en marcha.",
+}
+MENSAJE_ERROR_CHAT_GENERICO = "No pude generar una consulta válida para responder eso. ¿Puedes reformular la pregunta?"
+
+
+def _resumen_texto_modelo(texto: str | None, limite: int = 200) -> str:
+    """Primeros caracteres de la respuesta no-SQL del modelo, en una línea, entre comillas."""
+    t = " ".join((texto or "").split())
+    return f"«{t[:limite]}{'…' if len(t) > limite else ''}»"
+
+
 MENSAJE_RESUMEN_NO_CONFIABLE = "No pude redactar un resumen confiable; revisa la tabla de resultados."
 
 PISTA_CERO_FILAS = (
@@ -264,6 +282,10 @@ class Text2SQLResult:
     # Chat libre (Fase 10): {"tiene_sentido": bool|None, "motivo": str} del juez-LLM.
     # Revisa si el SQL TIENE SENTIDO para la pregunta; NO verifica que la cifra sea correcta.
     revision_sensatez: dict | None = None
+    # Etapa 2, Paso 4: por qué no hubo respuesta, para que el chat no confunda casos:
+    # "seguridad" (el SQL del modelo no era una lectura permitida), "negativa_modelo"
+    # (el modelo respondió con texto en vez de SQL) o "infra" (Ollama no respondió).
+    tipo_error: str | None = None
 
 
 # Clasificación de cada intento (Fase 2). "ok" = el SQL corrió y devolvió filas;
@@ -458,6 +480,7 @@ class _ResolucionSQL:
     filas: list[tuple] = field(default_factory=list)
     intentos: int = 0
     error_seguridad: str | None = None
+    rechazo_modelo: str | None = None  # el modelo contestó con texto, no con SQL (no es un tema de seguridad)
     error_infra: str | None = None
     mensaje_fijo: str | None = None  # MENSAJE_SIN_RESULTADOS o MENSAJE_PROBLEMA_TRAS_REINTENTO
     origen: str = "llm"  # "llm", "plantilla:<nombre>" o "fallback_vista:<nombre>"
@@ -534,7 +557,10 @@ def _generar_y_ejecutar_llm(
         except SQLValidationError as exc:
             registrar(clasificar_excepcion(exc), sql_generado, str(exc))
             resultado.sql = sql_generado
-            resultado.error_seguridad = str(exc)
+            if exc.motivo == "no_es_sql":
+                resultado.rechazo_modelo = _resumen_texto_modelo(sql_generado)
+            else:
+                resultado.error_seguridad = str(exc)
             return resultado
 
         # Alias reservados (ej. `order_reviews or`): se renombran ANTES de validar/ejecutar.
@@ -551,7 +577,7 @@ def _generar_y_ejecutar_llm(
         except (SQLQualityError, sqlite3.Error) as exc:
             error = str(exc) if isinstance(exc, SQLQualityError) else f"Error de SQLite al ejecutar la consulta: {exc}"
             if bitacora is not None:
-                bitacora.registrar(detalles_de_error(exc, esquema_real), pregunta)
+                bitacora.registrar(detalles_de_error(exc, esquema_real, sql_validado), pregunta)
             registrar(clasificar_excepcion(exc), sql_validado, error, pista_siguiente=None if ultimo else error)
             sql_generado = sql_validado
             if not ultimo:
@@ -699,7 +725,9 @@ def _answer_open_question(
             "filas": r.filas,
             # El motivo del fallo se expone también cuando el resultado quedó vacío
             # (antes se perdía y el JSON mostraba error=null con 0 filas).
-            "error": r.error_infra or r.error_seguridad or (None if r.filas else r.error_detalle),
+            "error": (r.error_infra or r.error_seguridad
+                      or (f"{PREFIJO_NEGATIVA_MODELO}{r.rechazo_modelo}" if r.rechazo_modelo else None)
+                      or (None if r.filas else r.error_detalle)),
             "origen": r.origen,
             "rechazo_llm": r.error_detalle if r.origen != "llm" else None,
             "limite_sintesis": r.limite_sintesis,
@@ -786,9 +814,15 @@ def answer_question(
 
     if r.error_infra:
         resultado.error = r.error_infra
+        resultado.tipo_error = "infra"
         return resultado
     if r.error_seguridad:
         resultado.error = f"La consulta generada no es una lectura segura y fue rechazada: {r.error_seguridad}"
+        resultado.tipo_error = "seguridad"
+        return resultado
+    if r.rechazo_modelo:
+        resultado.error = f"{PREFIJO_NEGATIVA_MODELO}{r.rechazo_modelo}"
+        resultado.tipo_error = "negativa_modelo"
         return resultado
 
     resultado.columnas = r.columnas

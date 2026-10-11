@@ -1,0 +1,149 @@
+{
+  "pregunta": "n01_pct_clientes_recurrentes",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "k": 6,
+  "condiciones": {
+    "A_sin_bitacora": {
+      "corridas": [
+        {
+          "correcto": false,
+          "intentos": 2,
+          "intentos_sin_from": 2,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ejecucion"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE num_pedidos > 1 AND order_status NOT IN ('canceled', 'unavailable')), 2) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 2,
+          "intentos_sin_from": 2,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ejecucion"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE num_pedidos > 1 AND order_status NOT IN ('canceled', 'unavailable')), 2) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 2,
+          "intentos_sin_from": 2,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ejecucion"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes), 2) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 2,
+          "intentos_sin_from": 2,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ejecucion"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE num_pedidos > 1 AND order_status NOT IN ('canceled', 'unavailable')), 2) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 2,
+          "intentos_sin_from": 2,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ejecucion"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes), 2) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 2,
+          "intentos_sin_from": 2,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ejecucion"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes WHERE num_pedidos > 1), 2) AS porcentaje"
+        }
+      ],
+      "aciertos": 0,
+      "corridas_con_sin_from": 6,
+      "intentos_sin_from": 12,
+      "intentos_totales": 12
+    },
+    "B_con_bitacora": {
+      "corridas": [
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * COUNT(DISTINCT customer_unique_id) / \n       (SELECT COUNT(DISTINCT customer_unique_id) \n        FROM customers c \n        JOIN orders o ON c.customer_id = o.customer_id \n        WHERE o.order_status NOT IN ('canceled', 'unavailable')) \nFROM customers"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * COUNT(DISTINCT customer_unique_id) / \n       (SELECT COUNT(DISTINCT customer_unique_id) \n        FROM customers c \n        JOIN orders o ON c.customer_id = o.customer_id \n        WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje\nFROM customers"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                 FROM customers c \n                 JOIN orders o ON c.customer_id = o.customer_id \n                 WHERE o.order_status NOT IN ('canceled', 'unavailable')) \n           / (SELECT COUNT(DISTINCT customer_unique_id) \n         "
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * COUNT(DISTINCT customer_unique_id) / \n       (SELECT COUNT(DISTINCT customer_unique_id) \n        FROM customers c \n        JOIN orders o ON c.customer_id = o.customer_id \n        WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje\nFROM customers"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * COUNT(DISTINCT customer_unique_id) / \n       (SELECT COUNT(DISTINCT customer_unique_id) \n        FROM customers c \n        JOIN orders o ON c.customer_id = o.customer_id \n        WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje\nFROM customers"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * COUNT(DISTINCT customer_unique_id) / \n       (SELECT COUNT(DISTINCT customer_unique_id) \n        FROM customers c \n        JOIN orders o ON c.customer_id = o.customer_id \n        WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje\nFROM customers"
+        }
+      ],
+      "aciertos": 0,
+      "corridas_con_sin_from": 0,
+      "intentos_sin_from": 0,
+      "intentos_totales": 6
+    }
+  }
+}

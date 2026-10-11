@@ -157,3 +157,10 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Modelo:** sigue **llama3.1 8B**. qwen2.5-coder 7B empató exactamente (8/8/9, media 8.33) y es más lento (18.74 s frente a 15.38 s); llama3.2 3B dio 3/2/3. La regla exige ser mejor en DESARROLLO, y un empate no lo es, así que tampoco se evalúa qwen en PRUEBA.
 - **Contrapartida:** sin clasificador, el chat ya no parte en sub-consultas las preguntas compuestas de verdad ("X y además Y"); se responden con una sola consulta.
 - **Revertir:** `TEXT2SQL_CLASIFICADOR=1` y/o `TEXT2SQL_VISTA_VALIDOS=0`, o los valores por defecto anteriores desde git (commit `57b5902`).
+
+## D-26 (C) Paso 4: alcance de los cambios
+- **q01:** se calcula en 2 consultas + pandas en lugar de 4 consultas que repetían CTEs; el empate en la tasa de recompra se desempata por nombre de categoría. No se usaron tablas temporales: la conexión es de solo lectura y no hacía falta.
+- **Negativa del modelo:** solo cambia el texto y el `tipo_error`; se mantiene el corte sin reintento, para no alterar lo que midió el Paso 3. Reintentar tras una negativa queda como posible mejora, sin medir.
+- **Fecha:** se muestran los años en la métrica y las fechas exactas debajo, en vez de reducir el tamaño de letra de todas las métricas.
+- **Bitácora:** el diagnóstico nuevo solo cambia lo que se registra y se inyecta en preguntas futuras; la pista del reintento dentro de la misma pregunta no cambió.
+- **Revertir:** cada punto está en el commit del Paso 4 y se puede deshacer por separado con `git revert`/`git checkout` de su archivo.

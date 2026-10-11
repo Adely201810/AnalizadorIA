@@ -33,10 +33,49 @@ MAX_INYECTADAS = 5
 MAX_CHARS_ENTRADA = 220
 
 _NO_SUCH = re.compile(r"no such (column|table): ([\w.]+)", re.I)
+_NEAR_FROM = re.compile(r'near "FROM": syntax error', re.I)
 
 
-def detalles_de_error(exc: Exception, esquema_real: dict[str, set[str]]) -> list[dict]:
-    """Errores de esquema estructurados a partir de la excepción (o [] si no lo es)."""
+def _nivel_superior(sql: str) -> str:
+    """El SQL sin literales de texto y sin nada de lo que está entre paréntesis."""
+    sin_literales = re.sub(r"'(?:[^']|'')*'", "''", sql)
+    fuera, profundidad = [], 0
+    for ch in sin_literales:
+        if ch == "(":
+            profundidad += 1
+        elif ch == ")":
+            profundidad = max(0, profundidad - 1)
+        elif profundidad == 0:
+            fuera.append(ch)
+    return "".join(fuera)
+
+
+def diagnostico_select_sin_from(sql: str | None, error: str) -> dict | None:
+    """Etapa 2, Paso 4. Caso real repetido (n01, 39 intentos en DESARROLLO):
+    `SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT ... FROM ...))`.
+    El SELECT principal no tiene FROM y SQLite dice "no such column", así que la
+    bitácora registraba "la columna está en: customers, ..." y el error se repetía.
+    Variante: `SELECT ROUND(AVG(x) FROM t ...)` -> 'near "FROM": syntax error'."""
+    if not sql:
+        return None
+    arriba = _nivel_superior(sql).lower()
+    if not arriba.lstrip().startswith("select") or re.search(r"\bfrom\b", arriba):
+        return None
+    m = _NO_SUCH.search(error)
+    if m and m.group(1).lower() == "column":
+        return {"tipo": "select_sin_from", "columna": m.group(2).lower()}
+    if _NEAR_FROM.search(error):
+        return {"tipo": "from_entre_parentesis"}
+    return None
+
+
+def detalles_de_error(exc: Exception, esquema_real: dict[str, set[str]], sql: str | None = None) -> list[dict]:
+    """Errores de esquema estructurados a partir de la excepción (o [] si no lo es).
+    Con `sql`, un SELECT principal sin FROM se diagnostica como tal (no como columna mal ubicada)."""
+    if isinstance(exc, sqlite3.Error):
+        d = diagnostico_select_sin_from(sql, str(exc))
+        if d:
+            return [d]
     detalles = getattr(exc, "detalles", None)
     if detalles:
         return detalles
@@ -53,6 +92,15 @@ def detalles_de_error(exc: Exception, esquema_real: dict[str, set[str]]) -> list
 
 
 def _clave_y_mensaje(d: dict) -> tuple[str, str]:
+    if d["tipo"] == "select_sin_from":
+        return ("select_sin_from",
+                f"El SELECT principal usó '{d['columna']}' sin FROM. Toda columna necesita FROM: ponlo en el "
+                "SELECT principal o calcula cada parte en subconsultas: "
+                "SELECT 100.0 * (SELECT COUNT(*) FROM t1) / (SELECT COUNT(*) FROM t2).")
+    if d["tipo"] == "from_entre_parentesis":
+        return ("from_entre_parentesis",
+                "El FROM quedó dentro de los paréntesis de una función, p. ej. ROUND(AVG(x) FROM t). "
+                "Cierra la función antes del FROM: SELECT ROUND(AVG(x), 2) FROM t.")
     if d["tipo"] == "tabla":
         return f"tabla:{d['nombre']}", f"La tabla/vista '{d['nombre']}' no existe en el esquema."
     donde = d.get("existe_en") or []

@@ -280,14 +280,18 @@ except Exception as e:  # noqa: BLE001
     st.error(f"No se pudo leer el resumen de la base de datos. Detalle técnico: {e}")
     st.stop()
 
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4, c5 = st.columns([1, 1, 1, 1, 1.3])
 c1.metric("Pedidos", f"{resumen['total_pedidos']:,}")
 c2.metric("Clientes únicos", f"{resumen['clientes_unicos']:,}")
 c3.metric("Vendedores", f"{resumen['vendedores']:,}")
 c4.metric("Productos", f"{resumen['productos']:,}")
 fecha_min = str(resumen["fecha_min"])[:10]
 fecha_max = str(resumen["fecha_max"])[:10]
-c5.metric("Rango de fechas", f"{fecha_min} → {fecha_max}")
+# Etapa 2, Paso 4: "AAAA-MM-DD → AAAA-MM-DD" no cabe en 1/5 del ancho y st.metric lo
+# truncaba ("2016-09-…"). La métrica muestra los años y las fechas exactas van debajo.
+c5.metric("Rango de fechas", f"{fecha_min[:4]}–{fecha_max[:4]}",
+          help=f"Primer pedido: {fecha_min} · último pedido: {fecha_max}")
+st.caption(f"Pedidos registrados del **{fecha_min}** al **{fecha_max}** (fecha de compra).")
 
 col_pdf, _ = st.columns([1, 3])
 with col_pdf:

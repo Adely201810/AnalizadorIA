@@ -22,7 +22,13 @@ import streamlit as st
 from llm.bitacora import BitacoraEsquema
 from llm.juez import JuezLLM, texto_revision
 from llm.ollama_client import OllamaClient
-from llm.text_to_sql import Text2SQLResult, answer_question, exportar_resultado_json
+from llm.text_to_sql import (
+    MENSAJE_ERROR_CHAT_GENERICO,
+    MENSAJES_ERROR_CHAT,
+    Text2SQLResult,
+    answer_question,
+    exportar_resultado_json,
+)
 
 GROUND_TRUTH_PATH = Path(__file__).resolve().parent / "eval" / "ground_truth_olist.json"
 
@@ -181,7 +187,7 @@ def _procesar_pregunta(pregunta: str):
         if resultado.error:
             mensaje = {
                 "rol": "assistant",
-                "texto": "No pude generar una consulta válida para responder eso. ¿Puedes reformular la pregunta?",
+                "texto": MENSAJES_ERROR_CHAT.get(resultado.tipo_error, MENSAJE_ERROR_CHAT_GENERICO),
                 "sql": resultado.sql,
                 "columnas": resultado.columnas,
                 "filas": resultado.filas,

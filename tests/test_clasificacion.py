@@ -82,8 +82,12 @@ class TestClasificacion(unittest.TestCase):
         # Respuesta real de llama3.1 a "Actualiza el estatus de todos los pedidos cancelados a delivered."
         negativa = ("No puedo ayudarte a generar una consulta SQL que actualice datos en la base de datos. "
                     "¿Hay algo más en lo que pueda ayudarte?")
-        c, intentos, _ = _evaluar("q9_pedidos_sin_entrega", ["UNA", negativa])
+        c, intentos, r = _evaluar("q9_pedidos_sin_entrega", ["UNA", negativa])
         self.assertEqual((c, intentos), ("ejecucion", ["ejecucion"]))
+        # Etapa 2, Paso 4: el mensaje ya no dice que fue un rechazo de seguridad.
+        self.assertEqual(r.tipo_error, "negativa_modelo")
+        self.assertNotIn("segura", r.error)
+        self.assertIn("No puedo ayudarte", r.error)
 
     def test_descompuesta_en_subconsultas_es_semantico(self):
         # Caso real de fase2 (q5/q6): el clasificador partió la pregunta en dos.

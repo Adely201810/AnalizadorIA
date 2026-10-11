@@ -318,6 +318,61 @@ def _comparar(nombre: str, valor_pandas: float, valor_sql: float, tolerancia: fl
     return f"[{estado}] {nombre}: pandas={valor_pandas:,.2f} | sql={valor_sql:,.2f} | diff={diff:,.4f}"
 
 
+def verificar_q01_tablas(min_clientes_categoria: int = 200) -> list[str]:
+    """Etapa 2, Paso 4: las 4 tablas de q01 recalculadas desde los CSV, independientemente
+    de olist.db (q01 se reescribió para no recalcular CTEs). Los empates se comparan
+    ordenando también por la clave, porque su orden no es parte del resultado."""
+    orders, customers, order_items, products, traduccion = _cargar_csv()
+    pagos = pd.read_csv(DATA_DIR / "olist_order_payments_dataset.csv")
+    resenas = pd.read_csv(DATA_DIR / "olist_order_reviews_dataset.csv")
+    validos = orders[~orders["order_status"].isin(ESTATUS_INVALIDOS)].merge(
+        customers[["customer_id", "customer_unique_id", "customer_state"]], on="customer_id")
+
+    num = validos.groupby("customer_unique_id")["order_id"].nunique()
+    rc = pd.DataFrame({"customer_unique_id": num.index, "es_recurrente": (num > 1).astype(int).values})
+    pago_pedido = pagos.groupby("order_id")["payment_value"].sum()
+    gasto = validos.assign(p=validos["order_id"].map(pago_pedido).fillna(0)).groupby("customer_unique_id")["p"].sum()
+    primero = validos.sort_values(["order_purchase_timestamp", "order_id"]).drop_duplicates("customer_unique_id")
+    calif = primero.set_index("customer_unique_id")["order_id"].map(resenas.groupby("order_id")["review_score"].mean())
+    rc["gasto_total"] = rc["customer_unique_id"].map(gasto)
+    rc["calif_primer_pedido"] = rc["customer_unique_id"].map(calif)
+    esperado = {"comparacion_recurrentes_vs_no": rc.groupby("es_recurrente", as_index=False).agg(
+        clientes=("customer_unique_id", "size"), gasto_promedio=("gasto_total", "mean"),
+        calificacion_primer_pedido_promedio=("calif_primer_pedido", "mean")).round(2)}
+
+    items = order_items.merge(validos[["order_id", "customer_unique_id", "customer_state"]], on="order_id")
+    items = items.merge(products[["product_id", "product_category_name"]], on="product_id")
+    items = items.merge(traduccion, on="product_category_name", how="left")
+    items["categoria"] = items["product_category_name_english"].fillna("sin_categoria")
+    items = items.merge(rc[["customer_unique_id", "es_recurrente"]], on="customer_unique_id")
+    rec = items[items["es_recurrente"] == 1]
+    t = rec.groupby("categoria", as_index=False).agg(clientes_recurrentes=("customer_unique_id", "nunique"),
+                                                     ingresos=("price", "sum"))
+    esperado["top_10_categorias_recurrentes"] = t.sort_values("ingresos", ascending=False).head(10).round(2)
+    e = rec.groupby("customer_state", as_index=False).agg(clientes_recurrentes=("customer_unique_id", "nunique"))
+    esperado["top_10_estados_recurrentes"] = e.sort_values(["clientes_recurrentes", "customer_state"],
+                                                           ascending=[False, True]).head(10)
+    cc = items.drop_duplicates(["categoria", "customer_unique_id"])
+    r = cc.groupby("categoria", as_index=False).agg(clientes=("customer_unique_id", "size"),
+                                                    clientes_recurrentes=("es_recurrente", "sum"))
+    r = r[r["clientes"] >= min_clientes_categoria].copy()
+    r["tasa_recompra_pct"] = (100.0 * r["clientes_recurrentes"] / r["clientes"]).round(2)
+    esperado["tasa_recompra_por_categoria"] = r
+
+    obtenido = q01(min_clientes_categoria)["tablas"]
+    lineas = []
+    for nombre, df_p in esperado.items():
+        df_s = obtenido[nombre]
+        clave = list(df_s.columns)
+        ordenar = lambda d: d[clave].sort_values(clave[::-1] if nombre != "tasa_recompra_por_categoria" else clave).reset_index(drop=True)
+        try:
+            pd.testing.assert_frame_equal(ordenar(df_p), ordenar(df_s), check_dtype=False, atol=0.005, rtol=0)
+            lineas.append(f"[OK] q01 {nombre}: {len(df_s)} filas iguales a pandas")
+        except AssertionError as err:
+            lineas.append(f"[DIFF] q01 {nombre}: {str(err).splitlines()[0]}")
+    return lineas
+
+
 def main() -> None:
     pandas_vals = recalcular_con_pandas()
     sql_vals = _valores_sql()
@@ -328,6 +383,10 @@ def main() -> None:
     print(_comparar("Ingresos categoría top (R$)", pandas_vals["ingresos_categoria_top"], sql_vals["ingresos_categoria_top"]))
     print(_comparar("% ingresos top 5 categorías", pandas_vals["pct_ingresos_top5_categorias"], sql_vals["pct_ingresos_top5_categorias"]))
     print(_comparar("% pedidos tardíos (global)", pandas_vals["pct_pedidos_tardios"], sql_vals["pct_pedidos_tardios"]))
+
+    print("\n=== q01 completo: pandas (CSV) vs dashboard (olist.db) ===")
+    for linea in verificar_q01_tablas():
+        print(linea)
 
     print("\n=== Verificación pandas (CSV) vs oráculo (eval/ground_truth_olist.json) ===")
     for linea in verificar_oraculo():

@@ -172,84 +172,66 @@ def q01(min_clientes_categoria: int = 200) -> dict:
         "cómo se comparan contra los no recurrentes, qué compran y en qué "
         "categorías/estados hay mejor tasa de recompra?"
     )
+    # Etapa 2, Paso 4: antes eran 4 consultas que recalculaban cada una las mismas CTEs
+    # (resumen_cliente con su ROW_NUMBER y, en 3 de ellas, ventas_validas): ~31 s.
+    # Ahora cada CTE se calcula UNA vez (2 consultas) y las 4 tablas se derivan con pandas.
     conn = _conn()
     try:
-        sql_comparacion = f"""
+        # Una fila por cliente único: recurrente o no, gasto total y calificación del 1.er pedido.
+        sql_resumen_cliente = f"""
         WITH {PEDIDOS_CLIENTE_CTE},
         {PAGOS_PEDIDO_CTE},
         {REVIEW_PEDIDO_CTE},
         {RESUMEN_CLIENTE_CTE}
-        SELECT
-            es_recurrente,
-            COUNT(*) AS clientes,
-            ROUND(AVG(gasto_total), 2) AS gasto_promedio,
-            ROUND(AVG(calif_primer_pedido), 2) AS calificacion_primer_pedido_promedio
+        SELECT customer_unique_id, es_recurrente, gasto_total, calif_primer_pedido
         FROM resumen_cliente
-        GROUP BY es_recurrente
         """
-        comparacion = _run(conn, sql_comparacion)
+        rc = _run(conn, sql_resumen_cliente)
 
-        sql_top_categorias = f"""
-        WITH {PEDIDOS_CLIENTE_CTE},
-        {PAGOS_PEDIDO_CTE},
-        {REVIEW_PEDIDO_CTE},
-        {RESUMEN_CLIENTE_CTE},
-        {VENTAS_VALIDAS_CTE}
-        SELECT
-            v.categoria,
-            COUNT(DISTINCT v.customer_unique_id) AS clientes_recurrentes,
-            ROUND(SUM(v.price), 2) AS ingresos
-        FROM ventas_validas v
-        JOIN resumen_cliente rc ON rc.customer_unique_id = v.customer_unique_id
-        WHERE rc.es_recurrente = 1
-        GROUP BY v.categoria
-        ORDER BY ingresos DESC
-        LIMIT 10
+        # Una fila por (categoría, cliente, estado del cliente) con sus ingresos (SUM(price)).
+        sql_ventas_cliente = f"""
+        WITH {VENTAS_VALIDAS_CTE}
+        SELECT categoria, customer_unique_id, customer_state, SUM(price) AS ingresos
+        FROM ventas_validas
+        GROUP BY categoria, customer_unique_id, customer_state
         """
-        top_categorias = _run(conn, sql_top_categorias)
-
-        sql_top_estados = f"""
-        WITH {PEDIDOS_CLIENTE_CTE},
-        {PAGOS_PEDIDO_CTE},
-        {REVIEW_PEDIDO_CTE},
-        {RESUMEN_CLIENTE_CTE},
-        {VENTAS_VALIDAS_CTE}
-        SELECT
-            v.customer_state,
-            COUNT(DISTINCT v.customer_unique_id) AS clientes_recurrentes
-        FROM ventas_validas v
-        JOIN resumen_cliente rc ON rc.customer_unique_id = v.customer_unique_id
-        WHERE rc.es_recurrente = 1
-        GROUP BY v.customer_state
-        ORDER BY clientes_recurrentes DESC
-        LIMIT 10
-        """
-        top_estados = _run(conn, sql_top_estados)
-
-        sql_recompra_categoria = f"""
-        WITH {PEDIDOS_CLIENTE_CTE},
-        {PAGOS_PEDIDO_CTE},
-        {REVIEW_PEDIDO_CTE},
-        {RESUMEN_CLIENTE_CTE},
-        {VENTAS_VALIDAS_CTE},
-        clientes_categoria AS (
-            SELECT DISTINCT categoria, customer_unique_id
-            FROM ventas_validas
-        )
-        SELECT
-            cc.categoria,
-            COUNT(*) AS clientes,
-            SUM(rc.es_recurrente) AS clientes_recurrentes,
-            ROUND(100.0 * SUM(rc.es_recurrente) / COUNT(*), 2) AS tasa_recompra_pct
-        FROM clientes_categoria cc
-        JOIN resumen_cliente rc ON rc.customer_unique_id = cc.customer_unique_id
-        GROUP BY cc.categoria
-        HAVING COUNT(*) >= ?
-        ORDER BY tasa_recompra_pct DESC
-        """
-        recompra_categoria = _run(conn, sql_recompra_categoria, (min_clientes_categoria,))
+        vc = _run(conn, sql_ventas_cliente)
     finally:
         conn.close()
+
+    comparacion = (
+        rc.groupby("es_recurrente", as_index=False)
+        .agg(clientes=("customer_unique_id", "size"),
+             gasto_promedio=("gasto_total", "mean"),
+             calificacion_primer_pedido_promedio=("calif_primer_pedido", "mean"))
+        .round({"gasto_promedio": 2, "calificacion_primer_pedido_promedio": 2})
+    )
+
+    vr = vc.merge(rc[["customer_unique_id", "es_recurrente"]], on="customer_unique_id")
+    rec = vr[vr["es_recurrente"] == 1]
+    top_categorias = (
+        rec.groupby("categoria", as_index=False)
+        .agg(clientes_recurrentes=("customer_unique_id", "nunique"), ingresos=("ingresos", "sum"))
+        .sort_values("ingresos", ascending=False, kind="stable").head(10).reset_index(drop=True)
+    )
+    top_categorias["ingresos"] = top_categorias["ingresos"].round(2)
+    top_estados = (
+        rec.groupby("customer_state", as_index=False)
+        .agg(clientes_recurrentes=("customer_unique_id", "nunique"))
+        .sort_values("clientes_recurrentes", ascending=False, kind="stable").head(10).reset_index(drop=True)
+    )
+
+    cc = vr[["categoria", "customer_unique_id", "es_recurrente"]].drop_duplicates(["categoria", "customer_unique_id"])
+    recompra_categoria = (
+        cc.groupby("categoria", as_index=False)
+        .agg(clientes=("customer_unique_id", "size"), clientes_recurrentes=("es_recurrente", "sum"))
+    )
+    recompra_categoria = recompra_categoria[recompra_categoria["clientes"] >= min_clientes_categoria].copy()
+    recompra_categoria["tasa_recompra_pct"] = (
+        100.0 * recompra_categoria["clientes_recurrentes"] / recompra_categoria["clientes"]
+    ).round(2)
+    recompra_categoria = recompra_categoria.sort_values(
+        ["tasa_recompra_pct", "categoria"], ascending=[False, True], kind="stable").reset_index(drop=True)
 
     total_clientes = int(comparacion["clientes"].sum())
     fila_rec = comparacion[comparacion["es_recurrente"] == 1]
@@ -276,9 +258,14 @@ def q01(min_clientes_categoria: int = 200) -> dict:
         + "."
     )
 
-    sql_total = "\n\n".join(
-        [sql_comparacion, sql_top_categorias, sql_top_estados, sql_recompra_categoria]
-    )
+    sql_total = "\n\n".join([
+        sql_resumen_cliente,
+        sql_ventas_cliente,
+        "-- Derivado en pandas a partir de las 2 consultas anteriores:\n"
+        "--   comparación = resumen por es_recurrente (clientes, AVG gasto_total, AVG calif_primer_pedido)\n"
+        "--   top categorías/estados = clientes recurrentes distintos e ingresos, top 10\n"
+        "--   tasa de recompra = por categoría, % de sus clientes distintos que son recurrentes (HAVING clientes >= mínimo)",
+    ])
 
     return {
         "pregunta": pregunta,

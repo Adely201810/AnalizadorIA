@@ -1,0 +1,144 @@
+{
+  "pregunta": "n01_pct_clientes_recurrentes",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "k": 6,
+  "condiciones": {
+    "A_sin_bitacora": {
+      "corridas": [
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT customer_unique_id) * 1.0, 2) AS porcentaje\nFROM vw_pedidos_validos"
+        },
+        {
+          "correcto": true,
+          "intentos": 2,
+          "intentos_sin_from": 1,
+          "primer_intento_sin_from": true,
+          "tipos": [
+            "ejecucion",
+            "ok"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / \n             (SELECT COUNT(DISTINCT customer_unique_id) \n              FROM vw_pedidos_validos), 2) \nFROM vw_pedidos_validos \nWHERE customer_unique_id IN (SELECT customer_unique_id \n                             FROM vw_pedidos_validos \n     "
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT customer_unique_id) * 1.0, 2) AS porcentaje\nFROM vw_pedidos_validos"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT customer_unique_id) * 1.0, 2) AS porcentaje\nFROM vw_pedidos_validos\nWHERE customer_unique_id IN (SELECT customer_unique_id FROM vw_pedidos_validos GROUP BY customer_unique_id HAVING COUNT(order_id) > 1)"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT customer_unique_id) * 1.0, 2) AS porcentaje\nFROM vw_pedidos_validos"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT customer_unique_id) * 1.0, 2) AS porcentaje\nFROM vw_pedidos_validos"
+        }
+      ],
+      "aciertos": 1,
+      "corridas_con_sin_from": 1,
+      "intentos_sin_from": 1,
+      "intentos_totales": 7
+    },
+    "B_con_bitacora": {
+      "corridas": [
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                 FROM vw_pedidos_validos \n                 GROUP BY customer_unique_id \n                 HAVING COUNT(order_id) > 1) / \n        (SELECT COUNT(DISTINCT customer_unique_id) \n         FROM vw_pedidos_validos) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                 FROM vw_pedidos_validos \n                 GROUP BY customer_unique_id \n                 HAVING COUNT(order_id) > 1) / \n        (SELECT COUNT(DISTINCT customer_unique_id) \n         FROM vw_pedidos_validos) AS porcentaje_clien"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                 FROM vw_pedidos_validos \n                 GROUP BY customer_unique_id \n                 HAVING COUNT(order_id) > 1) / \n        (SELECT COUNT(DISTINCT customer_unique_id) \n         FROM vw_pedidos_validos) AS porcentaje"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                 FROM vw_pedidos_validos \n                 GROUP BY customer_unique_id \n                 HAVING COUNT(order_id) > 1) / \n        (SELECT COUNT(DISTINCT customer_unique_id) \n         FROM vw_pedidos_validos) AS porcentaje_clien"
+        },
+        {
+          "correcto": false,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                 FROM vw_pedidos_validos \n                 GROUP BY customer_unique_id \n                 HAVING COUNT(order_id) > 1) / \n        (SELECT COUNT(DISTINCT customer_unique_id) \n         FROM vw_pedidos_validos) AS porcentaje_clien"
+        },
+        {
+          "correcto": true,
+          "intentos": 1,
+          "intentos_sin_from": 0,
+          "primer_intento_sin_from": false,
+          "tipos": [
+            "ok"
+          ],
+          "sql_final": "SELECT 100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_pedidos_validos) AS porcentaje_clientes_recurrentes\nFROM vw_clientes_recurrentes\nWHERE num_pedidos > 1"
+        }
+      ],
+      "aciertos": 1,
+      "corridas_con_sin_from": 0,
+      "intentos_sin_from": 0,
+      "intentos_totales": 6
+    }
+  }
+}

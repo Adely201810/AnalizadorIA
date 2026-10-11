@@ -76,6 +76,27 @@ class TestBitacora(unittest.TestCase):
         self.assertEqual(e["clave"], "columna:*.customer_state")
         self.assertIn("customers", e["mensaje"])
 
+    def test_select_sin_from_se_diagnostica_como_tal(self):
+        # Etapa 2, Paso 4: SQL real de llama3.1 (n01, repetido 39 veces en DESARROLLO).
+        sin_from = ("```sql\nSELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / "
+                    "(SELECT COUNT(DISTINCT customer_unique_id) FROM customers), 2) AS pct\n```")
+        c = ClienteGuionado(["UNA", sin_from, sin_from])
+        r = answer_question("¿Qué parte de los clientes compró dos veces?", client=c,
+                            usar_plantillas=False, bitacora=self.bitacora)
+        self.assertIn("no such column: customer_unique_id", r.intentos_detalle[0]["detalle"])
+        e = self.bitacora.entradas()
+        self.assertEqual([x["clave"] for x in e], ["select_sin_from"])  # antes: "columna:*.customer_unique_id"
+        self.assertEqual(e[0]["veces"], 2)
+        self.assertIn("sin FROM", e[0]["mensaje"])
+        self.assertTrue(e[0]["mensaje"].endswith("FROM t2)."))  # cabe entero en MAX_CHARS_ENTRADA
+        self.assertIn("El SELECT principal usó 'customer_unique_id' sin FROM", self.bitacora.texto_para_prompt())
+
+    def test_from_entre_parentesis(self):
+        mal = "```sql\nSELECT ROUND(AVG(review_score) FROM order_reviews) AS x\n```"
+        c = ClienteGuionado(["UNA", mal, mal])
+        answer_question("¿Calificación media?", client=c, usar_plantillas=False, bitacora=self.bitacora)
+        self.assertEqual([x["clave"] for x in self.bitacora.entradas()], ["from_entre_parentesis"])
+
     def test_limites(self):
         b = BitacoraEsquema(Path(self.tmp.name) / "lim.json", max_entradas=3, max_inyectadas=2)
         for i in range(5):
