@@ -19,7 +19,7 @@ Fecha: 2026-10-10 · Estado: **COMPLETO**. Pasos 1-8 hechos y verificados. Prime
 | Python | 3.14.3 (tags/v3.14.3:323c59a, MSC v.1944 64 bit) |
 | SQLite (módulo `sqlite3`) | 3.50.4 |
 | Paquetes | ver `requirements.lock.txt` (47 paquetes). Principales: SQLAlchemy 2.1.4, pandas 3.0.6, streamlit 1.65.0, plotly 7.1.0, matplotlib 3.11.2, reportlab 5.0.1, requests 2.34.2, Faker 40.43.0 |
-| Ollama | **0.40.2** en `%LOCALAPPDATA%\Programs\Ollama` (2.79 GB instalado). Modelos en `C:\Users\alexp\.ollama\models` (`OLLAMA_MODELS` no definida) |
+| Ollama | **0.40.3** (se actualizó solo el 2026-10-11; antes 0.40.2) en `%LOCALAPPDATA%\Programs\Ollama` (2.79 GB instalado). Modelos en `C:\Users\alexp\.ollama\models` (`OLLAMA_MODELS` no definida) |
 | Modelo | `llama3.1:8b-instruct-q4_K_M` (ID `46e0c10c039e`, 4.9 GB, Q4_K_M, 8.0B parámetros) |
 | Backend de inferencia | Vulkan sobre RX 6600 (ROCm descartado por Ollama: `AMD driver is too old`) |
 
@@ -253,3 +253,9 @@ is_available: True
 - **P8.** Durante `ollama pull`, el tamaño de la carpeta de modelos engaña: el archivo `-partial` se reserva completo (4.58 GiB) desde el inicio. El avance real está en los `-partial-N` (JSON con `Completed`).
 - **P9. Latencia**: una pregunta simple por el CLI tarda ≈51 s con el modelo ya cargado; la carga en frío añade ≈40-50 s.
 - **P6. Definición de "ingresos" inconsistente** (resuelto por decisión del usuario, paso 4b). Siguen incluyendo pedidos cancelados q6 (método de pago) y q10 (ticket promedio); está pendiente de que el usuario decida si se les aplica la misma exclusión.
+
+## Etapa 2 — variables del pipeline
+- `OLLAMA_MODEL` (por defecto `llama3.1:8b-instruct-q4_K_M`): modelo del chat y de la evaluación.
+- `TEXT2SQL_CLASIFICADOR` (por defecto `0`, apagado) y `TEXT2SQL_VISTA_VALIDOS` (por defecto `1`): configuración final de la etapa 2 (D-25).
+- `TEXT2SQL_REGLA_DENOMINADOR`, `TEXT2SQL_VISTAS_DOC`, `TEXT2SQL_VISTAS_OCULTAS`, `TEXT2SQL_REGLA_MULTIPLICIDAD`: mejoras probadas y revertidas (apagadas por defecto).
+- Suite: `python -m unittest discover -s tests -t .` (64 pruebas).

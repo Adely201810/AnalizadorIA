@@ -1,0 +1,441 @@
+{
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-10-11T15:59:24",
+  "configuracion": {
+    "n_intentos": 2,
+    "cadena_con_arbitro": false,
+    "feedback": null,
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.1,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json",
+    "conjunto": "prueba"
+  },
+  "recursos_ollama": {
+    "size_bytes": 5804392447,
+    "size_vram_bytes": 5804392447,
+    "pct_gpu": 100.0,
+    "context_length": 8192
+  },
+  "resumen": {
+    "juez_vs_arbitro": null,
+    "total_preguntas": 10,
+    "correctas": 8,
+    "precision_pct": 80.0,
+    "textos_respaldados": 10,
+    "latencia_media_s": 11.13,
+    "latencia_max_s": 20.07,
+    "por_origen": {
+      "llm": 10
+    },
+    "clasificacion_final": {
+      "ok": 8,
+      "ejecucion": 0,
+      "semantico": 2,
+      "seguridad": 0,
+      "infra": 0
+    },
+    "clasificacion_por_intento": {
+      "ok": 8,
+      "ejecucion": 0,
+      "semantico": 2,
+      "seguridad": 0,
+      "infra": 0
+    }
+  },
+  "resultados": [
+    {
+      "id": "x01_pedidos_cancelados",
+      "pregunta": "¿Cuántos pedidos tienen el estatus cancelado (canceled)?",
+      "sql_generado": "SELECT COUNT(*) \nFROM orders \nWHERE order_status = 'canceled'",
+      "sql_referencia": "SELECT COUNT(*) AS pedidos FROM orders WHERE order_status = 'canceled'",
+      "filas_modelo": [
+        [
+          625
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          625
+        ]
+      ],
+      "respuesta_modelo": "Hay 625 pedidos con el estatus cancelado. Esto se debe a que en la base de datos se encontraron 625 pedidos con el estatus 'canceled'.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 20.07,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT COUNT(*) \nFROM orders \nWHERE order_status = 'canceled'",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x06_pct_pedidos_varios_articulos",
+      "pregunta": "¿Qué porcentaje de los pedidos válidos (sin contar pedidos cancelados o no disponibles) tiene más de un artículo?",
+      "sql_generado": "SELECT ROUND(100.0 * COUNT(DISTINCT oi.order_id) / COUNT(DISTINCT pv.order_id), 2) AS pct_pedidos_con_mas_de_un_articulo\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nWHERE oi.order_id IN (SELECT order_id FROM order_items GROUP BY order_id HAVING COUNT(*) > 1)",
+      "sql_referencia": "WITH n AS (SELECT oi.order_id, COUNT(*) AS articulos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY oi.order_id) SELECT ROUND(100.0 * SUM(CASE WHEN articulos > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct FROM n",
+      "filas_modelo": [
+        [
+          100.0
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          9.94
+        ]
+      ],
+      "respuesta_modelo": "Todos los pedidos válidos tienen más de un artículo. Esto se debe a que el porcentaje de pedidos con más de un artículo es del 100%.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 9.87,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT oi.order_id) / COUNT(DISTINCT pv.order_id), 2) AS pct_pedidos_con_mas_de_un_articulo\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nWHERE oi.order_id IN (SELECT order_id FROM order_items GROUP BY order_id HAVING COUNT(*) > 1)",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x08_dias_entrega_rj",
+      "pregunta": "¿Cuántos días tarda en promedio, desde la compra hasta la entrega al cliente, un pedido válido (sin contar pedidos cancelados o no disponibles) entregado a clientes del estado RJ?",
+      "sql_generado": "SELECT ROUND(AVG(julianday(order_delivered_customer_date) - julianday(order_purchase_timestamp)), 2) AS dias_promedio\nFROM vw_pedidos_validos\nWHERE order_status = 'delivered' AND customer_state = 'RJ'",
+      "sql_referencia": "SELECT ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2) AS dias FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') AND o.order_delivered_customer_date IS NOT NULL AND c.customer_state = 'RJ'",
+      "filas_modelo": [
+        [
+          15.31
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          15.31
+        ]
+      ],
+      "respuesta_modelo": "Los pedidos válidos entregados a clientes del estado RJ tardan en promedio 15,31 días en ser entregados al cliente desde la compra. Esto se debe a que el promedio de días entre la fecha de compra y la fecha de entrega es de 15,31 días.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 10.78,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT ROUND(AVG(julianday(order_delivered_customer_date) - julianday(order_purchase_timestamp)), 2) AS dias_promedio\nFROM vw_pedidos_validos\nWHERE order_status = 'delivered' AND customer_state = 'RJ'",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x09_mes_mas_cancelados",
+      "pregunta": "¿En qué mes (formato AAAA-MM, según la fecha de compra) hubo más pedidos con estatus cancelado y cuántos fueron?",
+      "sql_generado": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  COUNT(*) AS cantidad_cancelados\nFROM \n  orders o\nWHERE \n  o.order_status = 'canceled'\nGROUP BY \n  mes\nORDER BY \n  cantidad_cancelados DESC\nLIMIT 1",
+      "sql_referencia": "SELECT strftime('%Y-%m', order_purchase_timestamp) AS mes, COUNT(*) AS cancelados FROM orders WHERE order_status = 'canceled' GROUP BY mes ORDER BY cancelados DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "2018-08",
+          84
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "2018-08",
+          84
+        ]
+      ],
+      "respuesta_modelo": "El mes con más pedidos cancelados fue agosto del 2018, con un total de 84 pedidos.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 8.81,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  COUNT(*) AS cantidad_cancelados\nFROM \n  orders o\nWHERE \n  o.order_status = 'canceled'\nGROUP BY \n  mes\nORDER BY \n  cantidad_cancelados DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x11_clientes_unicos_sp",
+      "pregunta": "¿Cuántos clientes únicos del estado SP hicieron al menos un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT COUNT(DISTINCT customer_unique_id) \nFROM vw_pedidos_validos \nWHERE customer_state = 'SP'",
+      "sql_referencia": "SELECT COUNT(DISTINCT c.customer_unique_id) AS clientes FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') AND c.customer_state = 'SP'",
+      "filas_modelo": [
+        [
+          39749
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          39749
+        ]
+      ],
+      "respuesta_modelo": "El número de clientes únicos del estado SP que hicieron al menos un pedido válido es de 39,749. Esto se debe a que hay 39,749 clientes únicos con un estado de \"SP\" en la base de datos.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 9.1,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT COUNT(DISTINCT customer_unique_id) \nFROM vw_pedidos_validos \nWHERE customer_state = 'SP'",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x12_vendedores_health_beauty",
+      "pregunta": "¿Cuántos vendedores distintos vendieron al menos un producto de la categoría health_beauty en pedidos válidos (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_pedidos_validos \nJOIN order_items ON vw_pedidos_validos.order_id = order_items.order_id \nJOIN products ON order_items.product_id = products.product_id \nJOIN product_category_translation ON products.product_category_name = product_category_translation.product_category_name \nWHERE product_category_name_english = 'health_beauty'",
+      "sql_referencia": "SELECT COUNT(DISTINCT oi.seller_id) AS vendedores FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') AND t.product_category_name_english = 'health_beauty'",
+      "filas_modelo": [
+        [
+          489
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          489
+        ]
+      ],
+      "respuesta_modelo": "La categoría health_beauty fue vendida por 489 vendedores distintos en pedidos válidos. Esto se debe a que hay 489 IDs de vendedores únicos que aparecen en la base de datos.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 11.06,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_pedidos_validos \nJOIN order_items ON vw_pedidos_validos.order_id = order_items.order_id \nJOIN products ON order_items.product_id = products.product_id \nJOIN product_category_translation ON products.product_category_name = product_category_translation.product_category_name \nWHERE product_category_name_english = 'health_beauty'",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x14_ingresos_vendedores_sp_fuera_sp",
+      "pregunta": "¿Cuántos ingresos (suma de price) generaron, en pedidos válidos (sin contar pedidos cancelados o no disponibles), los vendedores del estado SP con clientes de otros estados?",
+      "sql_generado": "SELECT SUM(price) AS ingresos\nFROM vw_pedidos_validos\nJOIN order_items ON vw_pedidos_validos.order_id = order_items.order_id\nJOIN sellers ON order_items.seller_id = sellers.seller_id\nWHERE seller_state = 'SP' AND customer_state != 'SP'",
+      "sql_referencia": "SELECT ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN customers c ON c.customer_id = o.customer_id JOIN sellers s ON s.seller_id = oi.seller_id WHERE o.order_status NOT IN ('canceled','unavailable') AND s.seller_state = 'SP' AND c.customer_state <> 'SP'",
+      "filas_modelo": [
+        [
+          5101873.16
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          5101873.16
+        ]
+      ],
+      "respuesta_modelo": "Los vendedores del estado SP con clientes de otros estados generaron R$5,101,873.16 en ingresos de pedidos válidos. Esto se debe a que la suma de los precios de los pedidos de estos vendedores es de R$5,101,873.16.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 11.97,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT SUM(price) AS ingresos\nFROM vw_pedidos_validos\nJOIN order_items ON vw_pedidos_validos.order_id = order_items.order_id\nJOIN sellers ON order_items.seller_id = sellers.seller_id\nWHERE seller_state = 'SP' AND customer_state != 'SP'",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x15_calificacion_pedidos_boleto",
+      "pregunta": "¿Cuál es la calificación promedio de las reseñas de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que se pagaron, al menos en parte, con boleto?",
+      "sql_generado": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_pedidos_validos pv\nJOIN order_payments op ON pv.order_id = op.order_id\nJOIN order_reviews rv ON pv.order_id = rv.order_id\nWHERE op.payment_type = 'boleto'",
+      "sql_referencia": "SELECT ROUND(AVG(r.review_score), 2) AS calificacion FROM order_reviews r WHERE r.order_id IN (SELECT op.order_id FROM order_payments op JOIN orders o ON o.order_id = op.order_id WHERE o.order_status NOT IN ('canceled','unavailable') AND op.payment_type = 'boleto')",
+      "filas_modelo": [
+        [
+          4.116604334238434
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          4.12
+        ]
+      ],
+      "respuesta_modelo": "La calificación promedio de las reseñas de los pedidos válidos que se pagaron, al menos en parte, con boleto es de 4,12%. Esto se debe a que la calificación promedio de las reseñas de estos pedidos es de 4.116604334238434.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 10.68,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_pedidos_validos pv\nJOIN order_payments op ON pv.order_id = op.order_id\nJOIN order_reviews rv ON pv.order_id = rv.order_id\nWHERE op.payment_type = 'boleto'",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x16_pct_productos_sin_categoria",
+      "pregunta": "¿Qué porcentaje de los productos del catálogo no tiene una categoría asignada?",
+      "sql_generado": "SELECT CAST(COUNT(CASE WHEN product_category_name IS NULL THEN 1 ELSE NULL END) AS REAL) * 100 / COUNT(product_id) AS porcentaje_sin_categoria\nFROM products",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN product_category_name IS NULL THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct FROM products",
+      "filas_modelo": [
+        [
+          1.8512336499650996
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          1.85
+        ]
+      ],
+      "respuesta_modelo": "Alrededor del 1,85% de los productos del catálogo no tiene una categoría asignada. Esto se debe a que el 1,85% de los productos no tienen una categoría asignada.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 8.36,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT CAST(COUNT(CASE WHEN product_category_name IS NULL THEN 1 ELSE NULL END) AS REAL) * 100 / COUNT(product_id) AS porcentaje_sin_categoria\nFROM products",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "x20_pct_clientes_resena_1_estrella",
+      "pregunta": "De los clientes únicos con al menos un pedido válido (sin contar pedidos cancelados o no disponibles), ¿qué porcentaje dejó al menos una reseña de 1 estrella en esos pedidos?",
+      "sql_generado": "SELECT \n  ROUND(\n    100.0 * \n    COUNT(DISTINCT rv.order_id) / \n    COUNT(DISTINCT oi.order_id)\n  , 2) AS pct_1_estrella\nFROM vw_pedidos_validos oi\nJOIN order_reviews rv ON oi.order_id = rv.order_id\nWHERE rv.review_score = 1",
+      "sql_referencia": "WITH cli AS (SELECT DISTINCT c.customer_unique_id, o.order_id FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.order_status NOT IN ('canceled','unavailable')) SELECT ROUND(100.0 * COUNT(DISTINCT CASE WHEN r.review_score = 1 THEN cli.customer_unique_id END) / COUNT(DISTINCT cli.customer_unique_id), 2) AS pct FROM cli LEFT JOIN order_reviews r ON r.order_id = cli.order_id",
+      "filas_modelo": [
+        [
+          100.0
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          10.89
+        ]
+      ],
+      "respuesta_modelo": "La mayoría de los clientes que dejaron reseñas en sus pedidos dejaron al menos una reseña de 1 estrella. Esto se debe a que el porcentaje de clientes que dejaron reseñas de 1 estrella es del 100%.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 10.61,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  ROUND(\n    100.0 * \n    COUNT(DISTINCT rv.order_id) / \n    COUNT(DISTINCT oi.order_id)\n  , 2) AS pct_1_estrella\nFROM vw_pedidos_validos oi\nJOIN order_reviews rv ON oi.order_id = rv.order_id\nWHERE rv.review_score = 1",
+          "tipo": "ok",
+          "detalle": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    }
+  ]
+}

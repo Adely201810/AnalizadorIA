@@ -1,0 +1,52 @@
+{
+  "nombre": "final_prueba",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "configuracion": {
+    "n_intentos": 2,
+    "cadena_con_arbitro": false,
+    "feedback": null,
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.1,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json",
+    "conjunto": "prueba"
+  },
+  "archivos": [
+    "eval\\baselines\\etapa2\\final_prueba_r1.json",
+    "eval\\baselines\\etapa2\\final_prueba_r2.json",
+    "eval\\baselines\\etapa2\\final_prueba_r3.json"
+  ],
+  "preguntas": 10,
+  "aciertos": [
+    8,
+    8,
+    8
+  ],
+  "media": 8,
+  "minimo": 8,
+  "maximo": 8,
+  "pct_media": 80.0,
+  "wilson95_pct": [
+    62.7,
+    90.5
+  ],
+  "aciertos_por_pregunta": {
+    "x01_pedidos_cancelados": 3,
+    "x06_pct_pedidos_varios_articulos": 0,
+    "x08_dias_entrega_rj": 3,
+    "x09_mes_mas_cancelados": 3,
+    "x11_clientes_unicos_sp": 3,
+    "x12_vendedores_health_beauty": 3,
+    "x14_ingresos_vendedores_sp_fuera_sp": 3,
+    "x15_calificacion_pedidos_boleto": 3,
+    "x16_pct_productos_sin_categoria": 3,
+    "x20_pct_clientes_resena_1_estrella": 0
+  },
+  "clasificacion_total": {
+    "ok": 24,
+    "semantico": 6
+  },
+  "respuestas_descompuestas": 0,
+  "latencia_media_s": 11.11
+}

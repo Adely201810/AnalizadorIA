@@ -1,6 +1,6 @@
 # Progreso
 
-Última actualización: 2026-10-11 — Etapa 2 en curso (Paso 4 terminado). Plan B→J: [INFORME_FINAL.md](INFORME_FINAL.md). Decisiones: [DECISIONES.md](DECISIONES.md).
+Última actualización: 2026-10-11 — **Etapa 2 terminada**; configuración congelada en `02f3dba`. Resumen: [INFORME_FINAL_2.md](INFORME_FINAL_2.md). Decisiones: [DECISIONES.md](DECISIONES.md).
 
 | Paso | Estado | Commit | Cifras reales | Doc |
 |---|---|---|---|---|
@@ -28,9 +28,10 @@
 | 1 — Tolerancia 0.006 + recalificación offline | ✅ | `d21de4b` | 13 corridas recalificadas: solo cambian los dos `3.01` de la Fase 9 (dirigida r1 1/3→0/3; r3 2/3→1/3) | [E2_PASO_1.md](E2_PASO_1.md) |
 | 2 — Oráculo v3: 30 preguntas, DESARROLLO 20 / PRUEBA 10 | ✅ | `b2e99ec` | SQL **30/30**, pandas **30/30**; n04 con criterio completo (13); split por sorteo (semilla 20261011); blindaje de PRUEBA con 8 pruebas; suite 57/57 | [E2_PASO_2.md](E2_PASO_2.md) |
 | 3 — Mejoras una a una (A/B ×3, solo DESARROLLO) | ✅ | `1a1c39f` | llama3.1: base **3/3/3** → sin clasificador **5/5/5** → + `vw_pedidos_validos` **8/9/8** (Wilson 30.1–54.3 %). c, d1, d2 y d3 revertidas (5, 5, 7, 4.67). (d) causaba 25/45 fallos. qwen 8/8/9 (empate), llama3.2 3/2/3 → modelo sin cambio | [E2_PASO_3.md](E2_PASO_3.md) |
-| 4 — Dashboard y mensajes | ✅ | (este commit) | q01 **31.4 → 10.4 s**, 4 tablas = pandas desde los CSV; negativa del modelo ≠ rechazo de seguridad (verificado en el chat real); fecha sin truncar a 1366 px; bitácora diagnostica SELECT sin FROM: con el modelo real evita repetirlo (12/12 → 0/6 intentos) pero no lo vuelve correcto (0/6 y 0/6); 64/64 pruebas | [E2_PASO_4.md](E2_PASO_4.md) |
+| 4 — Dashboard y mensajes | ✅ | `02f3dba` | q01 **31.4 → 10.4 s**, 4 tablas = pandas desde los CSV; negativa del modelo ≠ rechazo de seguridad (verificado en el chat real); fecha sin truncar a 1366 px; bitácora diagnostica SELECT sin FROM: con el modelo real evita repetirlo (12/12 → 0/6 intentos) pero no lo vuelve correcto (0/6 y 0/6); 64/64 pruebas | [E2_PASO_4.md](E2_PASO_4.md) |
+| 5 — PRUEBA una sola vez (config. congelada `02f3dba`) | ✅ | (este commit) | DESARROLLO **10/7/9** (media 8.67, 43.3 %, Wilson 31.6–55.9) · PRUEBA **8/8/8** (80.0 %, Wilson 62.7–90.5). Sin señal de sobreajuste; porcentajes en PRUEBA 3/9 (x06 y x20, denominador) = problema abierto. Modelo sin cambio | [E2_PASO_5.md](E2_PASO_5.md) · [INFORME_FINAL_2.md](INFORME_FINAL_2.md) |
 
 ## Pendientes / avisos
 - ~~Velocidad de llama3.1 y app de bandeja de Ollama~~: resueltos tras reiniciar (Paso 0 de la etapa 2).
 - Una evaluación completa de 10 preguntas tarda entre 3.5 y 8 min (depende de reintentos y de consultas lentas).
-- La cifra honesta actual es **2/10**; las cifras anteriores estaban infladas (ver FASE_03.md).
+- Cifra honesta actual (oráculo v3, llama3.1, `02f3dba`): DESARROLLO media 8.67/20 (7–10), PRUEBA 8/10 (8–8). Las cifras de la etapa 1 (2/10) eran sobre otro oráculo.
