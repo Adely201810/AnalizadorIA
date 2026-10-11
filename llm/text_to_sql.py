@@ -68,6 +68,9 @@ MAX_FILAS_EJECUTADAS = 500  # límite duro de filas leídas de la base de datos
 # Intentos totales por pregunta en el chat (Fase 6). 2 = un reintento, como el
 # comportamiento efectivo anterior; configurable con TEXT2SQL_N_INTENTOS.
 N_INTENTOS_POR_DEFECTO = int(os.environ.get("TEXT2SQL_N_INTENTOS", "2"))
+# Etapa 2, Paso 3 (a): el clasificador puede partir en sub-consultas preguntas que se
+# resuelven con una sola. TEXT2SQL_CLASIFICADOR=0 lo desactiva (siempre una consulta).
+USAR_CLASIFICADOR_POR_DEFECTO = os.environ.get("TEXT2SQL_CLASIFICADOR", "1") != "0"
 # Límite de tiempo de ejecución del SQL generado. La consulta de referencia más
 # lenta del oráculo tarda ~10 s; 60 s deja margen (docs/FASE_03.md).
 LIMITE_EJECUCION_S = float(os.environ.get("TEXT2SQL_LIMITE_EJECUCION_S", "60"))
@@ -733,6 +736,7 @@ def answer_question(
     verificador: Verificador | None = None,
     bitacora: BitacoraEsquema | None = None,
     juez_sensatez: JuezLLM | None = None,
+    usar_clasificador: bool | None = None,
 ) -> Text2SQLResult:
     """Orquesta el flujo completo.
 
@@ -758,7 +762,9 @@ def answer_question(
             n_intentos, plantillas=plantillas, bitacora=bitacora,
         )
 
-    sub_preguntas = None if plantillas else clasificar_pregunta(client, pregunta)
+    if usar_clasificador is None:
+        usar_clasificador = USAR_CLASIFICADOR_POR_DEFECTO
+    sub_preguntas = None if (plantillas or not usar_clasificador) else clasificar_pregunta(client, pregunta)
     if sub_preguntas:
         return _answer_open_question(
             pregunta, sub_preguntas, client, schema_context, nombres_conocidos, n_intentos,
