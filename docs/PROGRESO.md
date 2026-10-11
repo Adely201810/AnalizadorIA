@@ -41,4 +41,5 @@
 
 | Paso | Estado | Commit | Cifras reales | Doc |
 |---|---|---|---|---|
-| 1 — Auditoría del contexto (sin cambios) | ✅ | (este commit) | System prompt **13,084 caracteres / 3,340 tokens**, idéntico para toda pregunta; notas 38 % de los tokens. Tablas base sin descripción; sin glosario (porcentaje, retraso, ticket, top N); 18 de 54 columnas ambiguas (14 sin explicación); ~26 % describe objetos que el modelo casi no usa; 2 notas derivadas del oráculo (n05, q5 v1) | [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md) |
+| 1 — Auditoría del contexto (sin cambios) | ✅ | `762cadd` | System prompt **13,084 caracteres / 3,340 tokens**, idéntico para toda pregunta; notas 38 % de los tokens. Tablas base sin descripción; sin glosario (porcentaje, retraso, ticket, top N); 18 de 54 columnas ambiguas (14 sin explicación); ~26 % describe objetos que el modelo casi no usa; 2 notas derivadas del oráculo (n05, q5 v1) | [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md) |
+| 2 — Oráculo v4 (DESARROLLO 30 + PRUEBA_2 20), anti-fugas, T=0.3 | ✅ | (este commit; base en `9100a04`) | 50/50 verificadas con pandas; ningún fragmento de 4 palabras de las 50 en el prompt; D-27 (notas que calcaban n05 y q5 v1). **Base T=0.3: 13/14/13 de 30** (Wilson por pregunta 30.2–63.9 %); control T=0.1: 16/16/17. n05 3/3 → 0/3 al quitar la nota contaminada | [E3_PASO_2.md](E3_PASO_2.md) |
