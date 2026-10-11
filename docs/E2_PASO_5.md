@@ -47,7 +47,7 @@ El DESARROLLO de esta corrida (8.67) es coherente con el A/B del Paso 3 para la 
 | ranking | 8/15 | 3/3 |
 
 ## ¿Sobreajuste?
-**No hay señal de sobreajuste:** PRUEBA (80 %) está **por encima** de DESARROLLO (43.3 %), no por debajo. Pero la comparación directa engaña:
+**PRUEBA no salió peor que DESARROLLO** (80 % frente a 43.3 %), pero eso no basta para descartar sobreajuste, porque los conjuntos no son comparables (ver [INFORME_FINAL_2.md](INFORME_FINAL_2.md), sección 6). Además, las 3 repeticiones de PRUEBA fueron idénticas, así que el intervalo sobre las 10 preguntas es 49.0–94.3 %, no 62.7–90.5 %. Pero la comparación directa engaña:
 - DESARROLLO contiene las 10 necesidades del dashboard (D-21: van todas a DESARROLLO por instrucción del usuario), que son las más difíciles (9/30). PRUEBA solo tiene preguntas nuevas.
 - Comparando solo preguntas nuevas, la distancia se reduce: **56.7 % frente a 80.0 %**. El resto depende de qué tipos tocaron en el sorteo (PRUEBA tiene más conteos y joins simples, D-21).
 - **Señal de alerta:** los porcentajes rinden 6/6 en DESARROLLO pero **3/9 en PRUEBA**. Las mejoras se eligieron con 2 preguntas de porcentaje de DESARROLLO (x02, x04), que ya acertaban. La regla de denominador (c), que apuntaba justo a este fallo, se **revirtió** porque empeoró DESARROLLO (6/3/6). Es un hueco real que DESARROLLO no podía revelar. No se ajustó nada tras verlo.

@@ -15,28 +15,64 @@ del modelo.
 > ground truth de 20 preguntas y resultados viejos). Ya no es el target del
 > pipeline LLM; ver `legacy/gimnasio/README.md`.
 
-## Inicio rápido
+## Resultados (léelos con sus limitaciones)
 
-**Versión de Python verificada: 3.14.3** (Windows 11). Las versiones exactas
-instaladas y probadas están en `requirements.lock.txt`; detalles del entorno en
-[docs/ENTORNO.md](docs/ENTORNO.md).
+Configuración final congelada en el commit `02f3dba` (llama3.1 8B, Ollama 0.40.3):
+**DESARROLLO 10, 7, 9 de 20** (media 8.67) y **PRUEBA 8, 8, 8 de 10**, evaluada una sola vez.
+Los dos conjuntos **no son comparables**, y las 10 necesidades del dashboard siguen en 9/30.
+Resumen honesto en [docs/RESUMEN_PARA_ENTREGA.md](docs/RESUMEN_PARA_ENTREGA.md); detalle en
+[docs/INFORME_FINAL_2.md](docs/INFORME_FINAL_2.md).
+
+## Reproducir desde cero
+
+### Versiones fijadas (las usadas para las cifras de arriba)
+
+| Componente | Versión |
+|---|---|
+| Python | **3.14.3** (Windows 11; `py` launcher) |
+| Paquetes de Python | `requirements.lock.txt` (versiones exactas) |
+| Ollama | **0.40.3**. Se actualizó **solo** de 0.40.2 a 0.40.3 a mitad del A/B de la etapa 2; las corridas afectadas se repitieron en 0.40.3 y las de 0.40.2 están archivadas en `eval/baselines/etapa2/ollama_0402/`. Instalador: <https://github.com/ollama/ollama/releases/tag/v0.40.3>. Desactiva las actualizaciones automáticas para no cambiar de versión a mitad de una medición |
+| Modelo (por defecto) | `llama3.1:8b-instruct-q4_K_M`, ID `46e0c10c039e` (4.9 GB) |
+| Modelos comparados (opcionales) | `qwen2.5-coder:7b-instruct-q4_K_M` ID `dae161e27b0e` (4.7 GB) · `llama3.2:3b-instruct-q4_K_M` ID `a80c4f17acd5` (2.0 GB) |
+| Datos | los 9 CSV de Olist, incluidos en el repo (`data/olist/`, 122 MB) |
+
+### Comandos (Git Bash en Windows; en Linux/macOS cambia `py -3.14` por `python3.14` y `Scripts` por `bin`)
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.lock.txt          # versiones fijadas (o requirements.txt para rangos)
+# 0) Código. El venv va FUERA de la carpeta del repo: si el repo está en OneDrive, la sincronización rompe el venv
+git clone https://github.com/Adely201810/AnalizadorIA.git && cd AnalizadorIA
+py -3.14 -m venv ~/.venvs/analizadoria && source ~/.venvs/analizadoria/Scripts/activate
+python --version                                   # Python 3.14.3
+python -m pip install -r requirements.lock.txt     # versiones exactas
 
-python db/olist_init_db.py --export-ddl      # crea el esquema + vistas
-python seeder/load_olist_csv.py               # carga los 9 CSV de data/olist/
-ollama pull llama3.1:8b-instruct-q4_K_M       # modelo LLM local (una vez)
+# 1) Base de datos: esquema + 9 CSV + 7 vistas -> db/olist.db (no se versiona; ~1-2 min)
+python seeder/load_olist_csv.py
 
-python -m llm.cli "¿Cuántos pedidos hay en total?"
-python eval/run_eval.py                       # evaluación de precisión (10 preguntas)
-streamlit run app.py                          # interfaz gráfica de chat
+# 2) Oráculo: reconstruirlo debe dar EXACTAMENTE los archivos versionados, y pandas debe coincidir
+python -m eval.construir_oraculo_v3
+git diff --exit-code eval/ground_truth_olist.json eval/split_oraculo.json && echo "oráculo idéntico"
+python -m dashboard.verify_pandas                  # todas las líneas deben decir [OK]
+
+# 3) Pruebas automáticas (no necesitan Ollama)
+python -m unittest discover -s tests -t .          # Ran 64 tests ... OK
+
+# 4) Ollama 0.40.3 y el modelo (instálalo antes desde el enlace de la tabla)
+ollama --version                                   # ollama version is 0.40.3
+ollama pull llama3.1:8b-instruct-q4_K_M            # ~4.9 GB
+ollama list                                        # el ID debe ser 46e0c10c039e
+
+# 5) Evaluación en DESARROLLO (configuración final por defecto; ~5 min por repetición)
+for k in 1 2 3; do python eval/run_eval.py --sin-plantillas --conjunto desarrollo --output eval/eval_results_desarrollo_r$k.json; done
+
+# 6) Interfaz: chat en http://localhost:8501 y dashboard en la página "Dashboard"
+streamlit run app.py
 ```
 
-Ver **[docs/DEPLOY.md](docs/DEPLOY.md)** para instrucciones detalladas de
-instalación y despliegue, y **[docs/esquema_olist.md](docs/esquema_olist.md)**
-para el diccionario de datos completo.
+Notas:
+- **PRUEBA no se vuelve a evaluar para ajustar nada** (ya se usó una vez; ver docs/INFORME_FINAL_2.md §6). El comando exacto que se usó está en [docs/E2_PASO_5.md](docs/E2_PASO_5.md).
+- **Variación esperable:** con la misma configuración, DESARROLLO dio 8, 9, 8 y luego 10, 7, 9. Una repetición sola no basta para comparar.
+- **Variables del pipeline:** `OLLAMA_MODEL`, `OLLAMA_HOST`, `TEXT2SQL_CLASIFICADOR` (0 por defecto), `TEXT2SQL_VISTA_VALIDOS` (1 por defecto) y `TEXT2SQL_N_INTENTOS` (2). Ver [docs/ENTORNO.md](docs/ENTORNO.md).
+- Detalles de instalación y despliegue: [docs/DEPLOY.md](docs/DEPLOY.md). Diccionario de datos: [docs/esquema_olist.md](docs/esquema_olist.md).
 
 ## Estructura
 
@@ -45,7 +81,7 @@ para el diccionario de datos completo.
 | `db/` | Esquema Olist (SQLAlchemy ORM), conexión de solo lectura, vistas analíticas |
 | `seeder/` | `load_olist_csv.py` (loader de los CSV reales de Olist) |
 | `llm/` | Cliente de Ollama, contexto de esquema (con few-shot), guardas de seguridad SQL, pipeline Text-to-SQL, CLI |
-| `eval/` | Oráculo de las 10 necesidades (`ground_truth_olist.json`), árbitro determinista, runner de evaluación, benchmark de modelos y líneas base (`eval/baselines/`) |
+| `eval/` | Oráculo v3 de 30 preguntas (`ground_truth_olist.json`, split DESARROLLO 20 / PRUEBA 10), árbitro determinista (`comparador.py`), runner de evaluación, A/B con repeticiones (`ab.py`) y corridas guardadas (`eval/baselines/`) |
 | `docs/` | Diccionario de datos de Olist, guía de despliegue y documentación por fase (`PROGRESO.md`, `DECISIONES.md`, `FASE_XX.md`) |
 | `tests/` | Pruebas automáticas (`python -m unittest discover -s tests -t .`) |
 | `legacy/gimnasio/` | Dataset histórico del gimnasio ficticio (no se usa en el pipeline) |
