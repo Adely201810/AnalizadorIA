@@ -36,3 +36,9 @@
 - ~~Velocidad de llama3.1 y app de bandeja de Ollama~~: resueltos tras reiniciar (Paso 0 de la etapa 2).
 - Una evaluación completa de 10 preguntas tarda entre 3.5 y 8 min (depende de reintentos y de consultas lentas).
 - Cifra honesta actual (oráculo v3, llama3.1, `02f3dba`): DESARROLLO media 8.67/20 (7–10), PRUEBA 8/10 (8–8). Las cifras de la etapa 1 (2/10) eran sobre otro oráculo.
+
+## Etapa 3 — Mejorar el contexto del modelo (2026-10-11)
+
+| Paso | Estado | Commit | Cifras reales | Doc |
+|---|---|---|---|---|
+| 1 — Auditoría del contexto (sin cambios) | ✅ | (este commit) | System prompt **13,084 caracteres / 3,340 tokens**, idéntico para toda pregunta; notas 38 % de los tokens. Tablas base sin descripción; sin glosario (porcentaje, retraso, ticket, top N); 18 de 54 columnas ambiguas (14 sin explicación); ~26 % describe objetos que el modelo casi no usa; 2 notas derivadas del oráculo (n05, q5 v1) | [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md) |
