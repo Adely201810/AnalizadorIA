@@ -93,3 +93,21 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Motivo:** la prueba léxica (D-05) solo marcaba 3 de ellos; el resto era fuga de método, no de texto.
 - **Efecto esperado:** puede bajar la precisión en flete y concentración, que antes tenían ejemplo casi exacto. Es la medida honesta.
 - **Revertir:** restaurar `EJEMPLOS_FEW_SHOT` desde git (commit `f23c019`).
+
+## D-13 (C) `n_intentos` reemplaza a `max_retries`; por defecto 2
+- **Decisión:** `answer_question(n_intentos=N)` = intentos TOTALES (N=1 sin reintentos). Cada problema (error de ejecución/calidad, 0 filas, Ollama caído, rechazo del verificador) consume un intento; seguridad corta siempre. Por defecto N=2 (variable `TEXT2SQL_N_INTENTOS`), que reproduce el comportamiento **efectivo** anterior (máximo 2 intentos) y no alarga la latencia del chat. `run_eval.py --max-retries` se sustituye por `--intentos`.
+- **Alternativas:** mantener `max_retries` con su significado corregido (N-1); subir el valor por defecto a 3 (más latencia en el chat, sin datos aún de que ayude sin verificador).
+- **Revertir:** `TEXT2SQL_N_INTENTOS=3` para más reintentos; el código anterior está en git.
+
+## D-14 (C) Cadena de intentos con verificador; el juez opina solo si se pide
+- **Decisión:** el corte "en el primer acierto" (Fase 9) existe solo donde hay árbitro (evaluación, `--cadena`). En el chat no hay referencia, así que se acepta el primer SQL que corre y devuelve filas. El juez-LLM (`llm/juez.py`) es un componente separado: `opinar` solo con `--juez` (para medirlo contra el árbitro), `diagnosticar` solo con `--feedback juez`. Nunca decide el veredicto.
+- **Motivo:** el juez es una llamada extra al LLM por intento; una prueba detectó que se pedía su opinión aunque nadie la usara (`test_juez_que_filtra_el_valor…`).
+
+## D-15 (C) Pistas sin cifras + guarda que censura formas de la referencia
+- **Decisión:** la pista traduce el motivo del árbitro a un texto **sin números** (el árbitro informa cuántas filas tiene la referencia; eso no se pasa). La guarda `eval/pistas.py:censurar` reemplaza por `[valor omitido]` cualquier forma escrita de los valores comparados: 0-3 decimales, coma o punto decimal, separadores de miles y escalas ×100 y ÷100. Se excluyen los enteros < 10 y los textos de menos de 3 caracteres, porque aparecen en cualquier frase ("5 categorías").
+- **Limitación:** una referencia que sea un entero < 10 no queda protegida por la guarda. En el oráculo v2 no hay ninguna (el entero más chico es 24).
+- **Revertir:** `--feedback ninguno` desactiva toda pista semántica.
+
+## D-16 (C) Protocolo del benchmark: 1 repetición, worktree aislado; no se cambia el modelo
+- **Decisión:** 1 repetición por modelo (se estimaban ~25 min por corrida por la lentitud anómala de llama3.1), desde un git worktree fijo (`4562e4e`), para que los cambios de código en paralelo no afectaran la comparación. El modelo por defecto sigue siendo `llama3.1:8b-instruct-q4_K_M` (instrucción del usuario).
+- **Revertir/ampliar:** `python -m eval.benchmark_modelos --modelos … --repeticiones 3`, después de reiniciar el equipo y con el oráculo ampliado.

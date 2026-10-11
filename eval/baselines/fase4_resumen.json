@@ -1,0 +1,229 @@
+[
+  {
+    "modelo": "llama3.1:8b-instruct-q4_K_M",
+    "carga_s": 31.6,
+    "latencia_generacion_sql": [
+      {
+        "total_s": 82.82,
+        "carga_s": 0.02,
+        "prompt_tokens": 3169,
+        "prompt_eval_s": 65.07,
+        "tokens_generados": 63,
+        "generacion_s": 17.69,
+        "tok_s_prompt": 48.7,
+        "tok_s_generacion": 3.6
+      },
+      {
+        "total_s": 21.64,
+        "carga_s": 0.02,
+        "prompt_tokens": 3169,
+        "prompt_eval_s": 0.75,
+        "tokens_generados": 74,
+        "generacion_s": 20.85,
+        "tok_s_prompt": 4225.4,
+        "tok_s_generacion": 3.5
+      },
+      {
+        "total_s": 8.45,
+        "carga_s": 0.01,
+        "prompt_tokens": 3167,
+        "prompt_eval_s": 0.73,
+        "tokens_generados": 28,
+        "generacion_s": 7.69,
+        "tok_s_prompt": 4365.9,
+        "tok_s_generacion": 3.6
+      }
+    ],
+    "corridas": [
+      {
+        "archivo": "eval\\baselines\\fase4_llama3_1_8b_instruct_q4_k_m_r1.json",
+        "duracion_s": 403.1,
+        "resumen": {
+          "total_preguntas": 10,
+          "correctas": 0,
+          "precision_pct": 0.0,
+          "textos_respaldados": 5,
+          "latencia_media_s": 36.45,
+          "latencia_max_s": 61.23,
+          "por_origen": {
+            "llm": 7,
+            "sin_origen": 3
+          },
+          "clasificacion_final": {
+            "ok": 0,
+            "ejecucion": 2,
+            "semantico": 8,
+            "seguridad": 0,
+            "infra": 0
+          },
+          "clasificacion_por_intento": {
+            "ok": 0,
+            "ejecucion": 8,
+            "semantico": 10,
+            "seguridad": 0,
+            "infra": 0
+          }
+        },
+        "aciertos": [],
+        "memoria_pico": {
+          "size_gb": 5.8,
+          "vram_gb": 5.8,
+          "pct_gpu_min": 100.0,
+          "ram_llama_server_mb": 5636.4
+        }
+      }
+    ]
+  },
+  {
+    "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+    "carga_s": 22.4,
+    "latencia_generacion_sql": [
+      {
+        "total_s": 24.73,
+        "carga_s": 0.01,
+        "prompt_tokens": 3170,
+        "prompt_eval_s": 21.68,
+        "tokens_generados": 52,
+        "generacion_s": 3.01,
+        "tok_s_prompt": 146.2,
+        "tok_s_generacion": 17.3
+      },
+      {
+        "total_s": 3.45,
+        "carga_s": 0.03,
+        "prompt_tokens": 3170,
+        "prompt_eval_s": 0.34,
+        "tokens_generados": 58,
+        "generacion_s": 3.05,
+        "tok_s_prompt": 9248.9,
+        "tok_s_generacion": 19.0
+      },
+      {
+        "total_s": 3.37,
+        "carga_s": 0.01,
+        "prompt_tokens": 3168,
+        "prompt_eval_s": 0.34,
+        "tokens_generados": 57,
+        "generacion_s": 2.99,
+        "tok_s_prompt": 9377.6,
+        "tok_s_generacion": 19.1
+      }
+    ],
+    "corridas": [
+      {
+        "archivo": "eval\\baselines\\fase4_qwen2_5_coder_7b_instruct_q4_k_m_r1.json",
+        "duracion_s": 265.3,
+        "resumen": {
+          "total_preguntas": 10,
+          "correctas": 1,
+          "precision_pct": 10.0,
+          "textos_respaldados": 4,
+          "latencia_media_s": 23.11,
+          "latencia_max_s": 40.36,
+          "por_origen": {
+            "llm": 8,
+            "sin_origen": 2
+          },
+          "clasificacion_final": {
+            "ok": 1,
+            "ejecucion": 3,
+            "semantico": 6,
+            "seguridad": 0,
+            "infra": 0
+          },
+          "clasificacion_por_intento": {
+            "ok": 1,
+            "ejecucion": 7,
+            "semantico": 9,
+            "seguridad": 0,
+            "infra": 0
+          }
+        },
+        "aciertos": [
+          "n03_pct_ingresos_top5_categorias"
+        ],
+        "memoria_pico": {
+          "size_gb": 5.12,
+          "vram_gb": 5.12,
+          "pct_gpu_min": 100.0,
+          "ram_llama_server_mb": 7295.6
+        }
+      }
+    ]
+  },
+  {
+    "modelo": "llama3.2:3b-instruct-q4_K_M",
+    "carga_s": 10.7,
+    "latencia_generacion_sql": [
+      {
+        "total_s": 17.51,
+        "carga_s": 0.01,
+        "prompt_tokens": 3179,
+        "prompt_eval_s": 16.11,
+        "tokens_generados": 88,
+        "generacion_s": 1.35,
+        "tok_s_prompt": 197.3,
+        "tok_s_generacion": 64.9
+      },
+      {
+        "total_s": 1.49,
+        "carga_s": 0.01,
+        "prompt_tokens": 3179,
+        "prompt_eval_s": 0.27,
+        "tokens_generados": 78,
+        "generacion_s": 1.19,
+        "tok_s_prompt": 11966.2,
+        "tok_s_generacion": 65.4
+      },
+      {
+        "total_s": 1.1,
+        "carga_s": 0.02,
+        "prompt_tokens": 3177,
+        "prompt_eval_s": 0.26,
+        "tokens_generados": 53,
+        "generacion_s": 0.81,
+        "tok_s_prompt": 12290.0,
+        "tok_s_generacion": 65.6
+      }
+    ],
+    "corridas": [
+      {
+        "archivo": "eval\\baselines\\fase4_llama3_2_3b_instruct_q4_k_m_r1.json",
+        "duracion_s": 258.1,
+        "resumen": {
+          "total_preguntas": 10,
+          "correctas": 0,
+          "precision_pct": 0.0,
+          "textos_respaldados": 3,
+          "latencia_media_s": 22.54,
+          "latencia_max_s": 44.29,
+          "por_origen": {
+            "sin_origen": 8,
+            "llm": 2
+          },
+          "clasificacion_final": {
+            "ok": 0,
+            "ejecucion": 1,
+            "semantico": 9,
+            "seguridad": 0,
+            "infra": 0
+          },
+          "clasificacion_por_intento": {
+            "ok": 0,
+            "ejecucion": 11,
+            "semantico": 15,
+            "seguridad": 0,
+            "infra": 0
+          }
+        },
+        "aciertos": [],
+        "memoria_pico": {
+          "size_gb": 3.09,
+          "vram_gb": 3.09,
+          "pct_gpu_min": 100.0,
+          "ram_llama_server_mb": 3653.0
+        }
+      }
+    ]
+  }
+]

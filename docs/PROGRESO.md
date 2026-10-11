@@ -10,14 +10,15 @@
 | C — Fase 1 | ✅ | `276fc4f` | Tipos en todas las columnas (antes faltaba INTEGER y se usaba STRING); 4 few-shot + 2 del clasificador reemplazados; prueba de disyunción 6/6 | [FASE_01.md](FASE_01.md) |
 | C — Fase 3 | ✅ | `d5f096a` | **baseline_01: 2/10 (20 %)** sin plantillas. baseline_00 recalificado con el árbitro nuevo: 3/10. Límite de 60 s para el SQL del modelo (una consulta quedó colgada >10 min) | [FASE_03.md](FASE_03.md) |
 | D — Fase 2 | ✅ | `f23c019` | Clasificación por intento y final. Corrida real: ok 2 · ejecución 2 · **semántico 6** · seguridad 0 · infra 0. Seguridad (`DELETE` real) e infra (Ollama detenido) verificados con el modelo; 9/9 pruebas | [FASE_02.md](FASE_02.md) |
-| E — Fase 5 | ✅ | (este commit) | Oráculo v2 = 10 necesidades del dashboard, 1 consulta cada una; **SQL 10/10 y pandas 10/10**; el dashboard muestra la respuesta de referencia en cada pestaña; few-shot sin métricas del oráculo | [FASE_05.md](FASE_05.md) |
-| F — Fase 4 | pendiente | | | |
+| E — Fase 5 | ✅ | `cb20411` | Oráculo v2 = 10 necesidades del dashboard, 1 consulta cada una; **SQL 10/10 y pandas 10/10**; el dashboard muestra la respuesta de referencia en cada pestaña; few-shot sin métricas del oráculo | [FASE_05.md](FASE_05.md) |
+| F — Fase 4 | ✅ | (este commit) | Oráculo v2, sin plantillas: **llama3.1 8B 0/10 · qwen2.5-coder 7B 1/10 · llama3.2 3B 0/10**. Muestra demasiado chica para concluir (difieren en 1 pregunta). VRAM 5.80 / 5.12 / 3.09 GB. Causa de la latencia medida: 1.ª evaluación del esquema y generación de tokens (no la caché) | [FASE_04.md](FASE_04.md) |
 | G — Fases 6, 9, 7, 8 | pendiente | | | |
 | H — Fase 10 | pendiente | | | |
 | I — Fase 11 | pendiente | | | |
 | J — Limpieza | pendiente | | | |
 
 ## Pendientes / avisos
+- ⚠ **Velocidad:** llama3.1 genera a ~4 tok/s desde ~17:50 (antes 36 tok/s); latencias de llama3.1 no representativas. Reiniciar Windows y volver a medir.
 - ⚠ **Ollama:** tras detenerlo para la prueba de infra, la app de bandeja no levanta su servidor; corre `ollama serve` lanzado desde la sesión. Ver FASE_02.md.
 - Una evaluación completa de 10 preguntas tarda entre 3.5 y 8 min (depende de reintentos y de consultas lentas).
 - La cifra honesta actual es **2/10**; las cifras anteriores estaban infladas (ver FASE_03.md).
