@@ -8,3 +8,6 @@ eval/eval_results_*.json
 .DS_Store
 logs/
 runtime/
+
+# Configuración local de Claude Code (rutas de esta máquina)
+.claude/

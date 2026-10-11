@@ -42,13 +42,16 @@ Resumen honesto en [docs/RESUMEN_PARA_ENTREGA.md](docs/RESUMEN_PARA_ENTREGA.md);
 # 0) Código. El venv va FUERA de la carpeta del repo: si el repo está en OneDrive, la sincronización rompe el venv
 git clone https://github.com/Adely201810/AnalizadorIA.git && cd AnalizadorIA
 py -3.14 -m venv ~/.venvs/analizadoria && source ~/.venvs/analizadoria/Scripts/activate
+export PYTHONUTF8=1                                # Windows: sin esto, run_eval falla al redirigir la salida (UnicodeEncodeError, cp1252)
 python --version                                   # Python 3.14.3
 python -m pip install -r requirements.lock.txt     # versiones exactas
 
 # 1) Base de datos: esquema + 9 CSV + 7 vistas -> db/olist.db (no se versiona; ~1-2 min)
 python seeder/load_olist_csv.py
 
-# 2) Oráculo: reconstruirlo debe dar EXACTAMENTE los archivos versionados, y pandas debe coincidir
+# 2) Oráculo: reconstruirlo debe dar EXACTAMENTE los archivos versionados, y pandas debe coincidir.
+#    El constructor parte del oráculo v2 (commit cb20411); se restaura desde git y el script lo convierte en v3
+git show cb20411:eval/ground_truth_olist.json > eval/ground_truth_olist.json
 python -m eval.construir_oraculo_v3
 git diff --exit-code eval/ground_truth_olist.json eval/split_oraculo.json && echo "oráculo idéntico"
 python -m dashboard.verify_pandas                  # todas las líneas deben decir [OK]
@@ -70,7 +73,7 @@ streamlit run app.py
 
 Notas:
 - **PRUEBA no se vuelve a evaluar para ajustar nada** (ya se usó una vez; ver docs/INFORME_FINAL_2.md §6). El comando exacto que se usó está en [docs/E2_PASO_5.md](docs/E2_PASO_5.md).
-- **Variación esperable:** con la misma configuración, DESARROLLO dio 8, 9, 8 y luego 10, 7, 9. Una repetición sola no basta para comparar.
+- **Variación esperable:** con la misma configuración, DESARROLLO dio 8, 9, 8; luego 10, 7, 9; y 6, 8, 7 al reproducirlo desde un clon limpio (9 repeticiones: rango 6–10, media 8.0). Una repetición sola no basta para comparar.
 - **Variables del pipeline:** `OLLAMA_MODEL`, `OLLAMA_HOST`, `TEXT2SQL_CLASIFICADOR` (0 por defecto), `TEXT2SQL_VISTA_VALIDOS` (1 por defecto) y `TEXT2SQL_N_INTENTOS` (2). Ver [docs/ENTORNO.md](docs/ENTORNO.md).
 - Detalles de instalación y despliegue: [docs/DEPLOY.md](docs/DEPLOY.md). Diccionario de datos: [docs/esquema_olist.md](docs/esquema_olist.md).
 

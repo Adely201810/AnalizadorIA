@@ -1,5 +1,7 @@
 # Despliegue — Olist Analytics (LLM local)
 
+> **Aviso (cierre del proyecto, 2026-10-11):** el procedimiento **verificado** para reproducir todo desde cero, con versiones fijadas (Python 3.14.3, Ollama 0.40.3, IDs de los modelos), es la sección "Reproducir desde cero" del [README](../README.md). Esta guía es de la etapa 1 y se conserva como referencia de hardware y opciones. Algunas partes quedaron desactualizadas: habla de "10 preguntas", pero el oráculo actual (v3) tiene 30, separadas en DESARROLLO y PRUEBA, y los modelos alternativos que menciona no se usaron en las mediciones.
+
 Guía para levantar el proyecto de punta a punta en una máquina con:
 
 - CPU: AMD Ryzen 5 (serie 7000) o equivalente
