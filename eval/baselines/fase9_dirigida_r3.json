@@ -1,0 +1,240 @@
+{
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-10-10T20:07:04",
+  "configuracion": {
+    "n_intentos": 5,
+    "cadena_con_arbitro": true,
+    "feedback": "generico",
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.9,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json"
+  },
+  "recursos_ollama": {
+    "size_bytes": 5804392447,
+    "size_vram_bytes": 5804392447,
+    "pct_gpu": 100.0,
+    "context_length": 8192
+  },
+  "resumen": {
+    "juez_vs_arbitro": null,
+    "total_preguntas": 3,
+    "correctas": 2,
+    "precision_pct": 66.7,
+    "textos_respaldados": 2,
+    "latencia_media_s": 51.29,
+    "latencia_max_s": 74.43,
+    "por_origen": {
+      "llm": 3
+    },
+    "clasificacion_final": {
+      "ok": 2,
+      "ejecucion": 1,
+      "semantico": 0,
+      "seguridad": 0,
+      "infra": 0
+    },
+    "clasificacion_por_intento": {
+      "ok": 2,
+      "ejecucion": 5,
+      "semantico": 3,
+      "seguridad": 0,
+      "infra": 0
+    }
+  },
+  "resultados": [
+    {
+      "id": "n01_pct_clientes_recurrentes",
+      "pregunta": "¿Qué porcentaje de los clientes únicos hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT \n    ROUND(\n        100.0 * \n        COUNT(DISTINCT customer_unique_id) / \n        (SELECT COUNT(DISTINCT customer_unique_id) FROM customers), \n        2) AS porcentaje_recurrencia\nFROM (\n  SELECT DISTINCT customer_unique_id \n  FROM vw_clientes_recurrentes\n  WHERE es_recurrente = 1\n) AS clientes_recurrentes",
+      "sql_referencia": "WITH p AS (SELECT c.customer_unique_id, COUNT(DISTINCT o.order_id) AS n FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY c.customer_unique_id) SELECT ROUND(100.0 * SUM(CASE WHEN n > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_recurrentes FROM p",
+      "filas_modelo": [
+        [
+          3.01
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          3.04
+        ]
+      ],
+      "respuesta_modelo": "Un 3% de los clientes únicos hicieron más de un pedido válido. Esto se respalda por que el porcentaje de recurrencia de estos clientes es de 3,01%.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 4,
+      "latencia_s": 63.24,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / \n    (SELECT COUNT(DISTINCT customer_unique_id) FROM vw_clientes_recurrentes), 2) \nAS porcentaje_recurrencia\nFROM customers c",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT ROUND(100.0 * \n    (SELECT COUNT(DISTINCT customer_unique_id) \n     FROM customers c \n     WHERE c.customer_unique_id IN (SELECT customer_unique_id \n                                    FROM vw_clientes_recurrentes)), \n    2) AS porcentaje_recurrencia",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n    ROUND(\n        100.0 * \n        COUNT(DISTINCT customer_unique_id) / \n        (SELECT COUNT(DISTINCT customer_unique_id) FROM customers), \n        2) AS porcentaje_recurrencia\nFROM vw_clientes_recurrentes",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 4,
+          "sql": "SELECT \n    ROUND(\n        100.0 * \n        COUNT(DISTINCT customer_unique_id) / \n        (SELECT COUNT(DISTINCT customer_unique_id) FROM customers), \n        2) AS porcentaje_recurrencia\nFROM (\n  SELECT DISTINCT customer_unique_id \n  FROM vw_clientes_recurrentes\n  WHERE es_recurrente = 1\n) AS clientes_recurrentes",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": true,
+          "pista_siguiente": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": [
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        }
+      ]
+    },
+    {
+      "id": "n03_pct_ingresos_top5_categorias",
+      "pregunta": "¿Qué porcentaje de los ingresos (sin contar pedidos cancelados o no disponibles) concentran las 5 categorías de producto que más ingresos generan?",
+      "sql_generado": "SELECT CAST(SUM(CASE WHEN t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) THEN oi.price ELSE 0 END) * 100 / \n          (SELECT SUM(price) FROM vw_ingresos_por_categoria WHERE payment_type = 'boleto' AND order_status NOT IN ('canceled', 'unavailable')) AS REAL) AS porcentaje\nFROM vw_ventas_pedido v\nJOIN order_items oi ON v.order_id = oi.order_id\nJOIN product_category_translation t ON oi.product_id = \n  (SELECT p.product_id \n   FROM products p \n   LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name \n   WHERE t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) \n   GROUP BY p.product_id \n   HAVING COUNT(DISTINCT p.product_id) = 5)",
+      "sql_referencia": "WITH cat AS (SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, SUM(oi.price) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY categoria) SELECT ROUND(100.0 * (SELECT SUM(ingresos) FROM (SELECT ingresos FROM cat ORDER BY ingresos DESC LIMIT 5)) / (SELECT SUM(ingresos) FROM cat), 2) AS pct_top5",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          39.82
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: ambiguous column name: price",
+      "origen": "llm",
+      "intentos": 5,
+      "latencia_s": 74.43,
+      "correcto": false,
+      "clasificacion": "ejecucion",
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT CAST(SUM(CASE WHEN t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) THEN oi.price ELSE 0 END) * 100 / \n          (SELECT SUM(price) FROM vw_ingresos_por_categoria WHERE payment_type = 'boleto' AND order_status NOT IN ('canceled', 'unavailable')) AS REAL) AS porcentaje\nFROM vw_ingresos_por_categoria c\nJOIN products p ON c.product_category_name_english = p.product_category_name\nJOIN order_items oi ON p.product_id = oi.product_id",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'c.product_category_name_english': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'c.product_category_name_english': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT CAST(SUM(CASE WHEN t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) THEN oi.price ELSE 0 END) * 100 / \n          (SELECT SUM(price) FROM vw_ingresos_por_categoria WHERE payment_type = 'boleto' AND order_status NOT IN ('canceled', 'unavailable')) AS REAL) AS porcentaje\nFROM vw_ingresos_por_categoria c\nJOIN product_category_translation t ON c.categoria_ingles = t.product_category_name_english\nJOIN order_items oi ON c.order_id = oi.order_id",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'c.order_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_entregas_retrasos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'c.order_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_entregas_retrasos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT CAST(SUM(CASE WHEN t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) THEN oi.price ELSE 0 END) * 100 / \n          (SELECT SUM(price) FROM vw_ingresos_por_categoria WHERE payment_type = 'boleto' AND order_status NOT IN ('canceled', 'unavailable')) AS REAL) AS porcentaje\nFROM vw_ingresos_por_categoria c\nJOIN product_category_translation t ON c.categoria_ingles = t.product_category_name_english\nJOIN vw_ventas_pedido v ON c.order_id = v.order_id\nJOIN order_items oi ON v.order_id = oi.order_id",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'c.order_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_entregas_retrasos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'c.order_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_entregas_retrasos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 4,
+          "sql": "SELECT CAST(SUM(CASE WHEN t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) THEN oi.price ELSE 0 END) * 100 / \n          (SELECT SUM(price) FROM vw_ingresos_por_categoria WHERE payment_type = 'boleto' AND order_status NOT IN ('canceled', 'unavailable')) AS REAL) AS porcentaje\nFROM vw_ventas_pedido v\nJOIN order_items oi ON v.order_id = oi.order_id\nJOIN product_category_translation t ON oi.product_id = \n  (SELECT p.product_id \n   FROM products p \n   LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name \n   WHERE t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) \n   GROUP BY p.product_id \n   HAVING COUNT(DISTINCT p.product_id) = 5)",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: ambiguous column name: price",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: ambiguous column name: price",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 5,
+          "sql": "SELECT CAST(SUM(CASE WHEN t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) THEN oi.price ELSE 0 END) * 100 / \n          (SELECT SUM(price) FROM vw_ingresos_por_categoria WHERE payment_type = 'boleto' AND order_status NOT IN ('canceled', 'unavailable')) AS REAL) AS porcentaje\nFROM vw_ventas_pedido v\nJOIN order_items oi ON v.order_id = oi.order_id\nJOIN product_category_translation t ON oi.product_id = \n  (SELECT p.product_id \n   FROM products p \n   LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name \n   WHERE t.product_category_name_english IN (SELECT product_category_name_english FROM vw_ingresos_por_categoria ORDER BY ingresos DESC LIMIT 5) \n   GROUP BY p.product_id \n   HAVING COUNT(DISTINCT p.product_id) = 5)",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: ambiguous column name: price",
+          "pista_siguiente": null,
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n07_mes_mayores_ingresos",
+      "pregunta": "¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?",
+      "sql_generado": "SELECT strftime('%Y-%m', order_purchase_timestamp) AS mes, SUM(price) AS ingresos\nFROM vw_ventas_pedido\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+      "sql_referencia": "SELECT strftime('%Y-%m', o.order_purchase_timestamp) AS mes, ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY mes ORDER BY ingresos DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "2017-11",
+          1003862.14
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "2017-11",
+          1003862.14
+        ]
+      ],
+      "respuesta_modelo": "El mes que tuvo más ingresos por ventas de pedidos válidos fue noviembre de 2017. Esto se debe a que en ese mes llegaron a la empresa ingresos de R$1.003.862,14.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 1,
+      "latencia_s": 16.2,
+      "correcto": true,
+      "clasificacion": "ok",
+      "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT strftime('%Y-%m', order_purchase_timestamp) AS mes, SUM(price) AS ingresos\nFROM vw_ventas_pedido\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": true,
+          "pista_siguiente": null,
+          "tipo_evaluado": "ok"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    }
+  ]
+}

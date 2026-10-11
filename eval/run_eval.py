@@ -198,6 +198,7 @@ def main():
     parser = argparse.ArgumentParser(description="Evalúa el pipeline Text-to-SQL contra el oráculo.")
     parser.add_argument("--model", default=None, help="Modelo de Ollama (default: el de llm/ollama_client.py)")
     parser.add_argument("--limit", type=int, default=None, help="Solo correr las primeras N preguntas")
+    parser.add_argument("--ids", nargs="+", default=None, help="Solo estas preguntas (ids del oráculo)")
     parser.add_argument("--intentos", type=int, default=2, help="N: intentos TOTALES por pregunta (Fase 6)")
     parser.add_argument("--cadena", action="store_true",
                         help="El árbitro verifica cada intento y la cadena se corta en el primer acierto (Fase 9)")
@@ -214,6 +215,8 @@ def main():
 
     data = json.loads(args.ground_truth.read_text(encoding="utf-8"))
     preguntas = data["preguntas"][: args.limit] if args.limit else data["preguntas"]
+    if args.ids:
+        preguntas = [q for q in preguntas if q["id"] in set(args.ids)]
 
     client = OllamaClient(model=args.model) if args.model else OllamaClient()
     if args.temperature is not None:

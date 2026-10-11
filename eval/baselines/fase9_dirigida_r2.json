@@ -1,0 +1,299 @@
+{
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "fecha": "2026-10-10T20:03:46",
+  "configuracion": {
+    "n_intentos": 5,
+    "cadena_con_arbitro": true,
+    "feedback": "generico",
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.9,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json"
+  },
+  "recursos_ollama": {
+    "size_bytes": 5804392447,
+    "size_vram_bytes": 5804392447,
+    "pct_gpu": 100.0,
+    "context_length": 8192
+  },
+  "resumen": {
+    "juez_vs_arbitro": null,
+    "total_preguntas": 3,
+    "correctas": 0,
+    "precision_pct": 0.0,
+    "textos_respaldados": 1,
+    "latencia_media_s": 62.92,
+    "latencia_max_s": 72.7,
+    "por_origen": {
+      "llm": 3
+    },
+    "clasificacion_final": {
+      "ok": 0,
+      "ejecucion": 1,
+      "semantico": 2,
+      "seguridad": 0,
+      "infra": 0
+    },
+    "clasificacion_por_intento": {
+      "ok": 0,
+      "ejecucion": 8,
+      "semantico": 7,
+      "seguridad": 0,
+      "infra": 0
+    }
+  },
+  "resultados": [
+    {
+      "id": "n01_pct_clientes_recurrentes",
+      "pregunta": "¿Qué porcentaje de los clientes únicos hizo más de un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_generado": "SELECT ROUND(100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                      FROM customers c JOIN orders o ON c.customer_id = o.customer_id\n                      WHERE o.order_status NOT IN ('canceled', 'unavailable')), \n             2) AS porcentaje",
+      "sql_referencia": "WITH p AS (SELECT c.customer_unique_id, COUNT(DISTINCT o.order_id) AS n FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY c.customer_unique_id) SELECT ROUND(100.0 * SUM(CASE WHEN n > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_recurrentes FROM p",
+      "filas_modelo": [
+        [
+          9499000.0
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          3.04
+        ]
+      ],
+      "respuesta_modelo": "No pude redactar un resumen confiable; revisa la tabla de resultados.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 5,
+      "latencia_s": 72.7,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled', 'unavailable')), 2) AS porcentaje",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / (SELECT COUNT(DISTINCT c.customer_unique_id) FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled', 'unavailable')), 2) AS porcentaje",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: c.customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: c.customer_unique_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / (SELECT COUNT(DISTINCT customer_unique_id) FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled', 'unavailable')), 2) AS porcentaje",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 4,
+          "sql": "SELECT ROUND(100.0 * (SELECT COUNT(DISTINCT customer_unique_id) FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) / (SELECT COUNT(DISTINCT customer_unique_id) FROM customers), 2) AS porcentaje",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 5,
+          "sql": "SELECT ROUND(100.0 * (SELECT COUNT(DISTINCT customer_unique_id) \n                      FROM customers c JOIN orders o ON c.customer_id = o.customer_id\n                      WHERE o.order_status NOT IN ('canceled', 'unavailable')), \n             2) AS porcentaje",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": [
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        }
+      ]
+    },
+    {
+      "id": "n03_pct_ingresos_top5_categorias",
+      "pregunta": "¿Qué porcentaje de los ingresos (sin contar pedidos cancelados o no disponibles) concentran las 5 categorías de producto que más ingresos generan?",
+      "sql_generado": "SELECT \n  (100 * pedidos * price) / \n  (SELECT SUM(price) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje,\n  categoria,\n  pedidos * price AS ingresos_categoria\nFROM \n  vw_ingresos_por_categoria\nORDER BY \n  ingresos_categoria DESC\nLIMIT 5",
+      "sql_referencia": "WITH cat AS (SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, SUM(oi.price) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY categoria) SELECT ROUND(100.0 * (SELECT SUM(ingresos) FROM (SELECT ingresos FROM cat ORDER BY ingresos DESC LIMIT 5)) / (SELECT SUM(ingresos) FROM cat), 2) AS pct_top5",
+      "filas_modelo": [],
+      "total_filas_modelo": 0,
+      "filas_referencia": [
+        [
+          39.82
+        ]
+      ],
+      "respuesta_modelo": "No logré armar una consulta que funcionara bien para responder eso; puede que la lógica no haya sido la correcta. ¿Podrías reformular la pregunta?",
+      "error_pipeline": null,
+      "detalle_error": "Error de SQLite al ejecutar la consulta: no such column: price",
+      "origen": "llm",
+      "intentos": 5,
+      "latencia_s": 59.35,
+      "correcto": false,
+      "clasificacion": "ejecucion",
+      "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n  (100 * SUM(CASE WHEN t.product_category_name_english = categoria THEN p.precio ELSE 0 END)) / \n  (SELECT SUM(price) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje,\n  t.product_category_name_english AS categoria,\n  SUM(CASE WHEN t.product_category_name_english = categoria THEN p.precio ELSE 0 END) AS ingresos_categoria\nFROM \n  vw_ingresos_por_categoria p JOIN product_category_translation t ON p.categoria_ingles = t.product_category_name_english\nGROUP BY \n  categoria\nORDER BY \n  ingresos_categoria DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'p.precio': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'precio'. Esa columna no existe en ninguna tabla ni vista del esquema. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'p.precio': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'precio'. Esa columna no existe en ninguna tabla ni vista del esquema. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n  (100 * SUM(CASE WHEN t.product_category_name_english = categoria THEN p.pedidos ELSE 0 END) * p.pedidos * p.precio) / \n  (SELECT SUM(price) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje,\n  t.product_category_name_english AS categoria,\n  SUM(CASE WHEN t.product_category_name_english = categoria THEN p.pedidos ELSE 0 END) * p.pedidos * p.precio AS ingresos_categoria\nFROM \n  vw_ingresos_por_categoria p JOIN product_category_translation t ON p.categoria_ingles = t.product_category_name_english\nGROUP BY \n  categoria\nORDER BY \n  ingresos_categoria DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "La consulta usa columnas que no existen en la tabla indicada: 'p.precio': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'precio'. Esa columna no existe en ninguna tabla ni vista del esquema. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'p.precio': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'precio'. Esa columna no existe en ninguna tabla ni vista del esquema. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n  (100 * pedidos * precio) / \n  (SELECT SUM(price) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje,\n  categoria,\n  pedidos * precio AS ingresos_categoria\nFROM \n  vw_ingresos_por_categoria\nORDER BY \n  ingresos_categoria DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: precio",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: precio",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 4,
+          "sql": "SELECT \n  (100 * pedidos * price) / \n  (SELECT SUM(price) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje,\n  categoria,\n  pedidos * price AS ingresos_categoria\nFROM \n  vw_ingresos_por_categoria\nORDER BY \n  ingresos_categoria DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: price",
+          "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: price",
+          "tipo_evaluado": "ejecucion"
+        },
+        {
+          "intento": 5,
+          "sql": "SELECT \n  (100 * pedidos * price) / \n  (SELECT SUM(price) FROM order_items oi JOIN orders o ON oi.order_id = o.order_id WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS porcentaje,\n  categoria,\n  pedidos * price AS ingresos_categoria\nFROM \n  vw_ingresos_por_categoria\nORDER BY \n  ingresos_categoria DESC\nLIMIT 5",
+          "tipo": "ejecucion",
+          "detalle": "Error de SQLite al ejecutar la consulta: no such column: price",
+          "pista_siguiente": null,
+          "tipo_evaluado": "ejecucion"
+        }
+      ],
+      "texto_respaldado": false,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": []
+    },
+    {
+      "id": "n07_mes_mayores_ingresos",
+      "pregunta": "¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?",
+      "sql_generado": "SELECT \n    strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n    SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status IN ('delivered', 'shipped')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+      "sql_referencia": "SELECT strftime('%Y-%m', o.order_purchase_timestamp) AS mes, ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY mes ORDER BY ingresos DESC LIMIT 1",
+      "filas_modelo": [
+        [
+          "2017-11",
+          995028.84
+        ]
+      ],
+      "total_filas_modelo": 1,
+      "filas_referencia": [
+        [
+          "2017-11",
+          1003862.14
+        ]
+      ],
+      "respuesta_modelo": "El mes con más ingresos por ventas de pedidos válidos fue noviembre de 2017 y los ingresos fueron de R$995,028.84.",
+      "error_pipeline": null,
+      "detalle_error": null,
+      "origen": "llm",
+      "intentos": 5,
+      "latencia_s": 56.71,
+      "correcto": false,
+      "clasificacion": "semantico",
+      "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+      "intentos_detalle": [
+        {
+          "intento": 1,
+          "sql": "SELECT \n    strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n    SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status IN ('delivered', 'shipped')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 2,
+          "sql": "SELECT \n    strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n    SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status IN ('delivered', 'shipped')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 3,
+          "sql": "SELECT \n    strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n    SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status IN ('delivered', 'shipped')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 4,
+          "sql": "SELECT \n    strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n    SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status IN ('delivered', 'shipped')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "tipo_evaluado": "semantico"
+        },
+        {
+          "intento": 5,
+          "sql": "SELECT \n    strftime('%Y-%m', o.order_purchase_timestamp) AS mes, \n    SUM(oi.price) AS ingresos\nFROM orders o\nJOIN order_items oi ON o.order_id = oi.order_id\nWHERE o.order_status IN ('delivered', 'shipped')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+          "tipo": "ok",
+          "detalle": null,
+          "verificado": false,
+          "pista_siguiente": null,
+          "tipo_evaluado": "semantico"
+        }
+      ],
+      "texto_respaldado": true,
+      "opiniones_juez": [],
+      "diagnosticos_juez": [],
+      "pistas": [
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        },
+        {
+          "pista": "El resultado tiene la forma esperada, pero sus valores no son los correctos: revisa la lógica del cálculo.",
+          "formas_censuradas": []
+        }
+      ]
+    }
+  ]
+}
