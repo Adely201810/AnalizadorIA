@@ -128,9 +128,9 @@ class TestOraculoCompleto(unittest.TestCase):
             v = comparar(ref, ref, q["tipos_columnas"], q.get("orden_importa", False))
             self.assertTrue(v.correcto, f"{qid}: {v.motivo}")
 
-    def test_oraculo_v2_cada_referencia_se_acepta_a_si_misma_y_coincide_con_lo_guardado(self):
+    def test_oraculo_actual_cada_referencia_se_acepta_a_si_misma_y_coincide_con_lo_guardado(self):
         v2 = json.loads((RAIZ / "eval" / "ground_truth_olist.json").read_text(encoding="utf-8"))["preguntas"]
-        self.assertEqual(len(v2), 30)
+        self.assertEqual(len(v2), 50)  # oráculo v4: DESARROLLO 30 + PRUEBA_2 20 (Etapa 3)
         conn = sqlite3.connect(f"file:{RAIZ / 'db' / 'olist.db'}?mode=ro", uri=True)
         try:
             for q in v2:

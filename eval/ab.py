@@ -11,7 +11,7 @@ Uso:
     python -m eval.ab --nombre sin_clasificador --env TEXT2SQL_CLASIFICADOR=0
     python -m eval.ab --nombre qwen --modelo qwen2.5-coder:7b-instruct-q4_K_M --env TEXT2SQL_CLASIFICADOR=0
 
-Por seguridad este script NO acepta --conjunto prueba (eso es del Paso 5).
+Por seguridad este script NO acepta --conjunto prueba_2 ni todos (PRUEBA_2 se evalúa una sola vez al final de la etapa 3).
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-SALIDA = RAIZ / "eval" / "baselines" / "etapa2"
+SALIDA = RAIZ / "eval" / "baselines" / "etapa2"  # --carpeta la cambia (Etapa 3: etapa3)
 
 
 def wilson(aciertos: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -58,7 +58,23 @@ def resumir(nombre: str, archivos: list[Path]) -> dict:
         "aciertos_por_pregunta": dict(sorted(por_pregunta.items())), "clasificacion_total": clasif,
         "respuestas_descompuestas": descompuestas,
         "latencia_media_s": round(statistics.mean(c["resumen"]["latencia_media_s"] for c in corridas), 2),
+        # Etapa 3: tamaño medio del PRIMER prompt al generador de SQL (system + pregunta), en caracteres.
+        "prompt_sql_caracteres_medio": _prompt_medio(corridas),
+        "wilson95_pct_por_pregunta": _wilson_por_pregunta(por_pregunta, len(aciertos)),
     }
+
+
+def _prompt_medio(corridas: list[dict]) -> float | None:
+    t = [r["prompt_sql_caracteres"][0] for c in corridas for r in c["resultados"] if r.get("prompt_sql_caracteres")]
+    return round(statistics.mean(t)) if t else None
+
+
+def _wilson_por_pregunta(por_pregunta: dict[str, int], k: int) -> dict:
+    """Intervalo sobre PREGUNTAS (no sobre respuestas): una pregunta cuenta como acertada
+    si acierta en la mayoría de las k repeticiones (Etapa 2: las repeticiones no son independientes)."""
+    n = len(por_pregunta)
+    mayoria = sum(v * 2 > k for v in por_pregunta.values())
+    return {"criterio": f"acierta en > {k // 2} de {k}", "aciertos": mayoria, "preguntas": n, "wilson95_pct": wilson(mayoria, n)}
 
 
 def main():
@@ -67,10 +83,13 @@ def main():
     ap.add_argument("--repeticiones", type=int, default=3)
     ap.add_argument("--modelo", default=None)
     ap.add_argument("--env", nargs="*", default=[], help="VAR=valor para el pipeline")
+    ap.add_argument("--carpeta", default="etapa2", help="subcarpeta de eval/baselines/ (Etapa 3: etapa3)")
     ap.add_argument("--extra", nargs=argparse.REMAINDER, default=[], help="argumentos extra para run_eval.py")
     args = ap.parse_args()
-    if "prueba" in args.extra or "todos" in args.extra:
-        sys.exit("eval.ab solo evalúa DESARROLLO; PRUEBA se evalúa una sola vez en el Paso 5.")
+    global SALIDA
+    SALIDA = RAIZ / "eval" / "baselines" / args.carpeta
+    if any(c in args.extra for c in ("prueba", "prueba_2", "todos")):
+        sys.exit("eval.ab solo evalúa DESARROLLO; PRUEBA_2 se evalúa una sola vez al final de la etapa 3.")
     SALIDA.mkdir(parents=True, exist_ok=True)
     env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
     env.update(dict(kv.split("=", 1) for kv in args.env))
@@ -88,8 +107,9 @@ def main():
     resumen = resumir(args.nombre, archivos)
     (SALIDA / f"{args.nombre}_resumen.json").write_text(json.dumps(resumen, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({k: resumen[k] for k in ("nombre", "modelo", "aciertos", "media", "minimo", "maximo", "pct_media",
-                                               "wilson95_pct", "respuestas_descompuestas", "clasificacion_total",
-                                               "latencia_media_s")}, ensure_ascii=False))
+                                               "wilson95_pct", "wilson95_pct_por_pregunta", "respuestas_descompuestas",
+                                               "clasificacion_total", "latencia_media_s", "prompt_sql_caracteres_medio")},
+                     ensure_ascii=False))
     print("aciertos por pregunta (de", args.repeticiones, "):", json.dumps(resumen["aciertos_por_pregunta"]))
 
 

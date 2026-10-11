@@ -56,6 +56,29 @@ MENSAJES_FIJOS = {MENSAJE_PROBLEMA_TRAS_REINTENTO, MENSAJE_RESUMEN_NO_CONFIABLE,
 MAX_FILAS_GUARDADAS = 10
 
 
+# Etapa 3, Paso 2: temperatura > 0 en TODAS las corridas de evaluación, para que las
+# repeticiones aporten variabilidad real (con 0.1, las 3 repeticiones de PRUEBA fueron
+# idénticas). El chat (llm/ollama_client.py) sigue con su valor propio (D-28).
+TEMPERATURA_EVAL = 0.3
+
+
+class MedidorPrompt:
+    """Envuelve al cliente de Ollama sin cambiar nada y anota el tamaño (caracteres de
+    system + prompt) de cada llamada al GENERADOR de SQL. Etapa 3: relación tamaño/precisión."""
+
+    def __init__(self, cliente):
+        self._cliente = cliente
+        self.tamanos_sql: list[int] = []
+
+    def __getattr__(self, nombre):
+        return getattr(self._cliente, nombre)
+
+    def generate(self, prompt, system=None, **kwargs):
+        if (system or "").startswith("Eres un generador de consultas SQL"):
+            self.tamanos_sql.append(len(system) + len(prompt))
+        return self._cliente.generate(prompt, system=system, **kwargs)
+
+
 def calificar(item: dict, resultado: Text2SQLResult, filas_referencia: list[tuple]) -> tuple[bool, str]:
     """Veredicto del árbitro determinista: (correcto, motivo)."""
     if resultado.error:
@@ -199,14 +222,15 @@ def main():
     parser.add_argument("--model", default=None, help="Modelo de Ollama (default: el de llm/ollama_client.py)")
     parser.add_argument("--limit", type=int, default=None, help="Solo correr las primeras N preguntas")
     parser.add_argument("--ids", nargs="+", default=None, help="Solo estas preguntas (ids del oráculo)")
-    parser.add_argument("--conjunto", choices=["desarrollo", "prueba", "todos"], default="desarrollo",
-                        help="Conjunto del oráculo v3. PRUEBA es held-out: solo para la evaluación final (Paso 5)")
+    parser.add_argument("--conjunto", choices=["desarrollo", "prueba_2", "todos"], default="desarrollo",
+                        help="Conjunto del oráculo v4. PRUEBA_2 es held-out: solo para la evaluación final de la etapa 3")
     parser.add_argument("--intentos", type=int, default=2, help="N: intentos TOTALES por pregunta (Fase 6)")
     parser.add_argument("--cadena", action="store_true",
                         help="El árbitro verifica cada intento y la cadena se corta en el primer acierto (Fase 9)")
     parser.add_argument("--feedback", choices=MODOS, default="generico", help="Pista entre intentos con --cadena (Fase 7)")
     parser.add_argument("--juez", action="store_true", help="Registra la opinión del juez-LLM en cada intento verificado (Fase 8)")
-    parser.add_argument("--temperature", type=float, default=None, help="Temperatura del generador de SQL")
+    parser.add_argument("--temperature", type=float, default=TEMPERATURA_EVAL,
+                        help=f"Temperatura del modelo (default {TEMPERATURA_EVAL}, Etapa 3: >0 para que las repeticiones varíen)")
     parser.add_argument("--sin-plantillas", action="store_true", help="Desactiva plantillas por reglas y fallback sobre vistas")
     parser.add_argument("--output", default=None, help="JSON de resultados (default: eval/eval_results_<timestamp>.json)")
     parser.add_argument("--reanudar", action="store_true", help="Retoma --output: salta las preguntas ya evaluadas")
@@ -268,9 +292,10 @@ def main():
         registro = {"opiniones_juez": [], "diagnosticos_juez": [], "pistas": []}
         verificador = crear_verificador(item, filas_ref, args.feedback, juez, registro, opinar=args.juez) if args.cadena else None
         t0 = time.perf_counter()
+        medidor = MedidorPrompt(client)
         try:
             resultado = answer_question(
-                item["pregunta"], client=client, n_intentos=args.intentos,
+                item["pregunta"], client=medidor, n_intentos=args.intentos,
                 usar_plantillas=configuracion["usar_plantillas"], verificador=verificador,
             )
         except Exception as exc:  # noqa: BLE001 - una pregunta rota no debe tumbar la corrida
@@ -309,6 +334,7 @@ def main():
             "motivo": motivo,
             "intentos_detalle": intentos_detalle,
             "texto_respaldado": texto_respaldado(resultado),
+            "prompt_sql_caracteres": medidor.tamanos_sql,
             **registro,
         })
         guardar(output_path, cabecera, resultados)

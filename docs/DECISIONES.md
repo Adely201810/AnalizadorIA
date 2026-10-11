@@ -164,3 +164,20 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Fecha:** se muestran los años en la métrica y las fechas exactas debajo, en vez de reducir el tamaño de letra de todas las métricas.
 - **Bitácora:** el diagnóstico nuevo solo cambia lo que se registra y se inyecta en preguntas futuras; la pista del reintento dentro de la misma pregunta no cambió.
 - **Revertir:** cada punto está en el commit del Paso 4 y se puede deshacer por separado con `git revert`/`git checkout` de su archivo.
+
+---
+# Etapa 3
+
+## D-27 (C) Dos notas del contexto calcaban preguntas del oráculo: reescritas antes de la nueva base
+- **Hallazgo (Paso 1):** la nota "Para 'peso del flete sobre el precio' usa SUM(freight_value)/SUM(price)" repetía la redacción de n05 ("pesa más el flete sobre el precio"), y la nota "Preguntas sobre desde qué punto/umbral de retraso empieza a bajar la calificación…" respondía a q5 del oráculo v1. Las dos venían de la etapa 1.
+- **Decisión:** se mantiene la definición de negocio, pero no la redacción. La regla `SUM(freight_value)/SUM(price)` queda en la nota general de "flete como proporción de las ventas"; `vw_retraso_por_rango` se describe como vista (qué trae y cómo ordenarla). El cambio entra **antes** de medir la nueva base, así que la base ya lo incluye.
+- **Prueba nueva:** `tests/test_heldout.py::TestContextoNoDerivaDelOraculo` exige que ningún fragmento de 4 palabras de las 50 preguntas aparezca en el prompt. Con 5 o 6 palabras, la nota de n05 no se detectaba.
+- **Revertir:** `git show 762cadd:llm/schema_context.py`.
+
+## D-28 (C) PRUEBA_2, oráculo v4 y temperatura de evaluación
+- **Oráculo v4** (`eval/construir_oraculo_v4.py`, idempotente): las 10 de PRUEBA v3 pasan a DESARROLLO (campo `conjunto_v3` para la historia). DESARROLLO queda en 30 preguntas y PRUEBA_2 en 20 nuevas: simple 4, porcentaje 5, pedido_valido 4, ranking 3, varios_pasos 4.
+- **Verificación:** cada referencia se ejecutó en SQL y se recalculó con pandas desde los CSV, de forma independiente (`dashboard/verify_pandas.py`): 50/50 OK. `verificar_oraculo` ahora también falla si una pregunta no tiene recálculo.
+- **Disyunción:** una pregunta inicial de PRUEBA_2 (cuotas máximas con tarjeta) chocaba con un few-shot del contexto (texto 0.364, SQL 0.500) y se reemplazó antes de congelar. Frente a DESARROLLO hay preguntas "hermanas" (misma estructura, otra condición; p. ej. p2_05 frente a x02, SQL 0.833). Es esperable en un held-out del mismo dominio y no es una fuga, porque DESARROLLO no entra al contexto; queda anotado como limitación.
+- **Limitación honesta:** escribí PRUEBA_2 y voy a diseñar las mejoras del contexto. Las mitigaciones son tres: PRUEBA_2 se escribió y congeló **antes** de diseñar E1-E7, las pruebas de disyunción cubren las 50 preguntas, y PRUEBA_2 no se vuelve a ejecutar hasta el final.
+- **Temperatura:** la evaluación usa **0.3** por defecto (`eval/run_eval.py`, `TEMPERATURA_EVAL`; queda en la configuración de cada corrida). El chat conserva 0.1 (`llm/ollama_client.py`), así que las cifras de evaluación describen el sistema a 0.3, no exactamente el chat. Revertir: `--temperature 0.1`.
+- **Medición del tamaño del prompt:** `run_eval` envuelve al cliente (`MedidorPrompt`, no cambia nada del pipeline) y guarda `prompt_sql_caracteres` por pregunta. `eval.ab` reporta el tamaño medio y un intervalo de Wilson **por pregunta** (acierta en la mayoría de las repeticiones).

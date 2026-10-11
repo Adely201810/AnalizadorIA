@@ -232,7 +232,69 @@ def recalcular_oraculo_con_pandas() -> dict[str, list[list]]:
     out["n10_estado_mas_clientes_por_vendedor"] = [[t.index[0], float(t["cpv"].iloc[0]), int(t["clientes"].iloc[0]), int(t["vendedores"].iloc[0])]]
     out.update(_recalcular_preguntas_nuevas(orders, customers, products, traduccion, payments, reviews, sellers,
                                             validos, items, calif_pedido))
+    out.update(_recalcular_prueba_2(orders, products, traduccion, payments, reviews, sellers, validos, items))
     return out
+
+
+def _recalcular_prueba_2(orders, products, traduccion, payments, reviews, sellers, validos, items) -> dict[str, list[list]]:
+    """Etapa 3, Paso 2: las 20 preguntas de PRUEBA_2 (p2_01-p2_20), replicando la definición
+    de cada una desde los CSV (sin olist.db)."""
+    out: dict[str, list[list]] = {}
+    dias = lambda a, b: (a - b).dt.total_seconds() / 86400  # = julianday(a) - julianday(b)
+    ent = validos[validos["order_delivered_customer_date"].notna()]
+
+    out["p2_01_vendedores_rio"] = [[int((sellers["seller_city"] == "rio de janeiro").sum())]]
+    out["p2_02_pagos_debito"] = [[int((payments["payment_type"] == "debit_card").sum())]]
+    out["p2_03_productos_mas_10kg"] = [[int((products["product_weight_g"] > 10000).sum())]]
+    out["p2_04_resenas_con_mensaje"] = [[int(reviews["review_comment_message"].notna().sum())]]
+    rapido = dias(ent["order_delivered_customer_date"], ent["order_purchase_timestamp"]) <= 7
+    out["p2_05_pct_entrega_7_dias"] = [[_r2(100 * rapido.mean())]]
+    con_ventas = set(items["seller_id"])
+    out["p2_06_pct_vendedores_sin_ventas"] = [[_r2(100 * (~sellers["seller_id"].isin(con_ventas)).mean())]]
+    iv = items.merge(sellers[["seller_id", "seller_state"]], on="seller_id")
+    out["p2_07_pct_ingresos_vendedores_mg"] = [[_r2(100 * iv.loc[iv["seller_state"] == "MG", "price"].sum() / iv["price"].sum())]]
+    con_titulo = reviews[reviews["review_comment_title"].notna()]
+    out["p2_08_pct_resenas_titulo_bajas"] = [[_r2(100 * (con_titulo["review_score"] <= 2).mean())]]
+    out["p2_09_pct_articulos_flete_mayor_precio"] = [[_r2(100 * (items["freight_value"] > items["price"]).mean())]]
+    out["p2_10_pedidos_validos_2017"] = [[int((validos["order_purchase_timestamp"].dt.year == 2017).sum())]]
+    pv = payments[payments["order_id"].isin(validos["order_id"])]
+    out["p2_11_ticket_promedio"] = [[_r2(pv.groupby("order_id")["payment_value"].sum().mean())]]
+    nov = items[items["order_purchase_timestamp"].dt.strftime("%Y-%m") == "2017-11"]
+    out["p2_12_precio_promedio_nov_2017"] = [[_r2(nov["price"].mean())]]
+    out["p2_13_articulos_clientes_rs"] = [[int((items["customer_state"] == "RS").sum())]]
+    cat = items.merge(products[["product_id", "product_category_name"]], on="product_id") \
+        .merge(traduccion, on="product_category_name", how="left")
+    cuenta = cat["product_category_name_english"].fillna("sin_categoria").value_counts()
+    out["p2_14_categoria_mas_articulos"] = [[cuenta.index[0], int(cuenta.iloc[0])]]
+    est = sellers["seller_state"].value_counts()
+    out["p2_15_top3_estados_vendedores"] = [[e, int(n)] for e, n in est.head(3).items()]
+    dia = ((validos["order_purchase_timestamp"].dt.dayofweek + 1) % 7).value_counts()  # pandas: lunes=0; SQL %w: domingo=0
+    out["p2_16_dia_semana_mas_pedidos"] = [[int(dia.index[0]), int(dia.iloc[0])]]
+    npc = validos.groupby("customer_unique_id")["order_id"].nunique()
+    pago_pedido = payments.groupby("order_id")["payment_value"].sum()
+    v2 = validos[validos["customer_unique_id"].isin(npc[npc >= 2].index)]
+    gasto = v2.assign(p=v2["order_id"].map(pago_pedido).fillna(0)).groupby("customer_unique_id")["p"].sum()
+    out["p2_17_gasto_clientes_2_pedidos"] = [[_r2(gasto.mean())]]
+    flete = _flete_por_pedido_todos(items, validos)
+    d = ent.assign(dias=dias(ent["order_delivered_customer_date"], ent["order_purchase_timestamp"]))
+    d = d.merge(flete.rename("fl"), left_on="order_id", right_index=True, how="inner")
+    out["p2_18_dias_entrega_por_flete"] = [[_r2(d.loc[d["fl"] > 50, "dias"].mean()), _r2(d.loc[d["fl"] <= 50, "dias"].mean())]]
+    art = items.groupby("seller_id").size()
+    grandes = art[art >= 50].index
+    calif = reviews.groupby("order_id")["review_score"].mean()
+    sp = items.loc[items["seller_id"].isin(grandes), ["seller_id", "order_id"]].drop_duplicates()
+    sp = sp.merge(calif.rename("s"), left_on="order_id", right_index=True, how="inner")
+    mejor = sp.groupby("seller_id")["s"].mean().sort_values(ascending=False)
+    out["p2_19_vendedor_mejor_calificado"] = [[mejor.index[0], _r2(mejor.iloc[0])]]
+    pp = pv.groupby("order_id").agg(t=("payment_value", "sum"), m=("payment_type", "nunique"))
+    out["p2_20_pct_pagado_varios_metodos"] = [[_r2(100 * pp.loc[pp["m"] > 1, "t"].sum() / pp["t"].sum())]]
+    return out
+
+
+def _flete_por_pedido_todos(items_validos, validos) -> pd.Series:
+    """Flete total por pedido sumando TODOS sus artículos (la referencia de p2_18 no filtra
+    order_items por estatus; para pedidos válidos es lo mismo que sumar los artículos válidos)."""
+    return items_validos.groupby("order_id")["freight_value"].sum()
 
 
 def _recalcular_preguntas_nuevas(orders, customers, products, traduccion, payments, reviews, sellers,
@@ -302,7 +364,10 @@ def verificar_oraculo() -> list[str]:
 
     gt = {i["id"]: i for i in json.loads(GROUND_TRUTH_PATH.read_text(encoding="utf-8"))["preguntas"]}
     lineas = []
-    for qid, filas_pandas in recalcular_oraculo_con_pandas().items():
+    recalculado = recalcular_oraculo_con_pandas()
+    for qid in sorted(set(gt) - set(recalculado)):
+        lineas.append(f"[DIFF] {qid}: sin recálculo con pandas")
+    for qid, filas_pandas in recalculado.items():
         item = gt[qid]
         esperado = item["resultado_esperado"]
         # todas las columnas: las no evaluadas (null) se comparan como conteo exacto
