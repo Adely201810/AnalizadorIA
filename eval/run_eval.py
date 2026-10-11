@@ -199,6 +199,8 @@ def main():
     parser.add_argument("--model", default=None, help="Modelo de Ollama (default: el de llm/ollama_client.py)")
     parser.add_argument("--limit", type=int, default=None, help="Solo correr las primeras N preguntas")
     parser.add_argument("--ids", nargs="+", default=None, help="Solo estas preguntas (ids del oráculo)")
+    parser.add_argument("--conjunto", choices=["desarrollo", "prueba", "todos"], default="desarrollo",
+                        help="Conjunto del oráculo v3. PRUEBA es held-out: solo para la evaluación final (Paso 5)")
     parser.add_argument("--intentos", type=int, default=2, help="N: intentos TOTALES por pregunta (Fase 6)")
     parser.add_argument("--cadena", action="store_true",
                         help="El árbitro verifica cada intento y la cadena se corta en el primer acierto (Fase 9)")
@@ -214,7 +216,10 @@ def main():
         parser.error("--juez y --feedback juez requieren --cadena")
 
     data = json.loads(args.ground_truth.read_text(encoding="utf-8"))
-    preguntas = data["preguntas"][: args.limit] if args.limit else data["preguntas"]
+    preguntas = data["preguntas"]
+    if args.conjunto != "todos" and any("conjunto" in q for q in preguntas):
+        preguntas = [q for q in preguntas if q.get("conjunto") == args.conjunto]
+    preguntas = preguntas[: args.limit] if args.limit else preguntas
     if args.ids:
         preguntas = [q for q in preguntas if q["id"] in set(args.ids)]
 
@@ -236,6 +241,7 @@ def main():
         "temperature": client.temperature,
         "num_ctx": client.num_ctx,
         "ground_truth": str(args.ground_truth.name),
+        "conjunto": args.conjunto,
     }
     cabecera = {"modelo": client.model, "fecha": dt.datetime.now().isoformat(timespec="seconds"), "configuracion": configuracion}
     resultados: list[dict] = []

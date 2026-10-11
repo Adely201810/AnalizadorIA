@@ -130,7 +130,7 @@ class TestOraculoCompleto(unittest.TestCase):
 
     def test_oraculo_v2_cada_referencia_se_acepta_a_si_misma_y_coincide_con_lo_guardado(self):
         v2 = json.loads((RAIZ / "eval" / "ground_truth_olist.json").read_text(encoding="utf-8"))["preguntas"]
-        self.assertEqual(len(v2), 10)
+        self.assertEqual(len(v2), 30)
         conn = sqlite3.connect(f"file:{RAIZ / 'db' / 'olist.db'}?mode=ro", uri=True)
         try:
             for q in v2:

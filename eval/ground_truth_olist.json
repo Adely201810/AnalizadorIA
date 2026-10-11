@@ -1,7 +1,8 @@
 {
-  "version": 2,
-  "descripcion": "Fuente única de verdad: las 10 necesidades de negocio del dueño (una por pestaña del dashboard, pages/1_Dashboard.py), cada una resoluble con UNA consulta. Alimenta el oráculo de evaluación (eval/run_eval.py) y la 'respuesta de referencia' de cada pestaña del dashboard. Pedido válido = order_status NOT IN ('canceled','unavailable'). resultado_esperado se obtuvo ejecutando sql_referencia sobre db/olist.db y se verifica con eval/compute_ground_truth.py (SQL) y dashboard/verify_pandas.py (pandas sobre los CSV). La versión anterior (10 preguntas sueltas) está en eval/ground_truth_olist_v1.json.",
+  "version": 3,
+  "descripcion": "30 preguntas de negocio sobre Olist, cada una resoluble con UNA consulta. Las 10 con pestana_dashboard son las necesidades del dueño (alimentan el dashboard). conjunto = 'desarrollo' (20: las 10 necesidades + 10 nuevas) o 'prueba' (10, held-out: no se usan para ajustar nada; solo se evalúan una vez al final). El reparto de las 20 nuevas es un sorteo con semilla 20261011 (eval/construir_oraculo_v3.py). Pedido válido = order_status NOT IN ('canceled','unavailable'). resultado_esperado se obtuvo ejecutando sql_referencia y se verifica con eval/compute_ground_truth.py (SQL) y dashboard/verify_pandas.py (pandas).",
   "cargado_con": "python seeder/load_olist_csv.py",
+  "semilla_split": 20261011,
   "preguntas": [
     {
       "id": "n01_pct_clientes_recurrentes",
@@ -18,7 +19,9 @@
           3.04
         ]
       ],
-      "origen_v1": "q3_pct_clientes_recurrentes"
+      "origen_v1": "q3_pct_clientes_recurrentes",
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n02_calificacion_retraso_vs_a_tiempo",
@@ -37,7 +40,9 @@
           4.29
         ]
       ],
-      "origen_v1": "q5_retraso_baja_calificacion"
+      "origen_v1": "q5_retraso_baja_calificacion",
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n03_pct_ingresos_top5_categorias",
@@ -54,24 +59,28 @@
           39.82
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
-      "id": "n04_vendedores_mala_calificacion",
+      "id": "n04_vendedores_problematicos",
       "pestana_dashboard": 4,
       "necesidad": "Vendedores problemáticos",
-      "pregunta": "¿Cuántos vendedores con al menos 30 pedidos válidos (sin contar cancelados o no disponibles) tienen una calificación promedio menor a 3.5, promediando la calificación de cada pedido?",
-      "sql_referencia": "WITH ped AS (SELECT DISTINCT oi.seller_id, o.order_id FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable')), rev AS (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id), vend AS (SELECT ped.seller_id, COUNT(*) AS pedidos, AVG(rev.calif) AS calif FROM ped LEFT JOIN rev ON rev.order_id = ped.order_id GROUP BY ped.seller_id) SELECT COUNT(*) AS vendedores FROM vend WHERE pedidos >= 30 AND calif < 3.5",
+      "pregunta": "Entre los vendedores con al menos 30 pedidos válidos (sin contar pedidos cancelados o no disponibles), ¿cuántos están en el 25 % con más ingresos y además tienen una calificación promedio menor a 3.5 (promediando la calificación de cada pedido) o más del 15 % de sus pedidos entregados con retraso respecto de la fecha estimada?",
+      "sql_referencia": "WITH ped AS (SELECT DISTINCT oi.seller_id, o.order_id, o.order_delivered_customer_date AS entregado, o.order_estimated_delivery_date AS estimado FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable')), ing AS (SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY oi.seller_id), rev AS (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id), vend AS (SELECT ped.seller_id, COUNT(*) AS pedidos, AVG(rev.calif) AS calif, 100.0 * SUM(CASE WHEN ped.entregado IS NOT NULL AND julianday(ped.entregado) > julianday(ped.estimado) THEN 1 ELSE 0 END) / NULLIF(SUM(CASE WHEN ped.entregado IS NOT NULL THEN 1 ELSE 0 END), 0) AS pct_tardias FROM ped LEFT JOIN rev ON rev.order_id = ped.order_id GROUP BY ped.seller_id), elegibles AS (SELECT v.seller_id, v.calif, v.pct_tardias, CUME_DIST() OVER (ORDER BY i.ingresos DESC) AS cd FROM vend v JOIN ing i ON i.seller_id = v.seller_id WHERE v.pedidos >= 30) SELECT COUNT(*) AS vendedores FROM elegibles WHERE cd <= 0.25 AND (calif < 3.5 OR pct_tardias > 15)",
       "tipos_columnas": [
         "conteo"
       ],
       "orden_importa": false,
       "resultado_esperado": [
         [
-          24
+          13
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n05_estado_mayor_peso_flete",
@@ -90,7 +99,9 @@
           28.55
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n06_metodo_pago_mas_usado",
@@ -109,7 +120,9 @@
           75618
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n07_mes_mayores_ingresos",
@@ -128,7 +141,9 @@
           1003862.14
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n08_categoria_mas_resenas_1_estrella",
@@ -149,7 +164,9 @@
           110
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n09_categorias_mas_compra_unica",
@@ -196,7 +213,9 @@
           99.46
         ]
       ],
-      "origen_v1": "q4_categorias_mas_compra_unica"
+      "origen_v1": "q4_categorias_mas_compra_unica",
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
     },
     {
       "id": "n10_estado_mas_clientes_por_vendedor",
@@ -219,7 +238,405 @@
           19
         ]
       ],
-      "origen_v1": null
+      "origen_v1": null,
+      "dificultad": "necesidad",
+      "conjunto": "desarrollo"
+    },
+    {
+      "id": "x01_pedidos_cancelados",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuántos pedidos tienen el estatus cancelado (canceled)?",
+      "sql_referencia": "SELECT COUNT(*) AS pedidos FROM orders WHERE order_status = 'canceled'",
+      "tipos_columnas": [
+        "conteo"
+      ],
+      "orden_importa": false,
+      "dificultad": "conteo",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          625
+        ]
+      ]
+    },
+    {
+      "id": "x02_pct_entregas_con_retraso",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "De los pedidos válidos (sin contar pedidos cancelados o no disponibles) que ya fueron entregados al cliente, ¿qué porcentaje llegó después de la fecha estimada de entrega?",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date) THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct FROM orders o WHERE o.order_status NOT IN ('canceled','unavailable') AND o.order_delivered_customer_date IS NOT NULL",
+      "tipos_columnas": [
+        "porcentaje"
+      ],
+      "orden_importa": false,
+      "dificultad": "porcentaje",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          8.11
+        ]
+      ]
+    },
+    {
+      "id": "x03_flete_promedio_por_articulo",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuál es el valor promedio del flete por artículo vendido en pedidos válidos (sin contar pedidos cancelados o no disponibles)?",
+      "sql_referencia": "SELECT ROUND(AVG(oi.freight_value), 2) AS flete_promedio FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable')",
+      "tipos_columnas": [
+        "dinero"
+      ],
+      "orden_importa": false,
+      "dificultad": "promedio",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          19.99
+        ]
+      ]
+    },
+    {
+      "id": "x04_pct_resenas_5_estrellas",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Qué porcentaje de todas las reseñas tiene una calificación de 5 estrellas?",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN review_score = 5 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct FROM order_reviews",
+      "tipos_columnas": [
+        "porcentaje"
+      ],
+      "orden_importa": false,
+      "dificultad": "porcentaje",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          57.78
+        ]
+      ]
+    },
+    {
+      "id": "x05_vendedor_mas_ingresos",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Qué vendedor (seller_id) generó más ingresos (suma de price) en pedidos válidos (sin contar pedidos cancelados o no disponibles) y cuánto suman?",
+      "sql_referencia": "SELECT oi.seller_id, ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY oi.seller_id ORDER BY ingresos DESC LIMIT 1",
+      "tipos_columnas": [
+        "texto",
+        "dinero"
+      ],
+      "orden_importa": false,
+      "dificultad": "ranking",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          "4869f7a5dfa277a7dca6462dcf3b52b2",
+          229237.63
+        ]
+      ]
+    },
+    {
+      "id": "x06_pct_pedidos_varios_articulos",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Qué porcentaje de los pedidos válidos (sin contar pedidos cancelados o no disponibles) tiene más de un artículo?",
+      "sql_referencia": "WITH n AS (SELECT oi.order_id, COUNT(*) AS articulos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY oi.order_id) SELECT ROUND(100.0 * SUM(CASE WHEN articulos > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct FROM n",
+      "tipos_columnas": [
+        "porcentaje"
+      ],
+      "orden_importa": false,
+      "dificultad": "porcentaje",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          9.94
+        ]
+      ]
+    },
+    {
+      "id": "x07_calificacion_pedidos_bed_bath_table",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuál es la calificación promedio (promediando la de cada pedido) de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que contienen al menos un producto de la categoría bed_bath_table?",
+      "sql_referencia": "WITH ped AS (SELECT DISTINCT oi.order_id FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') AND t.product_category_name_english = 'bed_bath_table'), rev AS (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) SELECT ROUND(AVG(rev.calif), 2) AS calificacion FROM ped JOIN rev ON rev.order_id = ped.order_id",
+      "tipos_columnas": [
+        "decimal"
+      ],
+      "orden_importa": false,
+      "dificultad": "joins",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          3.97
+        ]
+      ]
+    },
+    {
+      "id": "x08_dias_entrega_rj",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuántos días tarda en promedio, desde la compra hasta la entrega al cliente, un pedido válido (sin contar pedidos cancelados o no disponibles) entregado a clientes del estado RJ?",
+      "sql_referencia": "SELECT ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2) AS dias FROM orders o JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') AND o.order_delivered_customer_date IS NOT NULL AND c.customer_state = 'RJ'",
+      "tipos_columnas": [
+        "decimal"
+      ],
+      "orden_importa": false,
+      "dificultad": "promedio",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          15.31
+        ]
+      ]
+    },
+    {
+      "id": "x09_mes_mas_cancelados",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿En qué mes (formato AAAA-MM, según la fecha de compra) hubo más pedidos con estatus cancelado y cuántos fueron?",
+      "sql_referencia": "SELECT strftime('%Y-%m', order_purchase_timestamp) AS mes, COUNT(*) AS cancelados FROM orders WHERE order_status = 'canceled' GROUP BY mes ORDER BY cancelados DESC LIMIT 1",
+      "tipos_columnas": [
+        "texto",
+        "conteo"
+      ],
+      "orden_importa": false,
+      "dificultad": "ranking",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          "2018-08",
+          84
+        ]
+      ]
+    },
+    {
+      "id": "x10_categoria_precio_promedio_mas_alto",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "Entre las categorías de producto (en inglés) con al menos 200 artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles), ¿cuál tiene el precio promedio por artículo más alto y cuál es ese precio?",
+      "sql_referencia": "SELECT t.product_category_name_english AS categoria, ROUND(AVG(oi.price), 2) AS precio_promedio FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY t.product_category_name_english HAVING COUNT(*) >= 200 ORDER BY precio_promedio DESC LIMIT 1",
+      "tipos_columnas": [
+        "texto",
+        "dinero"
+      ],
+      "orden_importa": false,
+      "dificultad": "ranking",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          "computers",
+          1098.34
+        ]
+      ]
+    },
+    {
+      "id": "x11_clientes_unicos_sp",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuántos clientes únicos del estado SP hicieron al menos un pedido válido (sin contar pedidos cancelados o no disponibles)?",
+      "sql_referencia": "SELECT COUNT(DISTINCT c.customer_unique_id) AS clientes FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') AND c.customer_state = 'SP'",
+      "tipos_columnas": [
+        "conteo"
+      ],
+      "orden_importa": false,
+      "dificultad": "conteo",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          39749
+        ]
+      ]
+    },
+    {
+      "id": "x12_vendedores_health_beauty",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuántos vendedores distintos vendieron al menos un producto de la categoría health_beauty en pedidos válidos (sin contar pedidos cancelados o no disponibles)?",
+      "sql_referencia": "SELECT COUNT(DISTINCT oi.seller_id) AS vendedores FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') AND t.product_category_name_english = 'health_beauty'",
+      "tipos_columnas": [
+        "conteo"
+      ],
+      "orden_importa": false,
+      "dificultad": "joins",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          489
+        ]
+      ]
+    },
+    {
+      "id": "x13_estado_mayor_gasto_promedio",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "Entre los estados de cliente con al menos 1000 pedidos válidos (sin contar pedidos cancelados o no disponibles), ¿cuál tiene el mayor gasto promedio por pedido (precio más flete) y cuál es ese promedio?",
+      "sql_referencia": "WITH ped AS (SELECT c.customer_state, oi.order_id, SUM(oi.price + oi.freight_value) AS total FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN customers c ON c.customer_id = o.customer_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY c.customer_state, oi.order_id) SELECT customer_state, ROUND(AVG(total), 2) AS gasto_promedio FROM ped GROUP BY customer_state HAVING COUNT(*) >= 1000 ORDER BY gasto_promedio DESC LIMIT 1",
+      "tipos_columnas": [
+        "texto",
+        "dinero"
+      ],
+      "orden_importa": false,
+      "dificultad": "ranking",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          "CE",
+          207.5
+        ]
+      ]
+    },
+    {
+      "id": "x14_ingresos_vendedores_sp_fuera_sp",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuántos ingresos (suma de price) generaron, en pedidos válidos (sin contar pedidos cancelados o no disponibles), los vendedores del estado SP con clientes de otros estados?",
+      "sql_referencia": "SELECT ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN customers c ON c.customer_id = o.customer_id JOIN sellers s ON s.seller_id = oi.seller_id WHERE o.order_status NOT IN ('canceled','unavailable') AND s.seller_state = 'SP' AND c.customer_state <> 'SP'",
+      "tipos_columnas": [
+        "dinero"
+      ],
+      "orden_importa": false,
+      "dificultad": "joins",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          5101873.16
+        ]
+      ]
+    },
+    {
+      "id": "x15_calificacion_pedidos_boleto",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuál es la calificación promedio de las reseñas de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que se pagaron, al menos en parte, con boleto?",
+      "sql_referencia": "SELECT ROUND(AVG(r.review_score), 2) AS calificacion FROM order_reviews r WHERE r.order_id IN (SELECT op.order_id FROM order_payments op JOIN orders o ON o.order_id = op.order_id WHERE o.order_status NOT IN ('canceled','unavailable') AND op.payment_type = 'boleto')",
+      "tipos_columnas": [
+        "decimal"
+      ],
+      "orden_importa": false,
+      "dificultad": "joins",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          4.12
+        ]
+      ]
+    },
+    {
+      "id": "x16_pct_productos_sin_categoria",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Qué porcentaje de los productos del catálogo no tiene una categoría asignada?",
+      "sql_referencia": "SELECT ROUND(100.0 * SUM(CASE WHEN product_category_name IS NULL THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct FROM products",
+      "tipos_columnas": [
+        "porcentaje"
+      ],
+      "orden_importa": false,
+      "dificultad": "porcentaje",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          1.85
+        ]
+      ]
+    },
+    {
+      "id": "x17_top2_ciudades_vendedores",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuáles son las 2 ciudades de vendedores con más pedidos válidos (sin contar pedidos cancelados o no disponibles), de mayor a menor?",
+      "sql_referencia": "SELECT s.seller_city, COUNT(DISTINCT oi.order_id) AS pedidos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN sellers s ON s.seller_id = oi.seller_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY s.seller_city ORDER BY pedidos DESC LIMIT 2",
+      "tipos_columnas": [
+        "texto",
+        null
+      ],
+      "orden_importa": true,
+      "dificultad": "ranking",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          "sao paulo",
+          24457
+        ],
+        [
+          "ibitinga",
+          6555
+        ]
+      ]
+    },
+    {
+      "id": "x18_peso_promedio_furniture_decor",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?",
+      "sql_referencia": "SELECT ROUND(AVG(p.product_weight_g), 2) AS peso FROM order_items oi JOIN orders o ON o.order_id = oi.order_id JOIN products p ON p.product_id = oi.product_id JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE o.order_status NOT IN ('canceled','unavailable') AND t.product_category_name_english = 'furniture_decor'",
+      "tipos_columnas": [
+        "decimal"
+      ],
+      "orden_importa": false,
+      "dificultad": "joins",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          2649.19
+        ]
+      ]
+    },
+    {
+      "id": "x19_anio_mas_ingresos",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "¿Qué año (según la fecha de compra) tuvo más ingresos por ventas (suma de price) en pedidos válidos (sin contar pedidos cancelados o no disponibles) y cuánto sumaron?",
+      "sql_referencia": "SELECT strftime('%Y', o.order_purchase_timestamp) AS anio, ROUND(SUM(oi.price), 2) AS ingresos FROM order_items oi JOIN orders o ON o.order_id = oi.order_id WHERE o.order_status NOT IN ('canceled','unavailable') GROUP BY anio ORDER BY ingresos DESC LIMIT 1",
+      "tipos_columnas": [
+        "texto",
+        "dinero"
+      ],
+      "orden_importa": false,
+      "dificultad": "ranking",
+      "origen_v1": null,
+      "conjunto": "desarrollo",
+      "resultado_esperado": [
+        [
+          "2018",
+          7341182.41
+        ]
+      ]
+    },
+    {
+      "id": "x20_pct_clientes_resena_1_estrella",
+      "pestana_dashboard": null,
+      "necesidad": null,
+      "pregunta": "De los clientes únicos con al menos un pedido válido (sin contar pedidos cancelados o no disponibles), ¿qué porcentaje dejó al menos una reseña de 1 estrella en esos pedidos?",
+      "sql_referencia": "WITH cli AS (SELECT DISTINCT c.customer_unique_id, o.order_id FROM customers c JOIN orders o ON o.customer_id = c.customer_id WHERE o.order_status NOT IN ('canceled','unavailable')) SELECT ROUND(100.0 * COUNT(DISTINCT CASE WHEN r.review_score = 1 THEN cli.customer_unique_id END) / COUNT(DISTINCT cli.customer_unique_id), 2) AS pct FROM cli LEFT JOIN order_reviews r ON r.order_id = cli.order_id",
+      "tipos_columnas": [
+        "porcentaje"
+      ],
+      "orden_importa": false,
+      "dificultad": "porcentaje",
+      "origen_v1": null,
+      "conjunto": "prueba",
+      "resultado_esperado": [
+        [
+          10.89
+        ]
+      ]
     }
   ]
 }

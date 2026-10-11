@@ -126,3 +126,19 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 ## D-19 (C) Limpieza: `legacy/gimnasio/` con la misma estructura; documentos históricos intactos
 - **Decisión:** los 10 archivos del gimnasio se movieron con `git mv` a `legacy/gimnasio/{db,seeder,eval,docs}`, con sus importaciones actualizadas; siguen funcionando (seed y ground truth verificados contra una base temporal). `DIAGNOSTICO.md` y los `FASE_XX.md` anteriores no se editaron, porque describen el estado en su momento.
 - **Revertir:** `git mv` inverso (los renombres están en el commit de J).
+
+---
+# Etapa 2
+
+## D-20 (C) Necesidad 4 con su criterio completo (restaurado)
+- **Decisión:** n04 vuelve al criterio del dashboard en **una sola consulta** (CTE + `CUME_DIST()`): entre vendedores con ≥ 30 pedidos válidos, los que están en el 25 % con más ingresos (`CUME_DIST() OVER (ORDER BY ingresos DESC) <= 0.25`) y tienen calificación promedio por pedido < 3.5 **o** > 15 % de sus pedidos entregados con retraso. Resultado: **13** (la simplificación D-11 daba 24). Las diferencias con el dashboard original: solo pedidos válidos (D-01) y el percentil definido como `CUME_DIST`.
+- **Revertir:** restaurar el SQL de D-11 en `eval/construir_oraculo_v3.py` (`N04_COMPLETA`).
+
+## D-21 (C) Split DESARROLLO/PRUEBA por sorteo con semilla fija
+- **Decisión:** las 10 necesidades van a DESARROLLO (instrucción del usuario); las 20 nuevas se reparten 10/10 con `random.Random(20261011).sample` (`eval/construir_oraculo_v3.py`), sin elegir a mano. Resultado registrado en `eval/split_oraculo.json`.
+- **Consecuencia aceptada:** el sorteo dejó PRUEBA con más conteos y porcentajes (conteo 2, porcentaje 3, joins 3, promedio 1, ranking 1) y DESARROLLO con más rankings (ranking 5, porcentaje 2, joins 2, promedio 1, además de las 10 necesidades). No se repitió el sorteo para "equilibrar", porque eso reintroduciría la elección humana.
+- **Revertir:** cambiar `SEMILLA_SPLIT` y reconstruir (invalida toda medición previa sobre PRUEBA; hasta el Paso 5 no hay ninguna).
+
+## D-22 (C) Blindaje del conjunto de PRUEBA
+- **Decisión:** `tests/test_heldout.py` (8 pruebas) impide que el texto, el SQL o los resultados de PRUEBA aparezcan en few-shot, clasificador, prompt completo o bitácora. Además: `run_eval.py` evalúa **solo DESARROLLO por defecto** (`--conjunto prueba` hay que pedirlo explícitamente), la evaluación no usa bitácora y la app de chat solo ofrece como ejemplos las 10 necesidades (antes ofrecía todo el oráculo, así que una pregunta de prueba podía terminar en la bitácora).
+- **Cambios provocados por la prueba:** 2 few-shot reemplazados (uno rozaba x16 con Jaccard 0.250; otro compartía con x08 el fragmento "en promedio desde la compra hasta"). Un ajuste de la propia prueba: para valores no enteros, el redondeo a entero (15.31 → "15") no cuenta como fuga, porque chocaba con el rango "15+" de una vista, que es anterior y ajeno a x08.

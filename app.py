@@ -50,7 +50,10 @@ def get_juez() -> JuezLLM | None:
 def get_preguntas_ejemplo() -> list[str]:
     try:
         data = json.loads(GROUND_TRUTH_PATH.read_text(encoding="utf-8"))
-        return [item["pregunta"] for item in data["preguntas"]]
+        # Solo las 10 necesidades del dashboard (conjunto de DESARROLLO). Las preguntas de
+        # PRUEBA (held-out) no se ofrecen: si se usaran en el chat, sus errores entrarían a la
+        # bitácora y de ahí al prompt (docs/E2_PASO_2.md).
+        return [item["pregunta"] for item in data["preguntas"] if item.get("pestana_dashboard")]
     except (FileNotFoundError, KeyError, json.JSONDecodeError):
         return []
 

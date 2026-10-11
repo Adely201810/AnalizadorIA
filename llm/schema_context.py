@@ -86,8 +86,8 @@ EJEMPLOS_FEW_SHOT: list[tuple[str, str]] = [
         'SELECT ROUND(AVG(julianday(review_answer_timestamp) - julianday(review_creation_date)), 2) AS dias_promedio FROM order_reviews WHERE review_answer_timestamp IS NOT NULL',
     ),
     (
-        '¿Cuántos productos distintos hay en cada categoría (en inglés)?',
-        'SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, COUNT(*) AS productos FROM products p LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY productos DESC LIMIT 10',
+        '¿Cuántas fotos tienen en promedio los productos de cada categoría (en inglés)?',
+        'SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, ROUND(AVG(p.product_photos_qty), 2) AS fotos_promedio FROM products p LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY fotos_promedio DESC LIMIT 10',
     ),
     (
         '¿Cuánto gasta en total, en promedio, cada cliente único?',
@@ -102,7 +102,7 @@ EJEMPLOS_FEW_SHOT: list[tuple[str, str]] = [
         "SELECT ROUND(AVG(payment_installments), 2) AS cuotas_promedio FROM order_payments WHERE payment_type = 'credit_card'",
     ),
     (
-        '¿Cuántos días pasan en promedio desde la compra hasta que el pedido se entrega a la transportista?',
+        '¿Cuántos días pasan, como promedio, entre la compra y el momento en que la transportista recibe el pedido?',
         'SELECT ROUND(AVG(julianday(order_delivered_carrier_date) - julianday(order_purchase_timestamp)), 2) AS dias_promedio FROM orders WHERE order_delivered_carrier_date IS NOT NULL',
     ),
     (

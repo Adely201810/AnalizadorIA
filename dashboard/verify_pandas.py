@@ -141,6 +141,7 @@ def recalcular_oraculo_con_pandas() -> dict[str, list[list]]:
     payments = pd.read_csv(DATA_DIR / "olist_order_payments_dataset.csv")
     reviews = pd.read_csv(DATA_DIR / "olist_order_reviews_dataset.csv")
     sellers = pd.read_csv(DATA_DIR / "olist_sellers_dataset.csv")
+    products = products.copy()
     for col in ("order_purchase_timestamp", "order_delivered_customer_date", "order_estimated_delivery_date"):
         orders[col] = pd.to_datetime(orders[col])
     validos = _pedidos_validos(orders, customers).merge(
@@ -170,10 +171,21 @@ def recalcular_oraculo_con_pandas() -> dict[str, list[list]]:
     ing = items.groupby("categoria", dropna=False)["price"].sum().sort_values(ascending=False)
     out["n03_pct_ingresos_top5_categorias"] = [[_r2(100 * ing.head(5).sum() / ing.sum())]]
 
-    # n04: vendedores con >= 30 pedidos válidos y calificación promedio (por pedido) < 3.5
-    ped = items[["seller_id", "order_id"]].drop_duplicates().join(calif_pedido, on="order_id")
-    vend = ped.groupby("seller_id").agg(pedidos=("order_id", "size"), calif=("review_score", "mean"))
-    out["n04_vendedores_mala_calificacion"] = [[int(((vend["pedidos"] >= 30) & (vend["calif"] < 3.5)).sum())]]
+    # n04 (criterio completo, D-20): vendedores con >= 30 pedidos válidos, en el 25 % con más
+    # ingresos (CUME_DIST <= 0.25) y con calificación promedio por pedido < 3.5 o > 15 % de
+    # sus pedidos entregados con retraso.
+    fechas = orders[["order_id", "order_delivered_customer_date", "order_estimated_delivery_date"]]
+    ped = items[["seller_id", "order_id"]].drop_duplicates().merge(fechas, on="order_id", how="left")
+    ped = ped.join(calif_pedido, on="order_id")
+    ped["entregado"] = ped["order_delivered_customer_date"].notna()
+    ped["tarde"] = ped["entregado"] & (ped["order_delivered_customer_date"] > ped["order_estimated_delivery_date"])
+    vend = ped.groupby("seller_id").agg(pedidos=("order_id", "size"), calif=("review_score", "mean"),
+                                        tardes=("tarde", "sum"), entregados=("entregado", "sum"))
+    vend["pct_tardias"] = 100 * vend["tardes"] / vend["entregados"].where(vend["entregados"] > 0)
+    vend["ingresos"] = items.groupby("seller_id")["price"].sum()
+    eleg = vend[vend["pedidos"] >= 30].copy()
+    eleg["cd"] = eleg["ingresos"].rank(ascending=False, method="max") / len(eleg)  # = CUME_DIST() OVER (ORDER BY ingresos DESC)
+    out["n04_vendedores_problematicos"] = [[int(((eleg["cd"] <= 0.25) & ((eleg["calif"] < 3.5) | (eleg["pct_tardias"] > 15))).sum())]]
 
     # n05: estado del cliente con mayor flete/precio
     est = items.groupby("customer_state")[["freight_value", "price"]].sum()
@@ -218,6 +230,62 @@ def recalcular_oraculo_con_pandas() -> dict[str, list[list]]:
     t["cpv"] = (t["clientes"] / t["vendedores"]).round(2)
     t = t.sort_values("cpv", ascending=False)
     out["n10_estado_mas_clientes_por_vendedor"] = [[t.index[0], float(t["cpv"].iloc[0]), int(t["clientes"].iloc[0]), int(t["vendedores"].iloc[0])]]
+    out.update(_recalcular_preguntas_nuevas(orders, customers, products, traduccion, payments, reviews, sellers,
+                                            validos, items, calif_pedido))
+    return out
+
+
+def _recalcular_preguntas_nuevas(orders, customers, products, traduccion, payments, reviews, sellers,
+                                 validos, items, calif_pedido) -> dict[str, list[list]]:
+    """Las 20 preguntas nuevas del oráculo v3 (x01-x20), replicando cada sql_referencia."""
+    out: dict[str, list[list]] = {}
+    dias = lambda a, b: (a - b).dt.total_seconds() / 86400  # = julianday(a) - julianday(b)
+    con_cat = items.merge(products[["product_id", "product_category_name", "product_weight_g"]], on="product_id") \
+        .merge(traduccion, on="product_category_name", how="inner")  # JOIN (no LEFT) a la traducción
+    ent = validos[validos["order_delivered_customer_date"].notna()]
+
+    out["x01_pedidos_cancelados"] = [[int((orders["order_status"] == "canceled").sum())]]
+    tarde = ent["order_delivered_customer_date"] > ent["order_estimated_delivery_date"]
+    out["x02_pct_entregas_con_retraso"] = [[_r2(100 * tarde.mean())]]
+    out["x03_flete_promedio_por_articulo"] = [[_r2(items["freight_value"].mean())]]
+    out["x04_pct_resenas_5_estrellas"] = [[_r2(100 * (reviews["review_score"] == 5).mean())]]
+    ing = items.groupby("seller_id")["price"].sum().sort_values(ascending=False)
+    out["x05_vendedor_mas_ingresos"] = [[ing.index[0], _r2(ing.iloc[0])]]
+    art = items.groupby("order_id").size()
+    out["x06_pct_pedidos_varios_articulos"] = [[_r2(100 * (art > 1).mean())]]
+    peds = con_cat.loc[con_cat["product_category_name_english"] == "bed_bath_table", "order_id"].drop_duplicates()
+    out["x07_calificacion_pedidos_bed_bath_table"] = [[_r2(calif_pedido.reindex(peds).dropna().mean())]]
+    rj = ent[ent["customer_state"] == "RJ"]
+    out["x08_dias_entrega_rj"] = [[_r2(dias(rj["order_delivered_customer_date"], rj["order_purchase_timestamp"]).mean())]]
+    canc = orders[orders["order_status"] == "canceled"]
+    mes = canc["order_purchase_timestamp"].dt.strftime("%Y-%m").value_counts()
+    out["x09_mes_mas_cancelados"] = [[mes.index[0], int(mes.iloc[0])]]
+    g = con_cat.groupby("product_category_name_english")["price"].agg(["count", "mean"])
+    g = g[g["count"] >= 200].sort_values("mean", ascending=False)
+    out["x10_categoria_precio_promedio_mas_alto"] = [[g.index[0], _r2(g["mean"].iloc[0])]]
+    out["x11_clientes_unicos_sp"] = [[int(validos.loc[validos["customer_state"] == "SP", "customer_unique_id"].nunique())]]
+    out["x12_vendedores_health_beauty"] = [[int(con_cat.loc[con_cat["product_category_name_english"] == "health_beauty", "seller_id"].nunique())]]
+    tot = (items["price"] + items["freight_value"]).groupby([items["customer_state"], items["order_id"]]).sum()
+    est = tot.groupby(level=0).agg(["count", "mean"])
+    est = est[est["count"] >= 1000].sort_values("mean", ascending=False)
+    out["x13_estado_mayor_gasto_promedio"] = [[est.index[0], _r2(est["mean"].iloc[0])]]
+    iv = items.merge(sellers[["seller_id", "seller_state"]], on="seller_id", how="inner")
+    out["x14_ingresos_vendedores_sp_fuera_sp"] = [[_r2(iv.loc[(iv["seller_state"] == "SP") & (iv["customer_state"] != "SP"), "price"].sum())]]
+    boleto = payments.merge(validos[["order_id"]], on="order_id")
+    boleto = set(boleto.loc[boleto["payment_type"] == "boleto", "order_id"])
+    out["x15_calificacion_pedidos_boleto"] = [[_r2(reviews.loc[reviews["order_id"].isin(boleto), "review_score"].mean())]]
+    out["x16_pct_productos_sin_categoria"] = [[_r2(100 * products["product_category_name"].isna().mean())]]
+    ciu = iv.merge(sellers[["seller_id", "seller_city"]], on="seller_id").groupby("seller_city")["order_id"].nunique() \
+        .sort_values(ascending=False)
+    out["x17_top2_ciudades_vendedores"] = [[c, int(n)] for c, n in ciu.head(2).items()]
+    peso = con_cat.loc[con_cat["product_category_name_english"] == "furniture_decor", "product_weight_g"]
+    out["x18_peso_promedio_furniture_decor"] = [[_r2(peso.astype("float").mean())]]
+    anio = items.groupby(items["order_purchase_timestamp"].dt.strftime("%Y"))["price"].sum().sort_values(ascending=False)
+    out["x19_anio_mas_ingresos"] = [[anio.index[0], _r2(anio.iloc[0])]]
+    cli = validos[["customer_unique_id", "order_id"]].drop_duplicates()
+    unos = set(reviews.loc[reviews["review_score"] == 1, "order_id"])
+    con_uno = cli.loc[cli["order_id"].isin(unos), "customer_unique_id"].nunique()
+    out["x20_pct_clientes_resena_1_estrella"] = [[_r2(100 * con_uno / cli["customer_unique_id"].nunique())]]
     return out
 
 

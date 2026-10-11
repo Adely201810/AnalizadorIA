@@ -25,7 +25,8 @@
 | Paso | Estado | Commit | Cifras reales | Doc |
 |---|---|---|---|---|
 | 0 — Entorno tras reinicio | ✅ | `eee86bb` | Ollama arranca solo; llama3.1 **38.5 tok/s**, qwen 19.0, llama3.2 73.5 (ctx 8192), los 3 al 100 % en GPU | [E2_PASO_0.md](E2_PASO_0.md) |
-| 1 — Tolerancia 0.006 + recalificación offline | ✅ | (este commit) | 13 corridas recalificadas: solo cambian los dos `3.01` de la Fase 9 (dirigida r1 1/3→0/3; r3 2/3→1/3) | [E2_PASO_1.md](E2_PASO_1.md) |
+| 1 — Tolerancia 0.006 + recalificación offline | ✅ | `d21de4b` | 13 corridas recalificadas: solo cambian los dos `3.01` de la Fase 9 (dirigida r1 1/3→0/3; r3 2/3→1/3) | [E2_PASO_1.md](E2_PASO_1.md) |
+| 2 — Oráculo v3: 30 preguntas, DESARROLLO 20 / PRUEBA 10 | ✅ | (este commit) | SQL **30/30**, pandas **30/30**; n04 con criterio completo (13); split por sorteo (semilla 20261011); blindaje de PRUEBA con 8 pruebas; suite 57/57 | [E2_PASO_2.md](E2_PASO_2.md) |
 
 ## Pendientes / avisos
 - ~~Velocidad de llama3.1 y app de bandeja de Ollama~~: resueltos tras reiniciar (Paso 0 de la etapa 2).
