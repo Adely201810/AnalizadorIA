@@ -37,6 +37,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import requests
 
 from eval.comparador import comparar
+from eval.pistas import MODOS, censurar, construir_pista, motivo_generico, valores_de_referencia
+from llm.juez import JuezLLM
 from llm.ollama_client import OllamaClient
 from llm.text_to_sql import (
     MENSAJE_PROBLEMA_TRAS_REINTENTO,
@@ -73,7 +75,8 @@ def clasificar_intentos(resultado: Text2SQLResult, correcto: bool) -> tuple[str,
     árbitro lo rechaza, se reclasifica como "semantico" en `tipo_evaluado`."""
     intentos = [dict(d) for d in resultado.intentos_detalle]
     for d in intentos:
-        d["tipo_evaluado"] = d["tipo"]
+        # Con --cadena, un intento que corrió pero el árbitro rechazó (verificado=False) es semántico.
+        d["tipo_evaluado"] = "semantico" if d.get("verificado") is False else d["tipo"]
     if correcto:
         return "ok", intentos
     if resultado.sub_consultas:
@@ -131,7 +134,21 @@ def resumen(resultados: list[dict]) -> dict:
         por_clasificacion[r["clasificacion"]] += 1
         for d in r["intentos_detalle"]:
             por_intento[d["tipo_evaluado"]] += 1
+    juez = {"acierto_coinciden": 0, "fallo_coinciden": 0, "falso_acierto": 0, "falso_rechazo": 0, "sin_opinion": 0}
+    for r in resultados:
+        for o in r.get("opiniones_juez", []):
+            if o["juez"] is None:
+                juez["sin_opinion"] += 1
+            elif o["juez"] and o["arbitro"]:
+                juez["acierto_coinciden"] += 1
+            elif not o["juez"] and not o["arbitro"]:
+                juez["fallo_coinciden"] += 1
+            elif o["juez"] and not o["arbitro"]:
+                juez["falso_acierto"] += 1  # el juez lo da por bueno; el árbitro no
+            else:
+                juez["falso_rechazo"] += 1  # el juez lo rechaza; el árbitro lo da por bueno
     return {
+        "juez_vs_arbitro": juez if any(juez.values()) else None,
         "total_preguntas": total,
         "correctas": correctas,
         "precision_pct": round(100 * correctas / total, 1) if total else 0.0,
@@ -151,28 +168,67 @@ def guardar(path: Path, cabecera: dict, resultados: list[dict]) -> None:
     tmp.replace(path)
 
 
+def crear_verificador(
+    item: dict, filas_ref: list, modo_feedback: str, juez: JuezLLM | None, registro: dict, opinar: bool = False,
+):
+    """Verificador de la cadena de intentos (Fases 7, 8 y 9): el árbitro decide;
+    si rechaza, se arma la pista (sin valores de la referencia) y, si hay juez,
+    se registra su opinión para compararla con el árbitro."""
+    valores = valores_de_referencia(filas_ref, item["tipos_columnas"])
+
+    def verificar(sql: str, columnas: list, filas: list):
+        v = comparar(filas, filas_ref, item["tipos_columnas"], item.get("orden_importa", False))
+        if opinar and juez is not None:
+            o = juez.opinar(item["pregunta"], sql, columnas, filas)
+            registro["opiniones_juez"].append({"juez": o.valor, "arbitro": v.correcto, "motivo_juez": o.motivo})
+        if v.correcto:
+            return True, None
+        diagnostico = None
+        if modo_feedback == "juez" and juez is not None:
+            diagnostico = juez.diagnosticar(item["pregunta"], sql, columnas, filas, motivo_generico(v.motivo))
+            registro["diagnosticos_juez"].append(diagnostico)
+        pista, censuradas = censurar(construir_pista(modo_feedback, v.motivo, diagnostico), valores)
+        registro["pistas"].append({"pista": pista, "formas_censuradas": censuradas})
+        return False, pista
+
+    return verificar
+
+
 def main():
     parser = argparse.ArgumentParser(description="Evalúa el pipeline Text-to-SQL contra el oráculo.")
     parser.add_argument("--model", default=None, help="Modelo de Ollama (default: el de llm/ollama_client.py)")
     parser.add_argument("--limit", type=int, default=None, help="Solo correr las primeras N preguntas")
-    parser.add_argument("--max-retries", type=int, default=2)
+    parser.add_argument("--intentos", type=int, default=2, help="N: intentos TOTALES por pregunta (Fase 6)")
+    parser.add_argument("--cadena", action="store_true",
+                        help="El árbitro verifica cada intento y la cadena se corta en el primer acierto (Fase 9)")
+    parser.add_argument("--feedback", choices=MODOS, default="generico", help="Pista entre intentos con --cadena (Fase 7)")
+    parser.add_argument("--juez", action="store_true", help="Registra la opinión del juez-LLM en cada intento verificado (Fase 8)")
+    parser.add_argument("--temperature", type=float, default=None, help="Temperatura del generador de SQL")
     parser.add_argument("--sin-plantillas", action="store_true", help="Desactiva plantillas por reglas y fallback sobre vistas")
     parser.add_argument("--output", default=None, help="JSON de resultados (default: eval/eval_results_<timestamp>.json)")
     parser.add_argument("--reanudar", action="store_true", help="Retoma --output: salta las preguntas ya evaluadas")
     parser.add_argument("--ground-truth", type=Path, default=DEFAULT_GROUND_TRUTH_PATH)
     args = parser.parse_args()
+    if (args.juez or args.feedback == "juez") and not args.cadena:
+        parser.error("--juez y --feedback juez requieren --cadena")
 
     data = json.loads(args.ground_truth.read_text(encoding="utf-8"))
     preguntas = data["preguntas"][: args.limit] if args.limit else data["preguntas"]
 
     client = OllamaClient(model=args.model) if args.model else OllamaClient()
+    if args.temperature is not None:
+        client.temperature = args.temperature
     if not client.is_available():
         print(f"⚠ No se pudo conectar a Ollama en {client.host}. Ejecuta 'ollama serve' e intenta de nuevo.")
         sys.exit(1)
+    juez = JuezLLM(OllamaClient(model=client.model)) if (args.juez or args.feedback == "juez") else None
 
     output_path = Path(args.output) if args.output else Path(__file__).resolve().parent / f"eval_results_{dt.datetime.now():%Y%m%d_%H%M%S}.json"
     configuracion = {
-        "max_retries": args.max_retries,
+        "n_intentos": args.intentos,
+        "cadena_con_arbitro": args.cadena,
+        "feedback": args.feedback if args.cadena else None,
+        "juez": bool(juez),
         "usar_plantillas": not args.sin_plantillas,
         "temperature": client.temperature,
         "num_ctx": client.num_ctx,
@@ -191,18 +247,22 @@ def main():
     hechas = {r["id"] for r in resultados}
 
     print(f"=== Evaluación Text-to-SQL | modelo={client.model} | {len(preguntas)} preguntas | "
-          f"plantillas={'sí' if configuracion['usar_plantillas'] else 'no'} | max_retries={args.max_retries} ===\n")
+          f"plantillas={'sí' if configuracion['usar_plantillas'] else 'no'} | N={args.intentos} | "
+          f"cadena={'sí (' + args.feedback + ')' if args.cadena else 'no'} | juez={'sí' if juez else 'no'} | "
+          f"temperature={client.temperature} ===\n")
 
     for i, item in enumerate(preguntas, start=1):
         if item["id"] in hechas:
             continue
         print(f"[{i}/{len(preguntas)}] {item['id']}: {item['pregunta']}", flush=True)
         _, filas_ref = execute_readonly(item["sql_referencia"], limite_s=None)
+        registro = {"opiniones_juez": [], "diagnosticos_juez": [], "pistas": []}
+        verificador = crear_verificador(item, filas_ref, args.feedback, juez, registro, opinar=args.juez) if args.cadena else None
         t0 = time.perf_counter()
         try:
             resultado = answer_question(
-                item["pregunta"], client=client, max_retries=args.max_retries,
-                usar_plantillas=configuracion["usar_plantillas"],
+                item["pregunta"], client=client, n_intentos=args.intentos,
+                usar_plantillas=configuracion["usar_plantillas"], verificador=verificador,
             )
         except Exception as exc:  # noqa: BLE001 - una pregunta rota no debe tumbar la corrida
             resultado = Text2SQLResult(pregunta=item["pregunta"], error=f"excepción {type(exc).__name__}: {exc}")
@@ -215,6 +275,10 @@ def main():
         print(f"   Referencia:   {filas_ref[:5]}{' …' if len(filas_ref) > 5 else ''}")
         print(f"   Respuesta:    {resultado.respuesta or resultado.error}")
         print(f"   Intentos:     {[d['tipo_evaluado'] for d in intentos_detalle]}")
+        for k, pz in enumerate(registro["pistas"], start=1):
+            print(f"   Pista {k}:      {pz['pista']}" + (f"  [censuradas: {pz['formas_censuradas']}]" if pz["formas_censuradas"] else ""))
+        if registro["opiniones_juez"]:
+            print(f"   Juez vs árbitro: {[(o['juez'], o['arbitro']) for o in registro['opiniones_juez']]}")
         print(f"   {'✅' if correcto else '❌'} [{clasificacion}] {motivo} | origen={resultado.origen} | intentos={resultado.intentos} | {latencia:.1f} s\n", flush=True)
 
         resultados.append({
@@ -236,6 +300,7 @@ def main():
             "motivo": motivo,
             "intentos_detalle": intentos_detalle,
             "texto_respaldado": texto_respaldado(resultado),
+            **registro,
         })
         guardar(output_path, cabecera, resultados)
 
@@ -247,6 +312,8 @@ def main():
           f"origen {r['por_origen']} | recursos {cabecera['recursos_ollama']} ===")
     print(f"=== CLASIFICACIÓN FINAL (por pregunta): {r['clasificacion_final']} ===")
     print(f"=== CLASIFICACIÓN POR INTENTO: {r['clasificacion_por_intento']} ===")
+    if r["juez_vs_arbitro"]:
+        print(f"=== JUEZ vs ÁRBITRO (por intento verificado): {r['juez_vs_arbitro']} ===")
     print(f"Resultados detallados guardados en: {output_path}")
 
 

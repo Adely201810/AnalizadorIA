@@ -56,6 +56,11 @@ para el diccionario de datos completo.
   y cualquier intento de inyectar una segunda sentencia vía `;`).
 - La ejecución contra SQLite se hace en una conexión abierta explícitamente en
   **modo solo-lectura** (`file:...?mode=ro`) como defensa adicional.
-- Si el SQL generado falla (sintaxis inválida, columna inexistente), el
-  pipeline reintenta hasta 2 veces reenviando el error al modelo para que se
-  autocorrija, antes de devolver un mensaje de error claro.
+- Si el SQL generado falla (sintaxis inválida, columna inexistente, más de
+  60 s de ejecución) o no devuelve filas, el pipeline reintenta reenviando el
+  error al modelo para que se autocorrija. `n_intentos` es el número **total**
+  de intentos por pregunta (por defecto 2, es decir, un reintento; se cambia
+  con la variable `TEXT2SQL_N_INTENTOS` o con `answer_question(n_intentos=N)`).
+  Un rechazo de seguridad nunca se reintenta. En la evaluación,
+  `eval/run_eval.py --intentos N --cadena` verifica cada intento contra la
+  referencia y corta en el primer acierto (ver docs/FASE_06_09_07_08.md).

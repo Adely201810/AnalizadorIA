@@ -146,8 +146,9 @@ El flujo internamente: pregunta en español → prompt con el esquema compacto
 `INSERT/UPDATE/DELETE/DROP/ALTER/PRAGMA/ATTACH`, y cualquier intento de colar
 una segunda sentencia) → se ejecuta contra SQLite en una conexión abierta en
 **modo solo-lectura** (`file:...?mode=ro`) → si algo falla (o la consulta
-devuelve 0 filas de forma sospechosa), se reintenta hasta 2 veces reenviando
-el error/aviso al modelo para que se autocorrija → el resultado se sintetiza
+devuelve 0 filas de forma sospechosa), se reintenta reenviando el error/aviso
+al modelo para que se autocorrija, hasta completar `n_intentos` intentos en
+total (por defecto 2; variable `TEXT2SQL_N_INTENTOS`) → el resultado se sintetiza
 en una respuesta en español con tono de analista de negocio.
 
 ### Capa de validación/plantillas (patrones donde el LLM de 8B falla)

@@ -43,6 +43,7 @@ import sqlite3
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable
 
 _logger = logging.getLogger(__name__)
 
@@ -62,6 +63,9 @@ from llm.sql_guard import (
 from llm.sql_templates import Plantilla, detectar_plantillas, plantilla_fallback
 
 MAX_FILAS_EJECUTADAS = 500  # límite duro de filas leídas de la base de datos
+# Intentos totales por pregunta en el chat (Fase 6). 2 = un reintento, como el
+# comportamiento efectivo anterior; configurable con TEXT2SQL_N_INTENTOS.
+N_INTENTOS_POR_DEFECTO = int(os.environ.get("TEXT2SQL_N_INTENTOS", "2"))
 # Límite de tiempo de ejecución del SQL generado. La consulta de referencia más
 # lenta del oráculo tarda ~10 s; 60 s deja margen (docs/FASE_03.md).
 LIMITE_EJECUCION_S = float(os.environ.get("TEXT2SQL_LIMITE_EJECUCION_S", "60"))
@@ -148,6 +152,14 @@ MENSAJE_PROBLEMA_TRAS_REINTENTO = (
 )
 
 MENSAJE_RESUMEN_NO_CONFIABLE = "No pude redactar un resumen confiable; revisa la tabla de resultados."
+
+PISTA_CERO_FILAS = (
+    "La consulta se ejecutó sin errores pero no devolvió ninguna fila. Revisa si "
+    "el JOIN o el filtro está mal planteado (por ejemplo, saltarte la tabla orders "
+    "al relacionar customers con order_items); si aplica, usa directamente una de "
+    "las vistas del esquema. Recuerda también que los datos de Olist solo cubren "
+    "2016-2018. Genera una consulta corregida."
+)
 
 _NUMERO_RESPUESTA_RE = re.compile(r"-?\d[\d.,]*\d|-?\d")
 
@@ -348,7 +360,7 @@ def generar_sql(
     if error_previo and sql_previo:
         prompt += (
             f"\n\nYa intentaste responder con esta consulta:\n```sql\n{sql_previo}\n```"
-            f"\nPero falló con este error: {error_previo}"
+            f"\nPero tuvo este problema: {error_previo}"
             f"\nGenera una nueva consulta SQL corregida que resuelva el problema."
         )
     respuesta = client.generate(prompt, system=system_prompt, num_predict=350)
@@ -440,48 +452,50 @@ class _ResolucionSQL:
     intentos_detalle: list[dict] = field(default_factory=list)  # ver Text2SQLResult.intentos_detalle
 
 
+# Verificador opcional de un resultado ya ejecutado (Fase 9): recibe
+# (sql, columnas, filas) y devuelve (es_correcto, pista_para_el_siguiente_intento).
+# En la evaluación es el árbitro determinista contra la referencia; en el chat
+# no hay verificador y se acepta el primer SQL que corre y devuelve filas.
+Verificador = Callable[[str, list, list], "tuple[bool, str | None]"]
+
+
 def _generar_y_ejecutar_llm(
     client: OllamaClient,
     pregunta: str,
     schema_context: str,
     nombres_conocidos: set[str],
-    max_retries: int,
+    n_intentos: int,
+    verificador: Verificador | None = None,
 ) -> _ResolucionSQL:
-    """Corre generar_sql -> validar seguridad -> validar calidad -> ejecutar.
+    """Hasta `n_intentos` intentos de generar_sql -> validar -> ejecutar (Fase 6).
 
-    La validación de SEGURIDAD (`validate_select_only`) se rechaza de
-    inmediato, SIN reintento. `SQLQualityError` (literales placeholder o
-    tabla/vista inexistente), `sqlite3.Error` (falla de ejecución), "0 filas",
-    SQL vacío (el modelo no devolvió nada) y `OllamaError` al generar (timeout,
-    conexión caída) comparten UN solo reintento unificado (`ya_reintento_por_problema`): la
-    primera vez que ocurre cualquiera de las tres, se reintenta; la segunda,
-    se corta con `mensaje_fijo` (que depende de qué pasó en ese último
-    intento, no del historial).
+    Cada problema consume un intento y el siguiente recibe una pista (Fase 7):
+    el error real del motor/validador, el aviso de 0 filas o, si hay
+    `verificador` y rechaza el resultado, la pista que él devuelve (nunca el
+    valor correcto). La cadena se corta en el PRIMER ACIERTO (Fase 9): sin
+    verificador, el primer SQL que corre y devuelve filas; con verificador, el
+    primero que el verificador acepta. Un rechazo de SEGURIDAD corta siempre,
+    sin reintento.
     """
     resultado = _ResolucionSQL()
     esquema_real = get_esquema_real()
     sql_generado: str | None = None
-    error_actual: str | None = None
-    ya_reintento_por_problema = False
+    pista: str | None = None
 
-    def registrar(tipo: str, sql: str | None, detalle: str | None) -> None:
+    def registrar(tipo: str, sql: str | None, detalle: str | None, **extra) -> None:
         resultado.intentos_detalle.append(
-            {"intento": resultado.intentos, "sql": sql, "tipo": tipo, "detalle": detalle}
+            {"intento": resultado.intentos, "sql": sql, "tipo": tipo, "detalle": detalle, **extra}
         )
 
-    for intento in range(max_retries + 1):
-        resultado.intentos = intento + 1
+    for intento in range(1, n_intentos + 1):
+        resultado.intentos = intento
+        ultimo = intento == n_intentos
         try:
-            sql_generado = generar_sql(
-                client, pregunta, schema_context,
-                error_previo=error_actual, sql_previo=sql_generado,
-            )
+            sql_generado = generar_sql(client, pregunta, schema_context, error_previo=pista, sql_previo=sql_generado)
         except OllamaError as exc:
             registrar(clasificar_excepcion(exc), None, str(exc))
-            if not ya_reintento_por_problema and intento < max_retries:
-                ya_reintento_por_problema = True
-                error_actual = None  # no hay SQL previo que corregir: se repite el mismo prompt
-                sql_generado = None
+            if not ultimo:
+                pista, sql_generado = None, None  # sin SQL previo que corregir: se repite el mismo prompt
                 continue
             resultado.error_infra = str(exc)
             resultado.error_detalle = str(exc)
@@ -490,10 +504,8 @@ def _generar_y_ejecutar_llm(
 
         if not sql_generado.strip():
             registrar("ejecucion", None, "El modelo no devolvió ninguna consulta SQL.")
-            if not ya_reintento_por_problema and intento < max_retries:
-                ya_reintento_por_problema = True
-                error_actual = None
-                sql_generado = None
+            if not ultimo:
+                pista, sql_generado = None, None
                 continue
             resultado.error_detalle = "El modelo no devolvió ninguna consulta SQL."
             resultado.mensaje_fijo = MENSAJE_PROBLEMA_TRAS_REINTENTO
@@ -519,30 +531,24 @@ def _generar_y_ejecutar_llm(
             check_dominios_join(sql_validado)
             columnas, filas = execute_readonly(sql_validado)
         except (SQLQualityError, sqlite3.Error) as exc:
-            error_actual = str(exc) if isinstance(exc, SQLQualityError) else f"Error de SQLite al ejecutar la consulta: {exc}"
-            registrar(clasificar_excepcion(exc), sql_validado, error_actual)
-            if not ya_reintento_por_problema and intento < max_retries:
-                ya_reintento_por_problema = True
-                sql_generado = sql_validado
+            error = str(exc) if isinstance(exc, SQLQualityError) else f"Error de SQLite al ejecutar la consulta: {exc}"
+            registrar(clasificar_excepcion(exc), sql_validado, error, pista_siguiente=None if ultimo else error)
+            sql_generado = sql_validado
+            if not ultimo:
+                pista = error
                 continue
             resultado.sql = sql_validado
-            resultado.error_detalle = error_actual
+            resultado.error_detalle = error
             resultado.mensaje_fijo = MENSAJE_PROBLEMA_TRAS_REINTENTO
             return resultado
 
         if not filas:
             # Corre pero no devuelve nada: sospecha semántica (filtro o JOIN mal planteado).
-            registrar("semantico", sql_validado, "La consulta se ejecutó sin errores pero no devolvió ninguna fila.")
-            if not ya_reintento_por_problema and intento < max_retries:
-                ya_reintento_por_problema = True
-                error_actual = (
-                    "La consulta se ejecutó sin errores pero no devolvió ninguna fila. Revisa si "
-                    "el JOIN o el filtro está mal planteado (por ejemplo, saltarte la tabla orders "
-                    "al relacionar customers con order_items); si aplica, usa directamente una de "
-                    "las vistas del esquema. Recuerda también que los datos de Olist solo cubren "
-                    "2016-2018. Genera una consulta corregida."
-                )
-                sql_generado = sql_validado
+            registrar("semantico", sql_validado, "La consulta se ejecutó sin errores pero no devolvió ninguna fila.",
+                      pista_siguiente=None if ultimo else PISTA_CERO_FILAS)
+            sql_generado = sql_validado
+            if not ultimo:
+                pista = PISTA_CERO_FILAS
                 continue
             resultado.sql = sql_validado
             resultado.columnas = columnas
@@ -550,7 +556,15 @@ def _generar_y_ejecutar_llm(
             resultado.mensaje_fijo = MENSAJE_SIN_RESULTADOS
             return resultado
 
-        registrar("ok", sql_validado, None)
+        if verificador is not None:
+            correcto, pista_verificador = verificador(sql_validado, columnas, filas)
+            registrar("ok", sql_validado, None, verificado=correcto,
+                      pista_siguiente=None if (correcto or ultimo) else pista_verificador)
+            if not correcto and not ultimo:
+                sql_generado, pista = sql_validado, pista_verificador
+                continue
+        else:
+            registrar("ok", sql_validado, None)
         resultado.sql = sql_validado
         resultado.columnas = columnas
         resultado.filas = filas
@@ -588,9 +602,10 @@ def _generar_y_ejecutar(
     pregunta: str,
     schema_context: str,
     nombres_conocidos: set[str],
-    max_retries: int,
+    n_intentos: int,
     plantilla: Plantilla | None = None,
     usar_plantillas: bool = True,
+    verificador: Verificador | None = None,
 ) -> _ResolucionSQL:
     """Orden de resolución de una (sub-)pregunta:
     1. Plantilla fija si una regla reconoce el patrón (no se consulta al modelo).
@@ -602,7 +617,7 @@ def _generar_y_ejecutar(
     Con `usar_plantillas=False` se saltan los pasos 1 y 3 (solo LLM), para
     evaluar al modelo sin la ayuda de reglas fijas."""
     if not usar_plantillas:
-        return _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, max_retries)
+        return _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, n_intentos, verificador)
     if plantilla is None:
         detectadas = detectar_plantillas(pregunta)
         plantilla = detectadas[0] if detectadas else None
@@ -611,7 +626,7 @@ def _generar_y_ejecutar(
         if resuelto is not None:
             return resuelto
 
-    resultado = _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, max_retries)
+    resultado = _generar_y_ejecutar_llm(client, pregunta, schema_context, nombres_conocidos, n_intentos, verificador)
     if resultado.mensaje_fijo == MENSAJE_PROBLEMA_TRAS_REINTENTO and not resultado.error_infra:
         respaldo = plantilla_fallback(pregunta)
         if respaldo is not None:
@@ -634,7 +649,7 @@ def _answer_open_question(
     client: OllamaClient,
     schema_context: str,
     nombres_conocidos: set[str],
-    max_retries: int,
+    n_intentos: int,
     plantillas: list[Plantilla] | None = None,
     usar_plantillas: bool = True,
 ) -> Text2SQLResult:
@@ -649,7 +664,7 @@ def _answer_open_question(
     for i, sub_pregunta in enumerate(sub_preguntas):
         plantilla = plantillas[i] if plantillas else None
         r = _generar_y_ejecutar(
-            client, sub_pregunta, schema_context, nombres_conocidos, max_retries,
+            client, sub_pregunta, schema_context, nombres_conocidos, n_intentos,
             plantilla=plantilla, usar_plantillas=usar_plantillas,
         )
         intentos_totales += r.intentos
@@ -695,14 +710,19 @@ def _answer_open_question(
 def answer_question(
     pregunta: str,
     client: OllamaClient | None = None,
-    max_retries: int = 2,
+    n_intentos: int = N_INTENTOS_POR_DEFECTO,
     usar_plantillas: bool = True,
+    verificador: Verificador | None = None,
 ) -> Text2SQLResult:
-    """Orquesta el flujo completo. `max_retries` controla cuántas veces se le
-    permite al modelo corregir su propia consulta tras un error de calidad o
-    ejecución (no de seguridad, que se rechaza siempre de inmediato).
-    `usar_plantillas=False` desactiva plantillas por reglas y fallback sobre
-    vistas (el SQL sale siempre del LLM); lo usa la evaluación del modelo."""
+    """Orquesta el flujo completo.
+
+    `n_intentos` (Fase 6) = número TOTAL de intentos de generar SQL para la
+    pregunta (n_intentos=1: sin reintentos). Cada error de ejecución/calidad, 0
+    filas o rechazo del `verificador` consume un intento; un rechazo de
+    seguridad corta siempre. `usar_plantillas=False` desactiva plantillas por
+    reglas y fallback sobre vistas (el SQL sale siempre del LLM).
+    `verificador` (Fase 9): ver `Verificador`; sin él, se acepta el primer SQL
+    que corre y devuelve filas. No se aplica a preguntas descompuestas."""
     client = client or OllamaClient()
     schema_context = get_schema_context()
     nombres_conocidos = get_known_names()
@@ -712,20 +732,21 @@ def answer_question(
     if len(plantillas) > 1:
         return _answer_open_question(
             pregunta, [p.subpregunta for p in plantillas], client, schema_context, nombres_conocidos,
-            max_retries, plantillas=plantillas,
+            n_intentos, plantillas=plantillas,
         )
 
     sub_preguntas = None if plantillas else clasificar_pregunta(client, pregunta)
     if sub_preguntas:
         return _answer_open_question(
-            pregunta, sub_preguntas, client, schema_context, nombres_conocidos, max_retries,
+            pregunta, sub_preguntas, client, schema_context, nombres_conocidos, n_intentos,
             usar_plantillas=usar_plantillas,
         )
 
     resultado = Text2SQLResult(pregunta=pregunta)
     r = _generar_y_ejecutar(
-        client, pregunta, schema_context, nombres_conocidos, max_retries,
+        client, pregunta, schema_context, nombres_conocidos, n_intentos,
         plantilla=plantillas[0] if plantillas else None, usar_plantillas=usar_plantillas,
+        verificador=verificador,
     )
     resultado.intentos = r.intentos
     resultado.sql = r.sql
