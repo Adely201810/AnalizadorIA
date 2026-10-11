@@ -16,6 +16,14 @@ from __future__ import annotations
 
 import re
 
+# Palabras con las que empieza una sentencia SQL (no SELECT): si la respuesta
+# del modelo empieza con otra cosa, no es SQL sino texto.
+_PALABRAS_DE_SENTENCIA = {
+    "insert", "update", "delete", "drop", "alter", "create", "replace", "truncate", "attach",
+    "detach", "pragma", "vacuum", "reindex", "grant", "revoke", "begin", "commit", "rollback",
+    "savepoint", "explain", "analyze", "values", "upsert", "merge", "release", "end",
+}
+
 FORBIDDEN_KEYWORDS = [
     "insert", "update", "delete", "drop", "alter", "create", "replace",
     "truncate", "attach", "detach", "pragma", "vacuum", "reindex",
@@ -31,12 +39,29 @@ _CTE_NAME_RE = re.compile(r"\bWITH\s+([A-Za-z_][A-Za-z0-9_]*)\s+AS\s*\(|,\s*([A-
 
 class SQLValidationError(ValueError):
     """La consulta generada no pasó la validación de SEGURIDAD (no es un
-    SELECT de solo lectura, o intenta colar una segunda sentencia)."""
+    SELECT de solo lectura, o intenta colar una segunda sentencia).
+
+    `motivo`: "prohibida" (sentencia o palabra clave no permitida, varias
+    sentencias) o "no_es_sql" (el modelo respondió texto, p. ej. una negativa,
+    en lugar de SQL). La clasificación de fallos (Fase 2) trata "no_es_sql"
+    como ejecución, no como seguridad."""
+
+    def __init__(self, mensaje: str, motivo: str = "prohibida"):
+        super().__init__(mensaje)
+        self.motivo = motivo
 
 
 class SQLQualityError(ValueError):
     """La consulta es un SELECT válido pero tiene un síntoma de alucinación
-    del modelo (literal inventado o tabla/vista inexistente)."""
+    del modelo (literal inventado o tabla/vista inexistente).
+
+    `motivo` dice qué check falló: "tabla_inexistente" / "columna_inexistente"
+    (el SQL no correría) o "placeholder" / "dominio_join" (correría, pero
+    respondería otra cosa). Lo usa la clasificación de fallos (Fase 2)."""
+
+    def __init__(self, mensaje: str, motivo: str = "otro"):
+        super().__init__(mensaje)
+        self.motivo = motivo
 
 
 def _strip_comments_and_strings_for_keyword_scan(sql: str) -> str:
@@ -52,7 +77,7 @@ def validate_select_only(sql: str) -> str:
     solo lectura. Si pasa, devuelve el SQL limpio (sin comentarios, sin ';' final).
     """
     if not sql or not sql.strip():
-        raise SQLValidationError("El modelo no generó ninguna consulta SQL.")
+        raise SQLValidationError("El modelo no generó ninguna consulta SQL.", motivo="no_es_sql")
 
     cleaned = _strip_comments_and_strings_for_keyword_scan(sql).strip()
 
@@ -68,7 +93,8 @@ def validate_select_only(sql: str) -> str:
     primera_palabra = primera_palabra.group(1).lower() if primera_palabra else ""
     if primera_palabra not in ("select", "with"):
         raise SQLValidationError(
-            f"Solo se permiten consultas SELECT. La consulta generada empieza con '{primera_palabra}'."
+            f"Solo se permiten consultas SELECT. La consulta generada empieza con '{primera_palabra}'.",
+            motivo="prohibida" if primera_palabra in _PALABRAS_DE_SENTENCIA else "no_es_sql",
         )
 
     tokens = re.findall(r"[A-Za-z_]+", sin_punto_final.lower())
@@ -93,7 +119,8 @@ def check_literales_placeholder(sql: str) -> None:
     if sospechosos:
         raise SQLQualityError(
             f"La consulta usa literal(es) que parecen inventados (placeholder), no datos reales: "
-            f"{', '.join(repr(s) for s in sospechosos)}. Usa valores reales del esquema o de las notas."
+            f"{', '.join(repr(s) for s in sospechosos)}. Usa valores reales del esquema o de las notas.",
+            motivo="placeholder",
         )
 
 
@@ -118,7 +145,8 @@ def check_tablas_conocidas(sql: str, nombres_conocidos: set[str]) -> None:
     if desconocidos:
         raise SQLQualityError(
             f"La consulta referencia tabla(s)/vista(s) que no existen en el esquema: "
-            f"{', '.join(desconocidos)}. Revisa los nombres exactos del esquema."
+            f"{', '.join(desconocidos)}. Revisa los nombres exactos del esquema.",
+            motivo="tabla_inexistente",
         )
 
 
@@ -407,7 +435,8 @@ def check_columnas_existentes(sql: str, esquema: dict[str, set[str]]) -> None:
     if problemas:
         raise SQLQualityError(
             "La consulta usa columnas que no existen en la tabla indicada: " + " ".join(dict.fromkeys(problemas))
-            + " Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista."
+            + " Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+            motivo="columna_inexistente",
         )
 
 
@@ -427,5 +456,6 @@ def check_dominios_join(sql: str) -> None:
         raise SQLQualityError(
             "La consulta compara columnas de dominios distintos en un JOIN/filtro: "
             + ", ".join(dict.fromkeys(malos))
-            + ". Une siempre order_id con order_id, seller_id con seller_id, customer_id con customer_id, etc."
+            + ". Une siempre order_id con order_id, seller_id con seller_id, customer_id con customer_id, etc.",
+            motivo="dominio_join",
         )

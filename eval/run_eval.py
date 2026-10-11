@@ -42,6 +42,7 @@ from llm.text_to_sql import (
     MENSAJE_PROBLEMA_TRAS_REINTENTO,
     MENSAJE_RESUMEN_NO_CONFIABLE,
     MENSAJE_SIN_RESULTADOS,
+    TIPOS_FALLO,
     Text2SQLResult,
     _respuesta_respaldada_por_datos,
     answer_question,
@@ -61,6 +62,33 @@ def calificar(item: dict, resultado: Text2SQLResult, filas_referencia: list[tupl
         return False, "pipeline: la pregunta se descompuso en sub-consultas (no hay un resultado único que comparar)"
     v = comparar(resultado.filas, filas_referencia, item["tipos_columnas"], item.get("orden_importa", False))
     return v.correcto, v.motivo
+
+
+def clasificar_intentos(resultado: Text2SQLResult, correcto: bool) -> tuple[str, list[dict]]:
+    """Fase 2. Devuelve (clasificación final de la pregunta, intentos).
+
+    Cada intento trae el `tipo` que le dio el pipeline (llm/text_to_sql.py:
+    clasificar_excepcion y la rama de 0 filas). Un intento "ok" del pipeline
+    solo significa que el SQL corrió y devolvió filas: si es el último y el
+    árbitro lo rechaza, se reclasifica como "semantico" en `tipo_evaluado`."""
+    intentos = [dict(d) for d in resultado.intentos_detalle]
+    for d in intentos:
+        d["tipo_evaluado"] = d["tipo"]
+    if correcto:
+        return "ok", intentos
+    if resultado.sub_consultas:
+        # Respondió con varias sub-consultas en lugar de una: corre, pero no es lo pedido.
+        # Cada sub-consulta que "corrió bien" tampoco responde la pregunta.
+        for d in intentos:
+            if d["tipo"] == "ok":
+                d["tipo_evaluado"] = "semantico"
+        return "semantico", intentos
+    if not intentos:
+        # Sin ningún intento registrado: el pipeline falló antes de generar SQL.
+        return "infra", intentos
+    if intentos[-1]["tipo"] == "ok":
+        intentos[-1]["tipo_evaluado"] = "semantico"
+    return intentos[-1]["tipo_evaluado"], intentos
 
 
 def texto_respaldado(resultado: Text2SQLResult) -> bool:
@@ -97,6 +125,12 @@ def resumen(resultados: list[dict]) -> dict:
         clave = (r["origen"] or "sin_origen").split(":")[0]
         origenes[clave] = origenes.get(clave, 0) + 1
     latencias = [r["latencia_s"] for r in resultados]
+    por_clasificacion = {t: 0 for t in TIPOS_FALLO}
+    por_intento = {t: 0 for t in TIPOS_FALLO}
+    for r in resultados:
+        por_clasificacion[r["clasificacion"]] += 1
+        for d in r["intentos_detalle"]:
+            por_intento[d["tipo_evaluado"]] += 1
     return {
         "total_preguntas": total,
         "correctas": correctas,
@@ -105,6 +139,8 @@ def resumen(resultados: list[dict]) -> dict:
         "latencia_media_s": round(sum(latencias) / total, 2) if total else None,
         "latencia_max_s": round(max(latencias), 2) if total else None,
         "por_origen": origenes,
+        "clasificacion_final": por_clasificacion,
+        "clasificacion_por_intento": por_intento,
     }
 
 
@@ -172,12 +208,14 @@ def main():
             resultado = Text2SQLResult(pregunta=item["pregunta"], error=f"excepción {type(exc).__name__}: {exc}")
         latencia = time.perf_counter() - t0
         correcto, motivo = calificar(item, resultado, filas_ref)
+        clasificacion, intentos_detalle = clasificar_intentos(resultado, correcto)
 
         print(f"   SQL generado: {resultado.sql}")
         print(f"   Filas modelo: {resultado.filas[:5]}{' …' if len(resultado.filas) > 5 else ''}")
         print(f"   Referencia:   {filas_ref[:5]}{' …' if len(filas_ref) > 5 else ''}")
         print(f"   Respuesta:    {resultado.respuesta or resultado.error}")
-        print(f"   {'✅' if correcto else '❌'} {motivo} | origen={resultado.origen} | intentos={resultado.intentos} | {latencia:.1f} s\n", flush=True)
+        print(f"   Intentos:     {[d['tipo_evaluado'] for d in intentos_detalle]}")
+        print(f"   {'✅' if correcto else '❌'} [{clasificacion}] {motivo} | origen={resultado.origen} | intentos={resultado.intentos} | {latencia:.1f} s\n", flush=True)
 
         resultados.append({
             "id": item["id"],
@@ -194,7 +232,9 @@ def main():
             "intentos": resultado.intentos,
             "latencia_s": round(latencia, 2),
             "correcto": correcto,
+            "clasificacion": clasificacion,
             "motivo": motivo,
+            "intentos_detalle": intentos_detalle,
             "texto_respaldado": texto_respaldado(resultado),
         })
         guardar(output_path, cabecera, resultados)
@@ -205,6 +245,8 @@ def main():
     print(f"=== RESULTADO FINAL: correctas {r['correctas']}/{r['total_preguntas']} ({r['precision_pct']}%) | "
           f"texto respaldado {r['textos_respaldados']}/{r['total_preguntas']} | latencia media {r['latencia_media_s']} s | "
           f"origen {r['por_origen']} | recursos {cabecera['recursos_ollama']} ===")
+    print(f"=== CLASIFICACIÓN FINAL (por pregunta): {r['clasificacion_final']} ===")
+    print(f"=== CLASIFICACIÓN POR INTENTO: {r['clasificacion_por_intento']} ===")
     print(f"Resultados detallados guardados en: {output_path}")
 
 

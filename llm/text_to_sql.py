@@ -241,6 +241,30 @@ class Text2SQLResult:
     sub_consultas: list[dict] = field(default_factory=list)  # solo si la pregunta se descompuso
     origen: str | None = None  # "llm", "plantilla:<nombre>" o "fallback_vista:<nombre>" (consulta simple)
     detalle_error: str | None = None  # por qué se descartó el SQL del LLM (aunque luego se respondiera con un fallback)
+    # Un dict por intento: {"intento", "sql", "tipo", "detalle"}; tipo en TIPOS_FALLO (ver clasificar_excepcion).
+    intentos_detalle: list[dict] = field(default_factory=list)
+
+
+# Clasificación de cada intento (Fase 2). "ok" = el SQL corrió y devolvió filas;
+# si además es correcto lo decide el árbitro de la evaluación, que puede
+# reclasificar un "ok" como "semantico".
+TIPOS_FALLO = ("ok", "ejecucion", "semantico", "seguridad", "infra")
+
+
+def clasificar_excepcion(exc: Exception) -> str:
+    """ejecucion = el SQL no corre (o no correría); semantico = corre pero
+    responde otra cosa; seguridad = no es una lectura permitida; infra = el
+    modelo/servidor no respondió."""
+    if isinstance(exc, OllamaError):
+        return "infra"
+    if isinstance(exc, SQLValidationError):
+        # Texto en lugar de SQL (p. ej. una negativa del modelo) no es un intento inseguro.
+        return "ejecucion" if exc.motivo == "no_es_sql" else "seguridad"
+    if isinstance(exc, SQLQualityError):
+        return "ejecucion" if exc.motivo in ("tabla_inexistente", "columna_inexistente") else "semantico"
+    if isinstance(exc, sqlite3.Error):
+        return "ejecucion"
+    raise TypeError(f"excepción no clasificable: {type(exc).__name__}")
 
 
 def _sqlite_path_from_url(database_url: str) -> str:
@@ -413,6 +437,7 @@ class _ResolucionSQL:
     origen: str = "llm"  # "llm", "plantilla:<nombre>" o "fallback_vista:<nombre>"
     error_detalle: str | None = None  # último problema del SQL del LLM (visible aunque no haya "error" de infraestructura)
     limite_sintesis: int | None = None  # filas que se le muestran al modelo al sintetizar (None = default)
+    intentos_detalle: list[dict] = field(default_factory=list)  # ver Text2SQLResult.intentos_detalle
 
 
 def _generar_y_ejecutar_llm(
@@ -439,6 +464,11 @@ def _generar_y_ejecutar_llm(
     error_actual: str | None = None
     ya_reintento_por_problema = False
 
+    def registrar(tipo: str, sql: str | None, detalle: str | None) -> None:
+        resultado.intentos_detalle.append(
+            {"intento": resultado.intentos, "sql": sql, "tipo": tipo, "detalle": detalle}
+        )
+
     for intento in range(max_retries + 1):
         resultado.intentos = intento + 1
         try:
@@ -447,6 +477,7 @@ def _generar_y_ejecutar_llm(
                 error_previo=error_actual, sql_previo=sql_generado,
             )
         except OllamaError as exc:
+            registrar(clasificar_excepcion(exc), None, str(exc))
             if not ya_reintento_por_problema and intento < max_retries:
                 ya_reintento_por_problema = True
                 error_actual = None  # no hay SQL previo que corregir: se repite el mismo prompt
@@ -458,6 +489,7 @@ def _generar_y_ejecutar_llm(
             return resultado
 
         if not sql_generado.strip():
+            registrar("ejecucion", None, "El modelo no devolvió ninguna consulta SQL.")
             if not ya_reintento_por_problema and intento < max_retries:
                 ya_reintento_por_problema = True
                 error_actual = None
@@ -470,6 +502,7 @@ def _generar_y_ejecutar_llm(
         try:
             sql_validado = validate_select_only(sql_generado)
         except SQLValidationError as exc:
+            registrar(clasificar_excepcion(exc), sql_generado, str(exc))
             resultado.sql = sql_generado
             resultado.error_seguridad = str(exc)
             return resultado
@@ -487,6 +520,7 @@ def _generar_y_ejecutar_llm(
             columnas, filas = execute_readonly(sql_validado)
         except (SQLQualityError, sqlite3.Error) as exc:
             error_actual = str(exc) if isinstance(exc, SQLQualityError) else f"Error de SQLite al ejecutar la consulta: {exc}"
+            registrar(clasificar_excepcion(exc), sql_validado, error_actual)
             if not ya_reintento_por_problema and intento < max_retries:
                 ya_reintento_por_problema = True
                 sql_generado = sql_validado
@@ -497,6 +531,8 @@ def _generar_y_ejecutar_llm(
             return resultado
 
         if not filas:
+            # Corre pero no devuelve nada: sospecha semántica (filtro o JOIN mal planteado).
+            registrar("semantico", sql_validado, "La consulta se ejecutó sin errores pero no devolvió ninguna fila.")
             if not ya_reintento_por_problema and intento < max_retries:
                 ya_reintento_por_problema = True
                 error_actual = (
@@ -514,6 +550,7 @@ def _generar_y_ejecutar_llm(
             resultado.mensaje_fijo = MENSAJE_SIN_RESULTADOS
             return resultado
 
+        registrar("ok", sql_validado, None)
         resultado.sql = sql_validado
         resultado.columnas = columnas
         resultado.filas = filas
@@ -538,6 +575,8 @@ def _ejecutar_plantilla(plantilla: Plantilla, tipo: str) -> _ResolucionSQL | Non
     resultado = _ResolucionSQL(
         sql=sql, columnas=columnas, filas=filas, intentos=0,
         origen=f"{tipo}:{plantilla.nombre}", limite_sintesis=plantilla.limite_sintesis,
+        intentos_detalle=[{"intento": 0, "sql": sql, "tipo": "ok" if filas else "semantico",
+                           "detalle": f"{tipo}:{plantilla.nombre}"}],
     )
     if not filas:
         resultado.mensaje_fijo = MENSAJE_SIN_RESULTADOS
@@ -584,6 +623,7 @@ def _generar_y_ejecutar(
             if resuelto is not None and resuelto.filas:
                 resuelto.intentos = resultado.intentos
                 resuelto.error_detalle = resultado.error_detalle
+                resuelto.intentos_detalle = resultado.intentos_detalle + resuelto.intentos_detalle
                 return resuelto
     return resultado
 
@@ -626,10 +666,14 @@ def _answer_open_question(
             "origen": r.origen,
             "rechazo_llm": r.error_detalle if r.origen != "llm" else None,
             "limite_sintesis": r.limite_sintesis,
+            "intentos_detalle": r.intentos_detalle,
         })
 
     resultado.intentos = intentos_totales
     resultado.sub_consultas = sub_consultas
+    resultado.intentos_detalle = [
+        {**d, "subpregunta": sc["pregunta"]} for sc in sub_consultas for d in sc["intentos_detalle"]
+    ]
     resultado.sql = "\n\n".join(sqls) if sqls else None
     resultado.total_filas = sum(len(sc["filas"]) for sc in sub_consultas)
 
@@ -687,6 +731,7 @@ def answer_question(
     resultado.sql = r.sql
     resultado.origen = r.origen
     resultado.detalle_error = r.error_detalle
+    resultado.intentos_detalle = r.intentos_detalle
 
     if r.error_infra:
         resultado.error = r.error_infra

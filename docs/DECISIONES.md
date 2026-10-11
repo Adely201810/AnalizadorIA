@@ -57,3 +57,9 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Decisión:** se corta la consulta desde dentro de SQLite (`set_progress_handler`) pasados `TEXT2SQL_LIMITE_EJECUCION_S` (60 s por defecto) y el error se trata como un error de ejecución más (se reintenta con ese mensaje). Las consultas de referencia del oráculo no tienen límite.
 - **Motivo:** la consulta de referencia más lenta tarda 9.93 s; 60 s es 6 veces eso.
 - **Revertir:** `TEXT2SQL_LIMITE_EJECUCION_S=0` desactiva el límite.
+
+## D-09 (C) Reglas de clasificación de fallos (Fase 2)
+- **Decisión:** 0 filas → `semantico` (corre, pero no responde); SQL vacío o texto en lugar de SQL (p. ej. una negativa del modelo) → `ejecucion` (no hay SQL ejecutable), no `seguridad`; literal inventado o JOIN entre dominios → `semantico`; tabla o columna inexistente → `ejecucion`; pregunta descompuesta en sub-consultas → `semantico`; excepción de Python sin intentos registrados → `infra`.
+- **Motivo:** las definiciones del plan (ejecución = no corre; semántico = corre pero responde otra cosa) aplicadas a cada rama existente del pipeline.
+- **Alternativas:** tratar 0 filas como `ejecucion`, o las negativas como `seguridad` (lo que pasaba antes del ajuste).
+- **Revertir:** `clasificar_excepcion` en `llm/text_to_sql.py` y `clasificar_intentos` en `eval/run_eval.py`.
