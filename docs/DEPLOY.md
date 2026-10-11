@@ -238,11 +238,9 @@ AnalizadorIA/
 │   ├── olist_database.py     # Conexión (respeta OLIST_DATABASE_URL)
 │   ├── olist_views.sql       # Vistas analíticas (ventas por pedido, clientes recurrentes, retrasos)
 │   ├── olist_init_db.py      # Crea tablas + vistas; exporta DDL
-│   ├── olist_schema.sql      # DDL exportado (generado, para lectura humana)
-│   └── models.py, database.py, views.sql, init_db.py, schema.sql, gimnasio.db  # dataset histórico
+│   └── olist_schema.sql      # DDL exportado (generado, para lectura humana)
 ├── seeder/
-│   ├── load_olist_csv.py     # Loader de los 9 CSV de Olist (idempotente)
-│   └── seed.py                # Generador sintético del gimnasio (histórico)
+│   └── load_olist_csv.py     # Loader de los 9 CSV de Olist (idempotente)
 ├── llm/
 │   ├── ollama_client.py      # Cliente HTTP de la API de Ollama (modelo configurable por OLLAMA_MODEL)
 │   ├── schema_context.py     # Esquema compacto + notas + ejemplos few-shot para el prompt
@@ -251,14 +249,13 @@ AnalizadorIA/
 │   ├── text_to_sql.py         # Pipeline completo pregunta -> SQL -> respuesta (reintento si SQL falla o resultado viene vacío)
 │   └── cli.py                  # CLI interactivo
 ├── eval/
-│   ├── ground_truth_olist.json # 10 preguntas con respuesta correcta calculada
-│   ├── ground_truth.json       # 20 preguntas del dataset de gimnasio, histórico
+│   ├── ground_truth_olist.json # 10 necesidades de negocio (fuente única del oráculo y del dashboard)
 │   ├── compute_ground_truth.py
 │   └── run_eval.py             # Corre y califica la evaluación
 ├── data/olist/                # 9 CSV públicos de Olist (fuente de datos)
 ├── docs/
 │   ├── esquema_olist.md      # Diccionario de datos de Olist (lectura humana)
-│   ├── diccionario_datos.md  # Diccionario de datos del gimnasio, histórico
 │   └── DEPLOY.md              # Este documento
+├── legacy/gimnasio/           # Dataset histórico del gimnasio (modelos, seeder, ground truth, docs)
 └── requirements.txt
 ```

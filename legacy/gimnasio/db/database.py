@@ -1,13 +1,13 @@
 """
 Configuracion de conexion a la base de datos.
 
-Por defecto usa SQLite en db/gimnasio.db, pero respeta la variable de entorno
+Por defecto usa SQLite en legacy/gimnasio/db/gimnasio.db, pero respeta la variable de entorno
 DATABASE_URL para apuntar a PostgreSQL sin cambiar una sola linea de codigo
 en el resto del proyecto (modelos, seeder, modulo LLM), ya que todo el acceso
 a datos pasa por SQLAlchemy.
 
 Ejemplos de DATABASE_URL:
-  sqlite:///./db/gimnasio.db                      (default)
+  sqlite:///./legacy/gimnasio/db/gimnasio.db                      (default)
   postgresql+psycopg2://usuario:pass@localhost/gimnasio
 """
 import os

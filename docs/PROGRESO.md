@@ -17,8 +17,8 @@
 | G — Fase 7 | ✅ | `266439f` | Pistas sin cifras + guarda; **0 fugas en 94 pistas reales**. Con/sin pista: 1/10 vs 0/10, **0 recuperaciones** tras rechazo en todas las configuraciones | [FASE_07.md](FASE_07.md) |
 | G — Fase 8 | ✅ | `8d85a08` | Veredicto = árbitro. Juez vs árbitro: 9/10 coinciden, **1 falso acierto**, 0 falsos rechazos (10 intentos) | [FASE_08.md](FASE_08.md) |
 | H — Fase 10 | ✅ | `3223ace` | Juez de sensatez en el chat (texto: "no comprueba la cifra"); bitácora JSON propia con límites. Real: registra e inyecta; el efecto de evitar el error solo está probado con el cliente guionado | [FASE_10.md](FASE_10.md) |
-| I — Fase 11 | ✅ | (este commit) | Carga del dashboard en frío **≈193-221 s → ≈25-30 s**; PDF bajo demanda; HTML escapado; títulos H1/H3; detalle técnico visible con Ollama caído (revisado en el navegador). Los índices empeoran q01, así que no se aplicaron | [FASE_11.md](FASE_11.md) |
-| J — Limpieza | pendiente | | | |
+| I — Fase 11 | ✅ | `d0fb8f4` | Carga del dashboard en frío **≈193-221 s → ≈25-30 s**; PDF bajo demanda; HTML escapado; títulos H1/H3; detalle técnico visible con Ollama caído (revisado en el navegador). Los índices empeoran q01, así que no se aplicaron | [FASE_11.md](FASE_11.md) |
+| J — Limpieza | ✅ | (este commit) | P2 resuelto (script y módulo); 10 archivos del gimnasio → `legacy/gimnasio/` con `git mv`; 49/49 pruebas y ambas páginas cargan sin excepciones | [FASE_J_LIMPIEZA.md](FASE_J_LIMPIEZA.md) |
 
 ## Pendientes / avisos
 - ⚠ **Velocidad:** llama3.1 genera a ~4 tok/s desde ~17:50 (antes 36 tok/s); latencias de llama3.1 no representativas. Reiniciar Windows y volver a medir.

@@ -2,20 +2,20 @@
 Crea (o recrea) el esquema completo de la base de datos: tablas ORM + vistas analíticas.
 
 Uso:
-    python db/init_db.py               # crea las tablas si no existen
-    python db/init_db.py --reset       # elimina todo y vuelve a crear (destructivo)
-    python db/init_db.py --export-ddl  # además exporta el DDL resultante a db/schema.sql
+    python legacy/gimnasio/db/init_db.py               # crea las tablas si no existen
+    python legacy/gimnasio/db/init_db.py --reset       # elimina todo y vuelve a crear (destructivo)
+    python legacy/gimnasio/db/init_db.py --export-ddl  # además exporta el DDL resultante a legacy/gimnasio/db/schema.sql
 """
 import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # raíz del repositorio
 
 from sqlalchemy.schema import CreateTable
 
-from db.database import DATABASE_URL, engine
-from db.models import Base
+from legacy.gimnasio.db.database import DATABASE_URL, engine
+from legacy.gimnasio.db.models import Base
 
 
 def reset_schema():
@@ -57,7 +57,7 @@ def export_ddl():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inicializa el esquema de la base de datos del gimnasio.")
     parser.add_argument("--reset", action="store_true", help="Elimina todas las tablas antes de crearlas (destructivo).")
-    parser.add_argument("--export-ddl", action="store_true", help="Exporta el DDL resultante a db/schema.sql")
+    parser.add_argument("--export-ddl", action="store_true", help="Exporta el DDL resultante a legacy/gimnasio/db/schema.sql")
     args = parser.parse_args()
 
     if args.reset:

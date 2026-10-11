@@ -10,10 +10,10 @@ y las vuelve a crear antes de insertar datos nuevos (ver --no-reset para desacti
 este comportamiento).
 
 Uso:
-    python seeder/seed.py                          # cantidades por defecto
-    python seeder/seed.py --clientes 3000 --scale 1.5
-    python seeder/seed.py --seed 7                  # reproducibilidad distinta
-    python seeder/seed.py --no-reset                # agrega datos sin limpiar (no recomendado)
+    python legacy/gimnasio/seeder/seed.py                          # cantidades por defecto
+    python legacy/gimnasio/seeder/seed.py --clientes 3000 --scale 1.5
+    python legacy/gimnasio/seeder/seed.py --seed 7                  # reproducibilidad distinta
+    python legacy/gimnasio/seeder/seed.py --no-reset                # agrega datos sin limpiar (no recomendado)
 
 Requiere: SQLAlchemy, Faker (ver requirements.txt)
 """
@@ -26,14 +26,14 @@ import random
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))  # raíz del repositorio
 
 from faker import Faker
 from sqlalchemy import text
 
-from db.database import engine
-from db.init_db import create_schema, create_views, reset_schema
-from db.models import (
+from legacy.gimnasio.db.database import engine
+from legacy.gimnasio.db.init_db import create_schema, create_views, reset_schema
+from legacy.gimnasio.db.models import (
     CalendarioEvento,
     CampaniaMarketing,
     Checkin,

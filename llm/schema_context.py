@@ -10,6 +10,14 @@ llm/ollama_client.py.
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    # Ejecutado como script (`python llm/schema_context.py`): Python pone llm/ en
+    # sys.path en vez de la raíz del proyecto, y `import db` fallaría (P2).
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from sqlalchemy import text
 
 from db.olist_database import engine

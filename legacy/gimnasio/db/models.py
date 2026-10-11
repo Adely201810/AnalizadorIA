@@ -4,7 +4,7 @@ Modelos ORM (SQLAlchemy 2.x) para la base de datos del gimnasio ficticio "FitZon
 Diseño portable: se usan tipos genéricos de SQLAlchemy (Integer, String, Numeric,
 Date, DateTime, Boolean, Text) que se traducen automáticamente a los tipos nativos
 tanto de SQLite como de PostgreSQL. Para migrar a PostgreSQL basta con cambiar la
-variable de entorno DATABASE_URL (ver db/database.py) y correr db/init_db.py contra
+variable de entorno DATABASE_URL (ver legacy/gimnasio/db/database.py) y correr legacy/gimnasio/db/init_db.py contra
 el nuevo motor -- no hay SQL específico de SQLite en este archivo.
 
 Convenciones:

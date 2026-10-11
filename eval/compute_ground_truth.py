@@ -23,13 +23,13 @@ from sqlalchemy import text
 
 DEFAULT_GROUND_TRUTH = {
     "olist": Path(__file__).resolve().parent / "ground_truth_olist.json",
-    "gimnasio": Path(__file__).resolve().parent / "ground_truth.json",
+    "gimnasio": Path(__file__).resolve().parent.parent / "legacy" / "gimnasio" / "eval" / "ground_truth.json",
 }
 
 
 def _engine_for(dataset: str):
     if dataset == "gimnasio":
-        from db.database import engine
+        from legacy.gimnasio.db.database import engine
     else:
         from db.olist_database import engine, verificar_bd_existe
 

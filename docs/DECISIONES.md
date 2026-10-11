@@ -122,3 +122,7 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Selector:** `st.tabs` ejecuta las 11 pestañas en cada carga (≈193-221 s en frío). Con un selector (`st.radio`), solo se calcula la sección elegida (≈25-30 s la carga inicial). Contrapartida: cambiar de sección dispara el cálculo de esa sección (q01 ≈30-40 s la primera vez; después queda en caché).
 - **Índices:** medidos sobre una copia, **empeoran** q01 (32 → 39-41 s) y q09 (13.4 → 16.6-17.8 s). No se aplicaron y la base no se tocó.
 - **Revertir:** restaurar `st.tabs` desde git (commit `3223ace`).
+
+## D-19 (C) Limpieza: `legacy/gimnasio/` con la misma estructura; documentos históricos intactos
+- **Decisión:** los 10 archivos del gimnasio se movieron con `git mv` a `legacy/gimnasio/{db,seeder,eval,docs}`, con sus importaciones actualizadas; siguen funcionando (seed y ground truth verificados contra una base temporal). `DIAGNOSTICO.md` y los `FASE_XX.md` anteriores no se editaron, porque describen el estado en su momento.
+- **Revertir:** `git mv` inverso (los renombres están en el commit de J).

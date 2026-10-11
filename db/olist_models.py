@@ -2,7 +2,7 @@
 Modelos ORM (SQLAlchemy 2.x) para la base de datos de e-commerce Olist
 (dataset público brasileño, ver data/olist/ y https://www.kaggle.com/olistbr).
 
-Diseño portable: igual que db/models.py, se usan tipos genéricos de SQLAlchemy
+Diseño portable: igual que legacy/gimnasio/db/models.py, se usan tipos genéricos de SQLAlchemy
 (Integer, String, Numeric, DateTime, Text) que se traducen automáticamente a los
 tipos nativos tanto de SQLite como de PostgreSQL.
 

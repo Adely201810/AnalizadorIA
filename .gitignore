@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 *.db
 *.sqlite3
-db/gimnasio.db
+legacy/gimnasio/db/gimnasio.db
 eval/eval_results_*.json
 .DS_Store
 logs/

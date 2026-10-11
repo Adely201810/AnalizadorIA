@@ -6,7 +6,7 @@ pagos, reseñas y geolocalización.
 
 Motor de referencia: **SQLite** (`db/olist.db`). El esquema está definido en
 SQLAlchemy (`db/olist_models.py`) y es portable a **PostgreSQL** cambiando la
-variable de entorno `OLIST_DATABASE_URL` (mismo patrón que `db/database.py`).
+variable de entorno `OLIST_DATABASE_URL` (mismo patrón que `legacy/gimnasio/db/database.py`).
 
 Este documento es la fuente de verdad que se inyecta como contexto al LLM en el
 módulo Text-to-SQL (`llm/text_to_sql.py`), para reducir alucinaciones y anclar al

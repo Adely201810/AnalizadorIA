@@ -11,9 +11,9 @@ evaluación con respuestas de referencia para medir objetivamente la precisión
 del modelo.
 
 > El proyecto también conserva un dataset anterior de un gimnasio ficticio
-> ("FitZone", `db/gimnasio.db`) como artefacto histórico -- ya no es el target
-> activo del pipeline LLM, pero sigue intacto y funcional por su cuenta (ver
-> `db/models.py`, `seeder/seed.py`, `eval/ground_truth.json`).
+> ("FitZone") como artefacto histórico en `legacy/gimnasio/` (modelos, seeder,
+> ground truth de 20 preguntas y resultados viejos). Ya no es el target del
+> pipeline LLM; ver `legacy/gimnasio/README.md`.
 
 ## Inicio rápido
 
@@ -42,11 +42,13 @@ para el diccionario de datos completo.
 
 | Carpeta | Contenido |
 |---|---|
-| `db/` | Esquema Olist (SQLAlchemy ORM), conexión de solo lectura, vistas analíticas. Incluye también el esquema/DB histórico de gimnasio |
-| `seeder/` | `load_olist_csv.py` (loader de los CSV reales de Olist) y `seed.py` (generador sintético del gimnasio, histórico) |
+| `db/` | Esquema Olist (SQLAlchemy ORM), conexión de solo lectura, vistas analíticas |
+| `seeder/` | `load_olist_csv.py` (loader de los CSV reales de Olist) |
 | `llm/` | Cliente de Ollama, contexto de esquema (con few-shot), guardas de seguridad SQL, pipeline Text-to-SQL, CLI |
-| `eval/` | Suite de evaluación con ground truth (Olist: 10 preguntas; gimnasio: 20, histórico) y runner de evaluación |
-| `docs/` | Diccionario de datos de Olist y de gimnasio, y guía de despliegue |
+| `eval/` | Oráculo de las 10 necesidades (`ground_truth_olist.json`), árbitro determinista, runner de evaluación, benchmark de modelos y líneas base (`eval/baselines/`) |
+| `docs/` | Diccionario de datos de Olist, guía de despliegue y documentación por fase (`PROGRESO.md`, `DECISIONES.md`, `FASE_XX.md`) |
+| `tests/` | Pruebas automáticas (`python -m unittest discover -s tests -t .`) |
+| `legacy/gimnasio/` | Dataset histórico del gimnasio ficticio (no se usa en el pipeline) |
 | `app.py` | Interfaz de chat (Streamlit) sobre el mismo pipeline que usa `llm/cli.py` |
 
 ## Seguridad del pipeline Text-to-SQL
