@@ -16,8 +16,8 @@
 | G — Fase 9 | ✅ | `9a0b0ad` | Corte en el primer acierto (demostrado). ⚠ El caso real "falla→acierta" fue un **falso acierto por tolerancia** (3.01 vs 3.04, D-17) | [FASE_09.md](FASE_09.md) |
 | G — Fase 7 | ✅ | `266439f` | Pistas sin cifras + guarda; **0 fugas en 94 pistas reales**. Con/sin pista: 1/10 vs 0/10, **0 recuperaciones** tras rechazo en todas las configuraciones | [FASE_07.md](FASE_07.md) |
 | G — Fase 8 | ✅ | `8d85a08` | Veredicto = árbitro. Juez vs árbitro: 9/10 coinciden, **1 falso acierto**, 0 falsos rechazos (10 intentos) | [FASE_08.md](FASE_08.md) |
-| H — Fase 10 | ✅ | (este commit) | Juez de sensatez en el chat (texto: "no comprueba la cifra"); bitácora JSON propia con límites. Real: registra e inyecta; el efecto de evitar el error solo está probado con el cliente guionado | [FASE_10.md](FASE_10.md) |
-| I — Fase 11 | pendiente | | | |
+| H — Fase 10 | ✅ | `3223ace` | Juez de sensatez en el chat (texto: "no comprueba la cifra"); bitácora JSON propia con límites. Real: registra e inyecta; el efecto de evitar el error solo está probado con el cliente guionado | [FASE_10.md](FASE_10.md) |
+| I — Fase 11 | ✅ | (este commit) | Carga del dashboard en frío **≈193-221 s → ≈25-30 s**; PDF bajo demanda; HTML escapado; títulos H1/H3; detalle técnico visible con Ollama caído (revisado en el navegador). Los índices empeoran q01, así que no se aplicaron | [FASE_11.md](FASE_11.md) |
 | J — Limpieza | pendiente | | | |
 
 ## Pendientes / avisos

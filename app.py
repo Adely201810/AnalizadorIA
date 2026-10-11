@@ -100,26 +100,29 @@ def _render_tabla(sql: str | None, columnas: list, filas: list):
 
 
 def _render_detalle(mensaje: dict):
-    """Expander 'Ver detalle' con el SQL y la tabla de resultados. Se usa tanto
-    al repintar el historial como al mostrar la respuesta recién generada, para
-    no duplicar la lógica de render. Si la pregunta se descompuso en
-    sub-consultas (pregunta abierta), muestra un bloque por cada una."""
+    """Sección colapsable 'Detalle técnico' (SQL, tabla de resultados, revisión
+    del juez y errores). Se usa tanto al repintar el historial como al mostrar
+    la respuesta recién generada. Si la pregunta se descompuso en sub-consultas,
+    muestra un bloque por cada una. Si hubo un error sin SQL (p. ej. Ollama
+    caído), igual se muestra el detalle técnico, abierto."""
     sub_consultas = mensaje.get("sub_consultas")
-    if not mensaje.get("sql") and not sub_consultas:
+    tiene_sql = bool(mensaje.get("sql") or sub_consultas)
+    if not tiene_sql and not mensaje.get("error_tecnico") and not mensaje.get("revision_sql"):
         return
-    with st.expander("Ver detalle"):
+    with st.expander("Detalle técnico (SQL, datos y diagnóstico)", expanded=not tiene_sql):
         if sub_consultas:
             for i, sc in enumerate(sub_consultas, start=1):
                 st.markdown(f"**{i}. {sc['pregunta']}**")
                 _render_tabla(sc.get("sql"), sc.get("columnas"), sc.get("filas"))
                 if i < len(sub_consultas):
                     st.markdown("---")
-        else:
+        elif mensaje.get("sql"):
             _render_tabla(mensaje["sql"], mensaje.get("columnas"), mensaje.get("filas"))
         if mensaje.get("revision_sql"):
             st.caption(texto_revision(mensaje["revision_sql"]))
         if mensaje.get("error_tecnico"):
-            st.caption(f"Detalle técnico: {mensaje['error_tecnico']}")
+            st.markdown("**Error técnico:**")
+            st.code(mensaje["error_tecnico"], language="text")
 
 
 def _render_descarga_json(mensaje: dict, indice: int):
@@ -142,6 +145,8 @@ for indice, mensaje in enumerate(st.session_state.mensajes):
         if mensaje["rol"] == "assistant":
             _render_detalle(mensaje)
             _render_descarga_json(mensaje, indice)
+    if mensaje["rol"] == "assistant":
+        st.divider()  # separa visualmente cada intercambio pregunta/respuesta
 
 
 def _procesar_pregunta(pregunta: str):
@@ -155,8 +160,14 @@ def _procesar_pregunta(pregunta: str):
                 "No logro conectarme al motor de IA local (Ollama). "
                 "Verifica que esté corriendo (`ollama serve`) e intenta de nuevo."
             )
+            mensaje = {
+                "rol": "assistant",
+                "texto": texto,
+                "error_tecnico": f"GET {client.host}/api/tags no respondió (modelo configurado: {client.model}).",
+            }
             st.markdown(texto)
-            st.session_state.mensajes.append({"rol": "assistant", "texto": texto})
+            _render_detalle(mensaje)
+            st.session_state.mensajes.append(mensaje)
             return
 
         with st.spinner("Pensando..."):

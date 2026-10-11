@@ -1,0 +1,6 @@
+copia: C:\Users\alexp\AppData\Local\Temp\claude\C--Users-alexp-OneDrive-Documentos-GitHub-AnalizadorIA\cc0f7d98-d472-4e87-860a-9f01d7ccbc32\scratchpad\olist_copia_indices.db (198,574,080 bytes)
+SIN índices (rep 1): {'q01': 32.24, 'q02': 1.49, 'q03': 5.63, 'q04': 8.01, 'q05': 5.66, 'q06': 6.99, 'q07': 2.61, 'q08': 5.29, 'q09': 13.37, 'q10': 13.7}
+SIN índices (rep 2): {'q01': 32.65, 'q02': 1.49, 'q03': 5.57, 'q04': 8.08, 'q05': 5.68, 'q06': 7.0, 'q07': 2.58, 'q08': 5.3, 'q09': 13.54, 'q10': 13.65}
+índices creados en la COPIA en 0.4 s: ['ix_orders_customer_id', 'ix_order_items_product_id', 'ix_order_items_seller_id', 'ix_order_reviews_order_id', 'ix_customers_unique_id']
+CON índices (rep 1): {'q01': 38.85, 'q02': 1.5, 'q03': 5.9, 'q04': 8.62, 'q05': 5.91, 'q06': 7.34, 'q07': 2.7, 'q08': 5.45, 'q09': 17.76, 'q10': 15.09}
+CON índices (rep 2): {'q01': 41.22, 'q02': 1.53, 'q03': 5.8, 'q04': 8.47, 'q05': 5.86, 'q06': 7.21, 'q07': 2.68, 'q08': 5.35, 'q09': 16.59, 'q10': 14.13}

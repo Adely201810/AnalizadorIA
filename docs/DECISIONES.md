@@ -117,3 +117,8 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Decisión:** **no** se cambió la tolerancia, porque la fijó el usuario en el plan. Se documenta y se recomienda.
 - **Recomendación:** ≤ 0.006 puntos (solo diferencias de redondeo a 2 decimales). Con ella, los 2 casos `3.01` se rechazan y ningún otro acierto de las corridas cambia (todos los demás son exactos).
 - **Aplicar:** `TOL_PORCENTAJE = 0.006` en `eval/comparador.py` y volver a correr la evaluación.
+
+## D-18 (C) Dashboard: selector de sección en vez de pestañas; no se aplican índices
+- **Selector:** `st.tabs` ejecuta las 11 pestañas en cada carga (≈193-221 s en frío). Con un selector (`st.radio`), solo se calcula la sección elegida (≈25-30 s la carga inicial). Contrapartida: cambiar de sección dispara el cálculo de esa sección (q01 ≈30-40 s la primera vez; después queda en caché).
+- **Índices:** medidos sobre una copia, **empeoran** q01 (32 → 39-41 s) y q09 (13.4 → 16.6-17.8 s). No se aplicaron y la base no se tocó.
+- **Revertir:** restaurar `st.tabs` desde git (commit `3223ace`).

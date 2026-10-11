@@ -15,6 +15,7 @@ chatbot.
 """
 from __future__ import annotations
 
+import html
 import json
 import sqlite3
 from datetime import datetime
@@ -66,7 +67,8 @@ def bloque_necesidad_oraculo(pestana: int) -> None:
     n = necesidades_oraculo().get(pestana)
     if n is None:
         return
-    st.markdown(f"**Necesidad {pestana} (pregunta de referencia):** {n['pregunta']}")
+    st.subheader("Respuesta de referencia (una consulta)")
+    st.markdown(f"**Necesidad {pestana}:** {n['pregunta']}")
     st.dataframe(respuesta_referencia(pestana), hide_index=True)
     with st.expander("SQL de referencia (una sola consulta, la misma que usa la evaluación del chatbot)"):
         st.code(n["sql_referencia"], language="sql")
@@ -175,6 +177,9 @@ def cached_reporte_pdf() -> bytes:
 
 
 def bloque_respuesta_clave(respuesta: str) -> None:
+    """Caja destacada con la respuesta clave. El texto se ESCAPA antes de
+    insertarlo en HTML: nunca se inserta texto (p. ej. de un modelo) sin escapar."""
+    respuesta = html.escape(respuesta)
     st.markdown(
         f"""
         <div style="
@@ -286,18 +291,23 @@ c5.metric("Rango de fechas", f"{fecha_min} → {fecha_max}")
 
 col_pdf, _ = st.columns([1, 3])
 with col_pdf:
-    try:
-        pdf_bytes = cached_reporte_pdf()
-        nombre_archivo = f"reporte_dashboard_olist_{datetime.now().strftime('%Y%m%d')}.pdf"
-        st.download_button(
-            "📄 Descargar reporte PDF",
-            data=pdf_bytes,
-            file_name=nombre_archivo,
-            mime="application/pdf",
-            key="btn_descargar_pdf_reporte",
-        )
-    except Exception as e:  # noqa: BLE001
-        st.error(f"No se pudo generar el reporte PDF. Detalle técnico: {e}")
+    # El PDF necesita las 10 consultas ampliadas (~2 min la primera vez): se genera
+    # solo cuando se pide, no en cada carga de la página.
+    if st.button("📄 Generar reporte PDF", key="btn_generar_pdf"):
+        st.session_state["pdf_pedido"] = True
+    if st.session_state.get("pdf_pedido"):
+        try:
+            pdf_bytes = cached_reporte_pdf()
+            nombre_archivo = f"reporte_dashboard_olist_{datetime.now().strftime('%Y%m%d')}.pdf"
+            st.download_button(
+                "⬇️ Descargar reporte PDF",
+                data=pdf_bytes,
+                file_name=nombre_archivo,
+                mime="application/pdf",
+                key="btn_descargar_pdf_reporte",
+            )
+        except Exception as e:  # noqa: BLE001
+            st.error(f"No se pudo generar el reporte PDF. Detalle técnico: {e}")
 
 st.markdown("---")
 
@@ -321,25 +331,19 @@ ESPECIFICACIONES = [
 
 
 def _tab_resumen() -> None:
-    st.subheader("Las 10 preguntas del dueño — respuesta directa de la base de datos")
+    st.subheader("Las 10 necesidades del dueño — respuesta de referencia")
+    st.caption(
+        "Una consulta por necesidad (la misma que usa la evaluación del chatbot). "
+        "El análisis ampliado de cada una está en su sección."
+    )
     filas = []
-    for nombre, fn in ESPECIFICACIONES:
+    for numero in range(1, 11):
+        n = necesidades_oraculo()[numero]
         try:
-            r = fn()
-            numero = int(nombre.split(".")[0])
-            filas.append(
-                {
-                    "Necesidad": nombre,
-                    "Pregunta de referencia": necesidades_oraculo()[numero]["pregunta"],
-                    "Respuesta de referencia": _texto_referencia(respuesta_referencia(numero)),
-                    "Análisis ampliado": r["respuesta_clave"],
-                }
-            )
+            respuesta = _texto_referencia(respuesta_referencia(numero))
         except Exception as e:  # noqa: BLE001
-            filas.append(
-                {"Necesidad": nombre, "Pregunta de referencia": "(error)", "Respuesta de referencia": "",
-                 "Análisis ampliado": f"No se pudo calcular: {e}"}
-            )
+            respuesta = f"No se pudo calcular: {e}"
+        filas.append({"Necesidad": f"{numero}. {n['necesidad']}", "Pregunta": n["pregunta"], "Respuesta de referencia": respuesta})
     st.dataframe(pd.DataFrame(filas), width="stretch", hide_index=True)
 
 
@@ -349,7 +353,8 @@ def _tab_retencion() -> None:
         min_value=50, max_value=2000, value=200, step=50, key="q01_min_clientes",
     )
     r = cached_q01(min_clientes_categoria=min_clientes)
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     comp = r["tablas"]["comparacion_recurrentes_vs_no"].copy()
@@ -385,7 +390,8 @@ def _tab_retencion() -> None:
 
 def _tab_retraso() -> None:
     r = cached_q02()
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     tabla = r["tablas"]["retraso_vs_calificacion"].sort_values("orden")
@@ -436,7 +442,8 @@ def _tab_concentracion() -> None:
         top_m = st.slider("Top M vendedores", 2, 50, 10, key="q03_top_m")
 
     r = cached_q03(top_n_categorias=top_n, top_m_vendedores=top_m)
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     cat = r["tablas"]["pareto_categorias"]
@@ -466,7 +473,8 @@ def _tab_vendedores() -> None:
         umbral_pct_tardias=umbral_tardias,
         percentil_ingresos_top=percentil_top,
     )
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     tabla = r["tablas"]["vendedores"].copy()
@@ -492,7 +500,8 @@ def _tab_flete() -> None:
         0, 50000, 5000, step=1000, key="q05_min_ingresos",
     )
     r = cached_q05(min_ingresos_categoria=float(min_ingresos))
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     estados = r["tablas"]["flete_por_estado"].sort_values("pct_flete_sobre_precio", ascending=False)
@@ -522,7 +531,8 @@ def _tab_pagos() -> None:
         10, 1000, 100, step=10, key="q06_min_pedidos",
     )
     r = cached_q06(min_pedidos_categoria=min_pedidos_cat)
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     c1, c2 = st.columns(2)
@@ -550,7 +560,8 @@ def _tab_estacionalidad() -> None:
         0.05, 0.5, 0.2, step=0.05, key="q07_umbral",
     )
     r = cached_q07(pct_umbral_bajo_volumen=umbral)
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     metrica = st.radio("Métrica a graficar", ["ingresos", "pedidos"], horizontal=True, key="q07_metrica")
@@ -588,7 +599,8 @@ def _tab_estacionalidad() -> None:
 def _tab_insatisfaccion() -> None:
     min_resenas = st.slider("Mínimo de reseñas por categoría", 10, 1000, 100, step=10, key="q08_min_resenas")
     r = cached_q08(min_resenas=min_resenas)
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     tabla = r["tablas"]["insatisfaccion_por_categoria"]
@@ -621,7 +633,8 @@ def _tab_insatisfaccion() -> None:
 
 def _tab_recompra() -> None:
     r = cached_q09()
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     col_a, col_b = st.columns(2)
@@ -644,7 +657,8 @@ def _tab_recompra() -> None:
 
 def _tab_oportunidad() -> None:
     r = cached_q10()
-    st.markdown(f"##### {r['pregunta']}")
+    st.subheader("Análisis ampliado")
+    st.markdown(f"**{r['pregunta']}**")
     bloque_respuesta_clave(r["respuesta_clave"])
 
     tabla = r["tablas"]["oportunidad_por_estado"].dropna(subset=["clientes_por_vendedor"])
@@ -662,51 +676,29 @@ def _tab_oportunidad() -> None:
     bloque_como_se_calculo(r)
 
 
-tabs = st.tabs(
-    [
-        "📋 Resumen",
-        "1. Retención",
-        "2. Retraso vs reseñas",
-        "3. Concentración",
-        "4. Vendedores problemáticos",
-        "5. Flete",
-        "6. Pagos",
-        "7. Estacionalidad",
-        "8. Insatisfacción",
-        "9. Recompra",
-        "10. Oportunidad geográfica",
-    ]
-)
+SECCIONES = [
+    ("📋 Resumen", _tab_resumen),
+    ("1. Retención", _tab_retencion),
+    ("2. Retraso vs reseñas", _tab_retraso),
+    ("3. Concentración", _tab_concentracion),
+    ("4. Vendedores problemáticos", _tab_vendedores),
+    ("5. Flete", _tab_flete),
+    ("6. Pagos", _tab_pagos),
+    ("7. Estacionalidad", _tab_estacionalidad),
+    ("8. Insatisfacción", _tab_insatisfaccion),
+    ("9. Recompra", _tab_recompra),
+    ("10. Oportunidad geográfica", _tab_oportunidad),
+]
 
-with tabs[0]:
+# st.tabs ejecuta el contenido de TODAS las pestañas en cada carga (los 10
+# análisis, ~2 min en frío). Con un selector, solo se calcula la sección elegida.
+nombre_seccion = st.radio(
+    "Sección", [nombre for nombre, _ in SECCIONES], horizontal=True, key="seccion", label_visibility="collapsed",
+)
+indice = [nombre for nombre, _ in SECCIONES].index(nombre_seccion)
+if indice == 0:
     render_seccion("Resumen", _tab_resumen)
-with tabs[1]:
-    render_seccion("Necesidad 1", lambda: bloque_necesidad_oraculo(1))
-    render_seccion("Retención", _tab_retencion)
-with tabs[2]:
-    render_seccion("Necesidad 2", lambda: bloque_necesidad_oraculo(2))
-    render_seccion("Retraso vs reseñas", _tab_retraso)
-with tabs[3]:
-    render_seccion("Necesidad 3", lambda: bloque_necesidad_oraculo(3))
-    render_seccion("Concentración", _tab_concentracion)
-with tabs[4]:
-    render_seccion("Necesidad 4", lambda: bloque_necesidad_oraculo(4))
-    render_seccion("Vendedores problemáticos", _tab_vendedores)
-with tabs[5]:
-    render_seccion("Necesidad 5", lambda: bloque_necesidad_oraculo(5))
-    render_seccion("Flete", _tab_flete)
-with tabs[6]:
-    render_seccion("Necesidad 6", lambda: bloque_necesidad_oraculo(6))
-    render_seccion("Pagos", _tab_pagos)
-with tabs[7]:
-    render_seccion("Necesidad 7", lambda: bloque_necesidad_oraculo(7))
-    render_seccion("Estacionalidad", _tab_estacionalidad)
-with tabs[8]:
-    render_seccion("Necesidad 8", lambda: bloque_necesidad_oraculo(8))
-    render_seccion("Insatisfacción", _tab_insatisfaccion)
-with tabs[9]:
-    render_seccion("Necesidad 9", lambda: bloque_necesidad_oraculo(9))
-    render_seccion("Recompra", _tab_recompra)
-with tabs[10]:
-    render_seccion("Necesidad 10", lambda: bloque_necesidad_oraculo(10))
-    render_seccion("Oportunidad geográfica", _tab_oportunidad)
+else:
+    render_seccion(f"Necesidad {indice}", lambda: bloque_necesidad_oraculo(indice))
+    st.divider()
+    render_seccion(nombre_seccion, SECCIONES[indice][1])
