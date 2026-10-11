@@ -85,6 +85,8 @@ class TestTolerancias(unittest.TestCase):
         self.assertTrue(valor_coincide(0.030412, 3.04, "porcentaje"))   # escala fracción
         self.assertFalse(valor_coincide(3.10, 3.04, "porcentaje"))
         self.assertFalse(valor_coincide(100.0, 3.04, "porcentaje"))     # caso q3 de baseline_00
+        self.assertFalse(valor_coincide(3.01, 3.04, "porcentaje"))      # D-17: otro denominador (2888/96096)
+        self.assertTrue(valor_coincide(3.0453, 3.04, "porcentaje"))     # redondeo a 2 decimales
 
     def test_decimal(self):
         self.assertTrue(valor_coincide(12.5588, 12.56, "decimal"))

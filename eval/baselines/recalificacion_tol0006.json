@@ -1,0 +1,126 @@
+[
+  {
+    "archivo": "baseline_00_actual.json",
+    "antes": 6,
+    "ahora": 3,
+    "total": 10,
+    "cambios": [
+      {
+        "id": "q5_retraso_baja_calificacion",
+        "antes": true,
+        "ahora": false,
+        "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia"
+      },
+      {
+        "id": "q6_metodo_pago_mayor_venta_promedio",
+        "antes": true,
+        "ahora": false,
+        "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia"
+      },
+      {
+        "id": "q7_estado_mas_pedidos_entregados",
+        "antes": true,
+        "ahora": false,
+        "motivo": "el SQL no ejecuta: no such column: customer_state"
+      }
+    ]
+  },
+  {
+    "archivo": "baseline_01_endurecido.json",
+    "antes": 2,
+    "ahora": 2,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase2_clasificacion.json",
+    "antes": 2,
+    "ahora": 2,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase4_llama3_1_8b_instruct_q4_k_m_r1.json",
+    "antes": 0,
+    "ahora": 0,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase4_llama3_2_3b_instruct_q4_k_m_r1.json",
+    "antes": 0,
+    "ahora": 0,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase4_qwen2_5_coder_7b_instruct_q4_k_m_r1.json",
+    "antes": 1,
+    "ahora": 1,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase6_n3_cadena_generico.json",
+    "antes": 1,
+    "ahora": 1,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase7_n3_cadena_sin_feedback.json",
+    "antes": 0,
+    "ahora": 0,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase8_n3_cadena_juez.json",
+    "antes": 1,
+    "ahora": 1,
+    "total": 10,
+    "cambios": []
+  },
+  {
+    "archivo": "fase9_dirigida_r1.json",
+    "antes": 1,
+    "ahora": 0,
+    "total": 3,
+    "cambios": [
+      {
+        "id": "n01_pct_clientes_recurrentes",
+        "antes": true,
+        "ahora": false,
+        "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia"
+      }
+    ]
+  },
+  {
+    "archivo": "fase9_dirigida_r2.json",
+    "antes": 0,
+    "ahora": 0,
+    "total": 3,
+    "cambios": []
+  },
+  {
+    "archivo": "fase9_dirigida_r3.json",
+    "antes": 2,
+    "ahora": 1,
+    "total": 3,
+    "cambios": [
+      {
+        "id": "n01_pct_clientes_recurrentes",
+        "antes": true,
+        "ahora": false,
+        "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia"
+      }
+    ]
+  },
+  {
+    "archivo": "fase9_n3_cadena_temp08.json",
+    "antes": 1,
+    "ahora": 1,
+    "total": 10,
+    "cambios": []
+  }
+]

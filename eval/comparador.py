@@ -15,7 +15,9 @@ Reglas (documentadas también en docs/FASE_03.md):
 Tolerancias por tipo (sobre la diferencia absoluta d = |modelo - referencia|):
   - conteo:      exacto (d == 0).
   - dinero:      d <= 0.01 (un centavo) o d <= 0.1 % de la referencia.
-  - porcentaje:  d <= 0.05 puntos porcentuales. También se acepta el valor en
+  - porcentaje:  d <= 0.006 puntos porcentuales (solo diferencias de redondeo a 2
+                 decimales; con 0.05 se aceptaba un cálculo con otro denominador,
+                 3.01 vs 3.04, D-17). También se acepta el valor en
                  escala de fracción (0.0304 para 3.04 %) si ×100 cumple lo mismo.
   - decimal:     d <= 0.01 (la referencia está redondeada a 2 decimales; cubre
                  días, calificaciones y otros promedios).
@@ -30,7 +32,7 @@ TIPOS_VALIDOS = {"conteo", "dinero", "porcentaje", "decimal", "texto"}
 
 TOL_DINERO_ABS = 0.01
 TOL_DINERO_REL = 0.001
-TOL_PORCENTAJE = 0.05
+TOL_PORCENTAJE = 0.006  # D-17 (decisión del usuario, etapa 2)
 TOL_DECIMAL = 0.01
 
 

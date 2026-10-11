@@ -112,7 +112,7 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Decisión:** 1 repetición por modelo (se estimaban ~25 min por corrida por la lentitud anómala de llama3.1), desde un git worktree fijo (`4562e4e`), para que los cambios de código en paralelo no afectaran la comparación. El modelo por defecto sigue siendo `llama3.1:8b-instruct-q4_K_M` (instrucción del usuario).
 - **Revertir/ampliar:** `python -m eval.benchmark_modelos --modelos … --repeticiones 3`, después de reiniciar el equipo y con el oráculo ampliado.
 
-## D-17 (C, conviene revisar) La tolerancia de porcentajes (≤ 0.05 puntos) acepta un cálculo distinto
+## D-17 (U, resuelta en la etapa 2: tolerancia = 0.006) La tolerancia de porcentajes (≤ 0.05 puntos) aceptaba un cálculo distinto
 - **Hallazgo (Fase 9):** el árbitro aceptó `3.01` para n01 (referencia `3.04`). Es otro cálculo, con un denominador equivocado: 2,888 / 96,096 en vez de 2,888 / 94,990. Pasó porque 0.03 < 0.05.
 - **Decisión:** **no** se cambió la tolerancia, porque la fijó el usuario en el plan. Se documenta y se recomienda.
 - **Recomendación:** ≤ 0.006 puntos (solo diferencias de redondeo a 2 decimales). Con ella, los 2 casos `3.01` se rechazan y ningún otro acierto de las corridas cambia (todos los demás son exactos).

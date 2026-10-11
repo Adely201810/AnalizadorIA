@@ -18,7 +18,7 @@ Lectura rápida: [PROGRESO.md](PROGRESO.md) (estado por fase) · [DECISIONES.md]
 | 6. N iteraciones configurables + juez-LLM | **COMPLETA** | `n_intentos` real (antes `max_retries` permitía como máximo 2 intentos fijos); juez en `llm/juez.py`. [FASE_06](FASE_06.md) |
 | 7. Feedback sin revelar la respuesta | **COMPLETA** | Pistas sin cifras + guarda; **0 fugas en 94 pistas reales**; prueba con un juez que filtra a propósito y es censurado. [FASE_07](FASE_07.md) |
 | 8. Veredicto determinista; el juez solo explica | **COMPLETA** | El árbitro decide; juez vs árbitro: 9/10 coinciden, **1 falso acierto**, 0 falsos rechazos. [FASE_08](FASE_08.md) |
-| 9. Cortar en el primer acierto | **COMPLETA, con hallazgo** | Corte demostrado (determinista y con el modelo real). El caso real "falla → acierta" fue un **falso acierto por tolerancia** (3.01 vs 3.04). [FASE_09](FASE_09.md) |
+| 9. Cortar en el primer acierto | **COMPLETA, con hallazgo (resuelto en la etapa 2)** | Corte demostrado (determinista y con el modelo real). El caso real "falla → acierta" fue un **falso acierto por tolerancia** (3.01 vs 3.04). [FASE_09](FASE_09.md) |
 | 10. Juez de sensatez en el chat + bitácora persistente | **COMPLETA, con límite** | La UI no lo presenta como verificación; bitácora JSON propia con límites. Con el modelo real: registra e inyecta; que **evite** el error solo está probado con el cliente guionado. [FASE_10](FASE_10.md) |
 | 11. Legibilidad del dashboard | **COMPLETA** | Carga en frío **193-221 s → 25-30 s**; HTML escapado; títulos H1/H3; detalle técnico visible con Ollama caído. Revisado en el navegador. [FASE_11](FASE_11.md) |
 
@@ -46,6 +46,8 @@ Además: prerrequisito A ([ENTORNO](ENTORNO.md)), línea base B ([BASELINE](BASE
 | fase 6 | llama3.1 8B | N=3, cadena, pista genérica | 1/10 | ok 1 · ejecución 2 · semántico 7 |
 | fase 8 | llama3.1 8B | N=3, cadena, pista del juez | 1/10 | ok 1 · ejecución 2 · semántico 7 |
 | fase 9 | llama3.1 8B | N=3, cadena, genérica, temp 0.8 | 1/10 | ok 1 · ejecución 2 · semántico 7 |
+
+**Recalificación con tolerancia de porcentajes 0.006 (etapa 2, D-17 resuelta; `logs/paso1_recalificacion.log`):** ninguna cifra de las tablas anteriores cambia, excepto las corridas dirigidas de la Fase 9: `fase9_dirigida_r1` pasa de 1/3 a **0/3** y `fase9_dirigida_r3` de 2/3 a **1/3**, porque los dos `3.01` (denominador equivocado) ahora se rechazan. Con la regla nueva, **en ninguna corrida real hay un acierto después de un rechazo**.
 
 **Cómo leer la evolución:**
 - **60 % → 30 %:** es el efecto de medir bien. Al recalificar el mismo SQL con el árbitro nuevo, la mitad de los "aciertos" de baseline_00 eran falsos positivos (p. ej. q7 contó como acierto el mensaje de error, porque "re**sp**onder" contiene "SP").
@@ -83,7 +85,7 @@ Además: prerrequisito A ([ENTORNO](ENTORNO.md)), línea base B ([BASELINE](BASE
 | D-14 | Corte en el primer acierto solo donde hay árbitro (evaluación) | baja |
 | D-15 | Guarda de pistas; los enteros < 10 no se protegen | baja |
 | D-16 | Benchmark con 1 repetición, desde un worktree aislado | media |
-| D-17 | **Tolerancia de porcentajes: se mantuvo ≤ 0.05 (tuya) pero aceptó un cálculo erróneo; se recomienda 0.006** | **alta** |
+| D-17 | Tolerancia de porcentajes → **0.006** (decidido por el usuario en la etapa 2) | resuelta |
 | D-18 | Dashboard con selector de sección; no se aplicaron índices (empeoran q01) | media |
 | D-19 | `legacy/gimnasio/`; documentos históricos sin editar | baja |
 
@@ -92,9 +94,9 @@ Además: prerrequisito A ([ENTORNO](ENTORNO.md)), línea base B ([BASELINE](BASE
 ---
 
 ## 5. Problemas abiertos
-1. **⚠ Ollama.** Tras detenerlo para la prueba de infra (Fase 2), la **app de bandeja ya no levanta su servidor** (`ollama server not ready after retries`). Desde entonces el servidor es un `ollama serve` lanzado por esta sesión: **al cerrarla, Ollama quedará detenido**. Probable solución: reiniciar Windows o abrir Ollama desde el menú Inicio (no verificado).
-2. **⚠ Velocidad de llama3.1:** ~4 tok/s desde ~17:50, frente a 36 tok/s a las 16:49; qwen va a ~18 tok/s en el mismo estado. Descarté las DLL de Git Bash y la competencia por recursos. Las latencias de llama3.1 de las Fases 2, 4 y 6-11 **no son representativas**. Hay que volver a medir tras reiniciar.
-3. **Tolerancia de porcentajes** (D-17): aceptó `3.01` (denominador equivocado) como `3.04`.
+1. **⚠ Ollama** (resuelto en la etapa 2 tras reiniciar: ver `docs/E2_PASO_0.md`). Tras detenerlo para la prueba de infra (Fase 2), la **app de bandeja ya no levanta su servidor** (`ollama server not ready after retries`). Desde entonces el servidor es un `ollama serve` lanzado por esta sesión: **al cerrarla, Ollama quedará detenido**. Probable solución: reiniciar Windows o abrir Ollama desde el menú Inicio (no verificado).
+2. **⚠ Velocidad de llama3.1** (resuelto tras reiniciar: 38.5 tok/s; llama3.1 es ~2× más rápido que qwen, al revés de lo que parecía en la Fase 4): ~4 tok/s desde ~17:50, frente a 36 tok/s a las 16:49; qwen va a ~18 tok/s en el mismo estado. Descarté las DLL de Git Bash y la competencia por recursos. Las latencias de llama3.1 de las Fases 2, 4 y 6-11 **no son representativas**. Hay que volver a medir tras reiniciar.
+3. ~~Tolerancia de porcentajes (D-17)~~: **resuelto** en la etapa 2 (0.006); los `3.01` se rechazan.
 4. **Precisión baja en las necesidades reales (0-1/10).** Las palancas que señalan los datos: (a) no descomponer preguntas de una consulta (el clasificador causa 3-8 fallos seguros); (b) reforzar "pedido válido" (n06, n07, n08 son casi-aciertos por ese filtro); (c) probar otro modelo con más repeticiones.
 5. **Muestras chicas:** 10 preguntas, 1 corrida por configuración, ningún intervalo de confianza. Para comparar modelos o configuraciones con seriedad hacen falta más preguntas (≥ 30) y ≥ 3 repeticiones.
 6. **q01 del dashboard tarda ~32 s.** Los índices no ayudan; probablemente se recalculan CTE. Pendiente reescribir esa consulta.

@@ -1,4 +1,4 @@
-# Progreso del plan (B → J)
+# Progreso
 
 Última actualización: 2026-10-10 — **plan B→J terminado**. Resumen y pendientes: [INFORME_FINAL.md](INFORME_FINAL.md). Decisiones: [DECISIONES.md](DECISIONES.md).
 
@@ -20,8 +20,14 @@
 | I — Fase 11 | ✅ | `d0fb8f4` | Carga del dashboard en frío **≈193-221 s → ≈25-30 s**; PDF bajo demanda; HTML escapado; títulos H1/H3; detalle técnico visible con Ollama caído (revisado en el navegador). Los índices empeoran q01, así que no se aplicaron | [FASE_11.md](FASE_11.md) |
 | J — Limpieza | ✅ | `fc870c4` | P2 resuelto (script y módulo); 10 archivos del gimnasio → `legacy/gimnasio/` con `git mv`; 49/49 pruebas y ambas páginas cargan sin excepciones | [FASE_J_LIMPIEZA.md](FASE_J_LIMPIEZA.md) |
 
+## Etapa 2 — Mejorar la precisión sin inflar las cifras (2026-10-11)
+
+| Paso | Estado | Commit | Cifras reales | Doc |
+|---|---|---|---|---|
+| 0 — Entorno tras reinicio | ✅ | `eee86bb` | Ollama arranca solo; llama3.1 **38.5 tok/s**, qwen 19.0, llama3.2 73.5 (ctx 8192), los 3 al 100 % en GPU | [E2_PASO_0.md](E2_PASO_0.md) |
+| 1 — Tolerancia 0.006 + recalificación offline | ✅ | (este commit) | 13 corridas recalificadas: solo cambian los dos `3.01` de la Fase 9 (dirigida r1 1/3→0/3; r3 2/3→1/3) | [E2_PASO_1.md](E2_PASO_1.md) |
+
 ## Pendientes / avisos
-- ⚠ **Velocidad:** llama3.1 genera a ~4 tok/s desde ~17:50 (antes 36 tok/s); latencias de llama3.1 no representativas. Reiniciar Windows y volver a medir.
-- ⚠ **Ollama:** tras detenerlo para la prueba de infra, la app de bandeja no levanta su servidor; corre `ollama serve` lanzado desde la sesión. Ver FASE_02.md.
+- ~~Velocidad de llama3.1 y app de bandeja de Ollama~~: resueltos tras reiniciar (Paso 0 de la etapa 2).
 - Una evaluación completa de 10 preguntas tarda entre 3.5 y 8 min (depende de reintentos y de consultas lentas).
 - La cifra honesta actual es **2/10**; las cifras anteriores estaban infladas (ver FASE_03.md).
