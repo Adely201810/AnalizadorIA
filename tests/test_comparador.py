@@ -11,7 +11,7 @@ from pathlib import Path
 from eval.comparador import comparar, valor_coincide
 
 RAIZ = Path(__file__).resolve().parent.parent
-GT = {q["id"]: q for q in json.loads((RAIZ / "eval" / "ground_truth_olist.json").read_text(encoding="utf-8"))["preguntas"]}
+GT = {q["id"]: q for q in json.loads((RAIZ / "eval" / "ground_truth_olist_v1.json").read_text(encoding="utf-8"))["preguntas"]}
 
 
 def _referencia(qid):
@@ -125,6 +125,19 @@ class TestOraculoCompleto(unittest.TestCase):
             ref = _referencia(qid)
             v = comparar(ref, ref, q["tipos_columnas"], q.get("orden_importa", False))
             self.assertTrue(v.correcto, f"{qid}: {v.motivo}")
+
+    def test_oraculo_v2_cada_referencia_se_acepta_a_si_misma_y_coincide_con_lo_guardado(self):
+        v2 = json.loads((RAIZ / "eval" / "ground_truth_olist.json").read_text(encoding="utf-8"))["preguntas"]
+        self.assertEqual(len(v2), 10)
+        conn = sqlite3.connect(f"file:{RAIZ / 'db' / 'olist.db'}?mode=ro", uri=True)
+        try:
+            for q in v2:
+                ref = conn.execute(q["sql_referencia"]).fetchall()
+                self.assertEqual([list(f) for f in ref], q["resultado_esperado"], q["id"])
+                v = comparar(ref, ref, q["tipos_columnas"], q["orden_importa"])
+                self.assertTrue(v.correcto, f"{q['id']}: {v.motivo}")
+        finally:
+            conn.close()
 
 
 if __name__ == "__main__":

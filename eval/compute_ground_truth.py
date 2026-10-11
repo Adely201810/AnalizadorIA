@@ -47,10 +47,20 @@ def main():
     engine = _engine_for(args.dataset)
 
     data = json.loads(ground_truth_path.read_text(encoding="utf-8"))
+    diferencias = 0
     with engine.connect() as conn:
         for item in data["preguntas"]:
             rows = conn.execute(text(item["sql_referencia"])).fetchall()
-            print(f"{item['id']:32s} -> {rows}")
+            linea = f"{item['id']:38s} -> {rows}"
+            # Oráculo v2: además de mostrarlo, comprueba que coincide con lo guardado.
+            if "resultado_esperado" in item:
+                igual = [list(r) for r in rows] == item["resultado_esperado"]
+                diferencias += not igual
+                linea = f"[{'OK' if igual else 'DIFF'}] {linea}"
+            print(linea)
+    if diferencias:
+        print(f"⚠ {diferencias} pregunta(s) no coinciden con resultado_esperado: ¿se recargó la base?")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

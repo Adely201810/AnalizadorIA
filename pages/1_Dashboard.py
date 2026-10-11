@@ -8,13 +8,17 @@ chatbot (app.py) y confirmar que la base de datos sí contiene esa
 información. Streamlit agrega esta página sola al menú lateral por vivir en
 pages/.
 
-No importa ni modifica app.py, llm/ ni eval/.
+No importa ni modifica app.py ni llm/. Lee eval/ground_truth_olist.json (la
+fuente única de las 10 necesidades) para mostrar, en cada pestaña, la
+respuesta de referencia de UNA consulta que también usa la evaluación del
+chatbot.
 """
 from __future__ import annotations
 
 import json
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -28,6 +32,44 @@ from dashboard.pdf_report import generar_pdf_bytes
 from db.olist_database import get_readonly_connection
 
 st.set_page_config(page_title="Dashboard de verificación — Olist", page_icon="📈", layout="wide")
+
+ORACULO_PATH = Path(__file__).resolve().parent.parent / "eval" / "ground_truth_olist.json"
+
+
+@st.cache_data
+def necesidades_oraculo() -> dict[int, dict]:
+    """Las 10 necesidades (fuente única), indexadas por número de pestaña."""
+    datos = json.loads(ORACULO_PATH.read_text(encoding="utf-8"))
+    return {n["pestana_dashboard"]: n for n in datos["preguntas"]}
+
+
+@st.cache_data(show_spinner="Consultando la respuesta de referencia...")
+def respuesta_referencia(pestana: int) -> pd.DataFrame:
+    """Ejecuta (solo lectura) el SQL de referencia de la necesidad: una consulta."""
+    conn = get_readonly_connection()
+    try:
+        return pd.read_sql_query(necesidades_oraculo()[pestana]["sql_referencia"], conn)
+    finally:
+        conn.close()
+
+
+def _texto_referencia(df: pd.DataFrame) -> str:
+    if df.empty:
+        return "(sin filas)"
+    if len(df) == 1:
+        return " · ".join(f"{c}: {v}" for c, v in df.iloc[0].items())
+    return "; ".join(str(v) for v in df.iloc[:, 0])
+
+
+def bloque_necesidad_oraculo(pestana: int) -> None:
+    """Pregunta de la necesidad (fuente única) + su respuesta de referencia."""
+    n = necesidades_oraculo().get(pestana)
+    if n is None:
+        return
+    st.markdown(f"**Necesidad {pestana} (pregunta de referencia):** {n['pregunta']}")
+    st.dataframe(respuesta_referencia(pestana), hide_index=True)
+    with st.expander("SQL de referencia (una sola consulta, la misma que usa la evaluación del chatbot)"):
+        st.code(n["sql_referencia"], language="sql")
 
 
 # ---------------------------------------------------------------------------
@@ -284,12 +326,19 @@ def _tab_resumen() -> None:
     for nombre, fn in ESPECIFICACIONES:
         try:
             r = fn()
+            numero = int(nombre.split(".")[0])
             filas.append(
-                {"Necesidad": nombre, "Pregunta": r["pregunta"], "Respuesta clave": r["respuesta_clave"]}
+                {
+                    "Necesidad": nombre,
+                    "Pregunta de referencia": necesidades_oraculo()[numero]["pregunta"],
+                    "Respuesta de referencia": _texto_referencia(respuesta_referencia(numero)),
+                    "Análisis ampliado": r["respuesta_clave"],
+                }
             )
         except Exception as e:  # noqa: BLE001
             filas.append(
-                {"Necesidad": nombre, "Pregunta": "(error)", "Respuesta clave": f"No se pudo calcular: {e}"}
+                {"Necesidad": nombre, "Pregunta de referencia": "(error)", "Respuesta de referencia": "",
+                 "Análisis ampliado": f"No se pudo calcular: {e}"}
             )
     st.dataframe(pd.DataFrame(filas), width="stretch", hide_index=True)
 
@@ -632,22 +681,32 @@ tabs = st.tabs(
 with tabs[0]:
     render_seccion("Resumen", _tab_resumen)
 with tabs[1]:
+    render_seccion("Necesidad 1", lambda: bloque_necesidad_oraculo(1))
     render_seccion("Retención", _tab_retencion)
 with tabs[2]:
+    render_seccion("Necesidad 2", lambda: bloque_necesidad_oraculo(2))
     render_seccion("Retraso vs reseñas", _tab_retraso)
 with tabs[3]:
+    render_seccion("Necesidad 3", lambda: bloque_necesidad_oraculo(3))
     render_seccion("Concentración", _tab_concentracion)
 with tabs[4]:
+    render_seccion("Necesidad 4", lambda: bloque_necesidad_oraculo(4))
     render_seccion("Vendedores problemáticos", _tab_vendedores)
 with tabs[5]:
+    render_seccion("Necesidad 5", lambda: bloque_necesidad_oraculo(5))
     render_seccion("Flete", _tab_flete)
 with tabs[6]:
+    render_seccion("Necesidad 6", lambda: bloque_necesidad_oraculo(6))
     render_seccion("Pagos", _tab_pagos)
 with tabs[7]:
+    render_seccion("Necesidad 7", lambda: bloque_necesidad_oraculo(7))
     render_seccion("Estacionalidad", _tab_estacionalidad)
 with tabs[8]:
+    render_seccion("Necesidad 8", lambda: bloque_necesidad_oraculo(8))
     render_seccion("Insatisfacción", _tab_insatisfaccion)
 with tabs[9]:
+    render_seccion("Necesidad 9", lambda: bloque_necesidad_oraculo(9))
     render_seccion("Recompra", _tab_recompra)
 with tabs[10]:
+    render_seccion("Necesidad 10", lambda: bloque_necesidad_oraculo(10))
     render_seccion("Oportunidad geográfica", _tab_oportunidad)

@@ -18,10 +18,14 @@ from eval.comparador import comparar
 from llm.text_to_sql import execute_readonly
 
 GROUND_TRUTH_PATH = Path(__file__).resolve().parent / "ground_truth_olist.json"
+GROUND_TRUTH_V1_PATH = Path(__file__).resolve().parent / "ground_truth_olist_v1.json"
 
 
 def recalificar(path: Path) -> list[dict]:
-    gt = {q["id"]: q for q in json.loads(GROUND_TRUTH_PATH.read_text(encoding="utf-8"))["preguntas"]}
+    # Las corridas viejas (baseline_00/01) usan ids del oráculo v1.
+    gt = {}
+    for ruta in (GROUND_TRUTH_V1_PATH, GROUND_TRUTH_PATH):
+        gt.update({q["id"]: q for q in json.loads(ruta.read_text(encoding="utf-8"))["preguntas"]})
     corrida = json.loads(path.read_text(encoding="utf-8"))
     filas_out = []
     for r in corrida["resultados"]:

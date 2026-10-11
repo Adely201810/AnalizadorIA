@@ -129,63 +129,118 @@ def _categoria_como_vista(items: pd.DataFrame, products: pd.DataFrame, traduccio
     return df["product_category_name_english"].fillna(df["product_category_name"])
 
 
-def recalcular_oraculo_con_pandas() -> dict:
-    """Recalcula con pandas, desde los CSV, el valor clave de las preguntas del
-    oráculo (eval/ground_truth_olist.json) que usan la definición de pedido
-    válido (excluye canceled/unavailable). Devuelve {id: (etiqueta, valor)}."""
+def _r2(x) -> float:
+    return round(float(x), 2)
+
+
+def recalcular_oraculo_con_pandas() -> dict[str, list[list]]:
+    """Recalcula con pandas, desde los CSV (nunca db/olist.db), el resultado de
+    las 10 necesidades del oráculo (eval/ground_truth_olist.json), replicando
+    la definición de cada sql_referencia. Devuelve {id: filas}."""
     orders, customers, order_items, products, traduccion = _cargar_csv()
     payments = pd.read_csv(DATA_DIR / "olist_order_payments_dataset.csv")
-    validos = _pedidos_validos(orders, customers)
-    items = order_items.merge(validos[["order_id", "customer_unique_id"]], on="order_id", how="inner")
+    reviews = pd.read_csv(DATA_DIR / "olist_order_reviews_dataset.csv")
+    sellers = pd.read_csv(DATA_DIR / "olist_sellers_dataset.csv")
+    for col in ("order_purchase_timestamp", "order_delivered_customer_date", "order_estimated_delivery_date"):
+        orders[col] = pd.to_datetime(orders[col])
+    validos = _pedidos_validos(orders, customers).merge(
+        customers[["customer_id", "customer_state"]], on="customer_id", how="left"
+    )
+    items = order_items.merge(
+        validos[["order_id", "customer_unique_id", "customer_state", "order_purchase_timestamp"]], on="order_id", how="inner"
+    )
     items["categoria"] = _categoria_como_vista(items, products, traduccion).values
+    calif_pedido = reviews.groupby("order_id")["review_score"].mean()
 
-    out = {}
+    out: dict[str, list[list]] = {}
 
-    # q2: categoría con más ingresos (SUM(price) de pedidos válidos)
-    ingresos = items.groupby("categoria", dropna=False)["price"].sum().sort_values(ascending=False)
-    out["q2_categoria_mas_ingresos"] = (ingresos.index[0], round(float(ingresos.iloc[0]), 2))
+    # n01: % de clientes únicos con más de un pedido válido
+    n = validos.groupby("customer_unique_id")["order_id"].nunique()
+    out["n01_pct_clientes_recurrentes"] = [[_r2(100 * (n > 1).mean())]]
 
-    # q4: % de clientes con 1 solo pedido en la categoría, categorías con >= 500
-    # pedidos válidos. Se excluyen productos sin categoría (decisión registrada en
-    # docs/DECISIONES.md), igual que el `categoria_ingles IS NOT NULL` del SQL.
+    # n02: calificación promedio (promedio por pedido) de entregados con retraso / a tiempo
+    ent = orders[orders["order_delivered_customer_date"].notna()].copy()
+    ent["tarde"] = ent["order_delivered_customer_date"] > ent["order_estimated_delivery_date"]
+    ent = ent.join(calif_pedido, on="order_id", how="inner")
+    out["n02_calificacion_retraso_vs_a_tiempo"] = [[
+        _r2(ent.loc[ent["tarde"], "review_score"].mean()), _r2(ent.loc[~ent["tarde"], "review_score"].mean()),
+    ]]
+
+    # n03: % de ingresos que concentran las 5 categorías con más ingresos (incluye el grupo sin categoría en el total)
+    ing = items.groupby("categoria", dropna=False)["price"].sum().sort_values(ascending=False)
+    out["n03_pct_ingresos_top5_categorias"] = [[_r2(100 * ing.head(5).sum() / ing.sum())]]
+
+    # n04: vendedores con >= 30 pedidos válidos y calificación promedio (por pedido) < 3.5
+    ped = items[["seller_id", "order_id"]].drop_duplicates().join(calif_pedido, on="order_id")
+    vend = ped.groupby("seller_id").agg(pedidos=("order_id", "size"), calif=("review_score", "mean"))
+    out["n04_vendedores_mala_calificacion"] = [[int(((vend["pedidos"] >= 30) & (vend["calif"] < 3.5)).sum())]]
+
+    # n05: estado del cliente con mayor flete/precio
+    est = items.groupby("customer_state")[["freight_value", "price"]].sum()
+    pct_flete = (100 * est["freight_value"] / est["price"]).sort_values(ascending=False)
+    out["n05_estado_mayor_peso_flete"] = [[pct_flete.index[0], _r2(pct_flete.iloc[0])]]
+
+    # n06: método de pago usado en más pedidos válidos (sin not_defined)
+    pv = payments.merge(validos[["order_id"]], on="order_id", how="inner")
+    pv = pv[pv["payment_type"] != "not_defined"]
+    uso = pv.groupby("payment_type")["order_id"].nunique().sort_values(ascending=False)
+    out["n06_metodo_pago_mas_usado"] = [[uso.index[0], int(uso.iloc[0])]]
+
+    # n07: mes con más ingresos
+    mes = items.groupby(items["order_purchase_timestamp"].dt.strftime("%Y-%m"))["price"].sum().sort_values(ascending=False)
+    out["n07_mes_mayores_ingresos"] = [[mes.index[0], _r2(mes.iloc[0])]]
+
+    # n08: categoría (>= 100 reseñas) con mayor % de reseñas de 1 estrella
+    cp = items[["order_id"]].copy()
+    cp["categoria"] = items.merge(products[["product_id", "product_category_name"]], on="product_id", how="left")         .merge(traduccion, on="product_category_name", how="left")["product_category_name_english"].fillna("sin_categoria").values
+    cp = cp.drop_duplicates().merge(reviews[["order_id", "review_score"]], on="order_id", how="inner")
+    g = cp.groupby("categoria")["review_score"].agg(resenas="size", unos=lambda s: (s == 1).sum())
+    g = g[g["resenas"] >= 100]
+    g["pct"] = (100 * g["unos"] / g["resenas"]).round(2)
+    g = g.sort_values("pct", ascending=False)
+    out["n08_categoria_mas_resenas_1_estrella"] = [[g.index[0], float(g["pct"].iloc[0]), int(g["resenas"].iloc[0])]]
+
+    # n09: top 5 categorías (con nombre, >= 500 pedidos válidos) por % de clientes de compra única
     con_cat = items[items["categoria"].notna()]
     por_cliente = con_cat.groupby(["categoria", "customer_unique_id"])["order_id"].nunique()
     pedidos_cat = con_cat.groupby("categoria")["order_id"].nunique()
+    clientes_cat = por_cliente.groupby(level=0).size()
     pct = (por_cliente.eq(1).groupby(level=0).mean() * 100).round(2)
-    pct = pct[pedidos_cat.reindex(pct.index) >= 500].sort_values(ascending=False)
-    out["q4_categorias_mas_compra_unica"] = (", ".join(pct.index[:5]), float(pct.iloc[0]))
+    pct = pct[pedidos_cat.reindex(pct.index) >= 500].sort_values(ascending=False).head(5)
+    out["n09_categorias_mas_compra_unica"] = [[c, int(pedidos_cat[c]), int(clientes_cat[c]), float(v)] for c, v in pct.items()]
 
-    # q6: método de pago con mayor valor promedio por pedido (pedidos válidos)
-    pv = payments.merge(validos[["order_id"]], on="order_id", how="inner")
-    por_pedido_tipo = pv.groupby(["order_id", "payment_type"])["payment_value"].sum()
-    prom = por_pedido_tipo.groupby(level="payment_type").mean().round(2).sort_values(ascending=False)
-    out["q6_metodo_pago_mayor_venta_promedio"] = (prom.index[0], float(prom.iloc[0]))
-
-    # q10: ticket promedio (precio + flete) por pedido válido
-    total_pedido = (items["price"] + items["freight_value"]).groupby(items["order_id"]).sum()
-    out["q10_ticket_promedio_pedido"] = ("", round(float(total_pedido.mean()), 2))
+    # n10: estado (>= 10 vendedores activos) con más clientes únicos por vendedor
+    iv = items.merge(sellers[["seller_id", "seller_state"]], on="seller_id", how="inner")
+    clientes = iv.groupby("customer_state")["customer_unique_id"].nunique()
+    vendedores = iv.groupby("seller_state")["seller_id"].nunique()
+    t = pd.DataFrame({"clientes": clientes, "vendedores": vendedores}).dropna()
+    t = t[t["vendedores"] >= 10]
+    t["cpv"] = (t["clientes"] / t["vendedores"]).round(2)
+    t = t.sort_values("cpv", ascending=False)
+    out["n10_estado_mas_clientes_por_vendedor"] = [[t.index[0], float(t["cpv"].iloc[0]), int(t["clientes"].iloc[0]), int(t["vendedores"].iloc[0])]]
     return out
 
 
 def verificar_oraculo() -> list[str]:
-    """Compara los valores recalculados con pandas contra el valor guardado en
-    el oráculo. Devuelve líneas de reporte; tolerancia 0 (al centavo)."""
+    """Compara, para las 10 necesidades, lo recalculado con pandas contra el
+    `resultado_esperado` del oráculo, con el mismo árbitro que la evaluación
+    (eval/comparador.py) y comparando TODAS las columnas (también las que la
+    evaluación no exige)."""
     import json
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from eval.comparador import comparar
 
     gt = {i["id"]: i for i in json.loads(GROUND_TRUTH_PATH.read_text(encoding="utf-8"))["preguntas"]}
     lineas = []
-    for qid, (etiqueta, valor) in recalcular_oraculo_con_pandas().items():
+    for qid, filas_pandas in recalcular_oraculo_con_pandas().items():
         item = gt[qid]
-        esperado = item.get("valor_esperado", item.get("valor_esperado_numero"))
-        contiene = item.get("contiene_cualquiera", [])
-        if not etiqueta:
-            etiqueta_ok = True
-        elif ", " in etiqueta:  # top-N: el conjunto completo debe coincidir
-            etiqueta_ok = set(etiqueta.split(", ")) == set(contiene)
-        else:
-            etiqueta_ok = etiqueta in contiene
-        estado = "OK" if (round(valor, 2) == round(esperado, 2) and etiqueta_ok) else "DIFF"
-        lineas.append(f"[{estado}] {qid}: pandas={etiqueta + ' ' if etiqueta else ''}{valor} | oráculo={esperado}")
+        esperado = item["resultado_esperado"]
+        # todas las columnas: las no evaluadas (null) se comparan como conteo exacto
+        tipos = [t or ("texto" if isinstance(v, str) else "conteo") for t, v in zip(item["tipos_columnas"], esperado[0])]
+        v = comparar([tuple(f) for f in filas_pandas], [tuple(f) for f in esperado], tipos, item["orden_importa"])
+        lineas.append(f"[{'OK' if v.correcto else 'DIFF'}] {qid}: pandas={filas_pandas} | oráculo={esperado}")
     return lineas
 
 

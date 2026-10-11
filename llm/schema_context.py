@@ -65,6 +65,10 @@ Notas importantes:
 # preguntas de evaluación de eval/ground_truth_olist.json: lo comprueba
 # tests/test_fewshot_disjunto.py con eval/similitud.py.
 EJEMPLOS_FEW_SHOT: list[tuple[str, str]] = [
+    # Cada ejemplo enseña una TÉCNICA (conteo de clientes únicos, julianday,
+    # LEFT JOIN a la traducción, promedio por pedido, literal de enum, razón de
+    # sumas, ranking, ventana) sobre una métrica que NO es ninguna de las 10
+    # necesidades del oráculo (docs/FASE_05.md, decisión D-10).
     (
         '¿Cuántos clientes tenemos?',
         'SELECT COUNT(DISTINCT customer_unique_id) FROM customers',
@@ -78,40 +82,32 @@ EJEMPLOS_FEW_SHOT: list[tuple[str, str]] = [
         'SELECT COALESCE(t.product_category_name_english, p.product_category_name) AS categoria, COUNT(*) AS productos FROM products p LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY productos DESC LIMIT 10',
     ),
     (
-        '¿Cuáles son mis clientes recurrentes?',
-        'SELECT * FROM vw_clientes_recurrentes WHERE es_recurrente = 1',
+        '¿Cuánto gasta en total, en promedio, cada cliente único?',
+        'SELECT ROUND(AVG(gasto_total), 2) AS gasto_promedio FROM vw_clientes_recurrentes',
     ),
     (
-        '¿Cuántos vendedores hay en cada estado?',
-        'SELECT seller_state, COUNT(*) AS vendedores FROM sellers GROUP BY seller_state ORDER BY vendedores DESC',
+        '¿Cuántos artículos tiene en promedio un pedido?',
+        'SELECT ROUND(AVG(articulos), 2) AS articulos_promedio FROM (SELECT order_id, COUNT(*) AS articulos FROM order_items GROUP BY order_id)',
     ),
     (
-        '¿Qué porcentaje de las reseñas es de 1 o 2 estrellas, por año de compra?',
-        "SELECT strftime('%Y', o.order_purchase_timestamp) AS anio, ROUND(100.0 * AVG(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END), 2) AS pct_1_2_estrellas FROM order_reviews rv JOIN orders o ON o.order_id = rv.order_id GROUP BY anio ORDER BY anio",
+        '¿Cuántas cuotas usan en promedio los pagos con tarjeta de crédito?',
+        "SELECT ROUND(AVG(payment_installments), 2) AS cuotas_promedio FROM order_payments WHERE payment_type = 'credit_card'",
     ),
     (
-        '¿Desde cuántos días de demora empiezan a bajar las reseñas?',
-        'SELECT rango_retraso, calificacion_promedio, pct_1_2_estrellas FROM vw_retraso_por_rango ORDER BY orden',
+        '¿Cuántos días pasan en promedio desde la compra hasta que el pedido se entrega a la transportista?',
+        'SELECT ROUND(AVG(julianday(order_delivered_carrier_date) - julianday(order_purchase_timestamp)), 2) AS dias_promedio FROM orders WHERE order_delivered_carrier_date IS NOT NULL',
     ),
     (
-        '¿En qué estados el flete pesa más sobre el precio de los productos?',
-        "SELECT v.customer_state, ROUND(SUM(v.freight_value) * 1.0 / SUM(v.price), 4) AS ratio_flete_precio FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.customer_state ORDER BY ratio_flete_precio DESC LIMIT 10",
+        '¿Qué porcentaje del valor total pagado se pagó con voucher?',
+        "SELECT ROUND(100.0 * SUM(CASE WHEN payment_type = 'voucher' THEN payment_value ELSE 0 END) / SUM(payment_value), 2) AS pct_voucher FROM order_payments",
     ),
     (
-        '¿En qué categorías el flete pesa más sobre lo que se cobra por el producto?',
-        'SELECT categoria_ingles, flete_total, ingresos, ratio_flete_ingresos FROM vw_ingresos_por_categoria ORDER BY ratio_flete_ingresos DESC LIMIT 10',
+        '¿Cuáles son las 5 ciudades con más clientes únicos?',
+        'SELECT customer_city, COUNT(DISTINCT customer_unique_id) AS clientes FROM customers GROUP BY customer_city ORDER BY clientes DESC LIMIT 5',
     ),
     (
-        '¿En qué combinaciones de estado y categoría el flete pesa más sobre el precio?',
-        "SELECT v.customer_state, v.categoria_ingles, ROUND(SUM(v.freight_value) * 1.0 / SUM(v.price), 4) AS ratio_flete_precio FROM vw_ventas_pedido v WHERE v.order_status NOT IN ('canceled','unavailable') GROUP BY v.customer_state, v.categoria_ingles HAVING COUNT(*) >= 30 ORDER BY ratio_flete_precio DESC LIMIT 10",
-    ),
-    (
-        '¿Qué categorías concentran el 80% de los ingresos?',
-        'SELECT categoria_ingles, ingresos FROM (SELECT categoria_ingles, ingresos, SUM(ingresos) OVER (ORDER BY ingresos DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - ingresos AS acumulado_previo, SUM(ingresos) OVER () AS total FROM vw_ingresos_por_categoria) WHERE acumulado_previo < 0.8 * total ORDER BY ingresos DESC',
-    ),
-    (
-        '¿Cuántos vendedores concentran el 80% de los ingresos?',
-        'SELECT COUNT(*) AS vendedores_que_forman_el_80pct FROM (SELECT seller_id, SUM(ingresos) OVER (ORDER BY ingresos DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) - ingresos AS acumulado_previo, SUM(ingresos) OVER () AS total FROM vw_ingresos_por_vendedor) WHERE acumulado_previo < 0.8 * total',
+        '¿Cuáles son los 5 productos con más artículos vendidos y en qué posición del ranking está cada uno?',
+        'SELECT product_id, COUNT(*) AS articulos, RANK() OVER (ORDER BY COUNT(*) DESC) AS posicion FROM order_items GROUP BY product_id ORDER BY posicion LIMIT 5',
     ),
 ]
 

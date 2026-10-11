@@ -63,3 +63,33 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Motivo:** las definiciones del plan (ejecución = no corre; semántico = corre pero responde otra cosa) aplicadas a cada rama existente del pipeline.
 - **Alternativas:** tratar 0 filas como `ejecucion`, o las negativas como `seguridad` (lo que pasaba antes del ajuste).
 - **Revertir:** `clasificar_excepcion` en `llm/text_to_sql.py` y `clasificar_intentos` en `eval/run_eval.py`.
+
+## D-10 (C) Oráculo v2 = las 10 necesidades del dashboard, una consulta cada una (Fase 5)
+- **Decisión:** la fuente única es `eval/ground_truth_olist.json` v2, con una necesidad por pestaña del dashboard. Cada una tiene `sql_referencia` (una sola consulta sobre tablas base), `tipos_columnas`, `orden_importa` y `resultado_esperado`. El dashboard la lee y muestra su respuesta de referencia en cada pestaña; `run_eval.py` la usa como oráculo. La v1 queda en `eval/ground_truth_olist_v1.json` (referencia de baseline_00, baseline_01 y fase2).
+- **Cómo se reescribieron las necesidades compuestas** (se conservó lo central de cada una, alineado con la "respuesta clave" que ya mostraba el dashboard):
+
+  | Pestaña | Necesidad compuesta (dashboard) | Pregunta única (v2) | Referencia |
+  |---|---|---|---|
+  | 1 Retención | % recurrentes + comparación + qué compran + dónde | % de clientes con >1 pedido válido (= q3 de v1) | 3.04 |
+  | 2 Retraso vs reseñas | umbral de días donde cae la calificación | calificación promedio con retraso vs a tiempo (= q5 de v1, reescrita sobre tablas base) | 2.57 / 4.29 |
+  | 3 Concentración | categorías **y** vendedores | % de ingresos de las 5 categorías top | 39.82 % |
+  | 4 Vendedores problemáticos | top 25 % de ingresos **y** (calif < 3.5 **o** > 15 % tardías) | nº de vendedores con ≥ 30 pedidos válidos y calificación < 3.5 | 24 |
+  | 5 Flete | estados **y** categorías | estado con mayor flete/precio | RR 28.55 % |
+  | 6 Pagos | método, cuotas **y** categorías a plazos | método usado en más pedidos válidos | credit_card 75,618 |
+  | 7 Estacionalidad | meses, incompletos **y** crecimiento interanual | mes con más ingresos | 2017-11, 1,003,862.14 |
+  | 8 Insatisfacción | % 1 estrella **y** clasificación producto/logística | categoría (≥ 100 reseñas) con mayor % de 1 estrella | fashion_male_clothing 22.73 % |
+  | 9 Recompra | audiencia satisfecha de compra única | q4 de v1 (top 5 compra única, ≥ 500 pedidos), según la decisión D-02 del usuario | consoles_games … |
+  | 10 Oportunidad geográfica | clientes por vendedor **y** logística | estado (≥ 10 vendedores activos) con más clientes por vendedor | BA 170.74 |
+- **Preguntas de v1 que salen del oráculo:** q1 (total de pedidos), q2 (categoría con más ingresos), q6 (método con mayor ticket), q7 (estado con más entregas), q8 (días de entrega), q9 (pedidos sin entrega) y q10 (ticket promedio). Son hechos simples, no necesidades del dueño.
+- **Revertir:** copiar `eval/ground_truth_olist_v1.json` sobre `eval/ground_truth_olist.json`; quitar `bloque_necesidad_oraculo` de `pages/1_Dashboard.py`.
+
+## D-11 (C) Necesidad 4 simplificada (solo calificación) y Necesidad 10 con ≥ 10 vendedores
+- **N4:** el criterio del dashboard (top 25 % de ingresos **y** (calif < 3.5 **o** tardías > 15 %), contando pedidos de todos los estatus) es una consulta con percentiles y dos condiciones; se dejó solo "≥ 30 pedidos válidos y calificación promedio por pedido < 3.5" (24 vendedores). El dashboard conserva su análisis ampliado (13 vendedores) en la misma pestaña.
+- **N10:** sin mínimo, el ranking lo encabezan estados con **un solo vendedor** (PA: 944 clientes por 1 vendedor), lo que no es una oportunidad comparable. Con ≥ 10 vendedores activos, el primero es BA (170.74).
+- **Revertir:** cambiar los umbrales en `sql_referencia` y regenerar `resultado_esperado`.
+
+## D-12 (C) Few-shot sin las métricas del oráculo v2
+- **Decisión:** se retiró todo ejemplo que calcule **la misma métrica** que una necesidad, aunque sea en otra dimensión: los 3 de flete/precio (≈ N5), los 2 de Pareto (≈ N3), % de reseñas de 1-2 estrellas (≈ N8), vendedores por estado (componente de N10), umbral de retraso vs reseñas (≈ N2) y "mis clientes recurrentes" (con `es_recurrente`, N1 es trivial). Se reemplazaron por ejemplos con la misma **técnica** (julianday, LEFT JOIN, promedio por pedido, literal de enum, razón de sumas, ranking con `RANK() OVER`) sobre métricas que no se evalúan.
+- **Motivo:** la prueba léxica (D-05) solo marcaba 3 de ellos; el resto era fuga de método, no de texto.
+- **Efecto esperado:** puede bajar la precisión en flete y concentración, que antes tenían ejemplo casi exacto. Es la medida honesta.
+- **Revertir:** restaurar `EJEMPLOS_FEW_SHOT` desde git (commit `f23c019`).
