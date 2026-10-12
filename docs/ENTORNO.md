@@ -255,7 +255,9 @@ is_available: True
 - **P6. Definición de "ingresos" inconsistente** (resuelto por decisión del usuario, paso 4b). Siguen incluyendo pedidos cancelados q6 (método de pago) y q10 (ticket promedio); está pendiente de que el usuario decida si se les aplica la misma exclusión.
 
 ## Etapa 2 — variables del pipeline
-- `OLLAMA_MODEL` (por defecto `llama3.1:8b-instruct-q4_K_M`): modelo del chat y de la evaluación.
+- `OLLAMA_MODEL` (por defecto `qwen2.5-coder:7b-instruct-q4_K_M` desde la etapa 3, D-31; antes `llama3.1:8b-instruct-q4_K_M`): modelo del chat y de la evaluación.
+- `TEXT2SQL_AUTOCONSISTENCIA` (por defecto 1): k SQL por pregunta con votación; la configuración evaluada en la etapa 3 usa 5. Los demás experimentos de la etapa 3 (TEXT2SQL_GLOSARIO, _ESQUEMA_POR_PREGUNTA, _DESC_COLUMNAS, _VISTAS_NEGOCIO, _FEWSHOT_DINAMICO, _PLAN) están revertidos y apagados.
+- La evaluación (`eval/run_eval.py`) usa temperatura 0.3 por defecto; el chat, 0.1.
 - `TEXT2SQL_CLASIFICADOR` (por defecto `0`, apagado) y `TEXT2SQL_VISTA_VALIDOS` (por defecto `1`): configuración final de la etapa 2 (D-25).
 - `TEXT2SQL_REGLA_DENOMINADOR`, `TEXT2SQL_VISTAS_DOC`, `TEXT2SQL_VISTAS_OCULTAS`, `TEXT2SQL_REGLA_MULTIPLICIDAD`: mejoras probadas y revertidas (apagadas por defecto).
-- Suite: `python -m unittest discover -s tests -t .` (64 pruebas).
+- Suite: `python -m unittest discover -s tests -t .` (78 pruebas).

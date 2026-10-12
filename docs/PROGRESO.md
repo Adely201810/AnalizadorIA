@@ -1,6 +1,6 @@
 # Progreso
 
-Última actualización: 2026-10-11 — **Etapa 2 terminada**; configuración congelada en `02f3dba`. Resumen: [INFORME_FINAL_2.md](INFORME_FINAL_2.md). Decisiones: [DECISIONES.md](DECISIONES.md).
+Última actualización: 2026-10-12 — **Etapa 3 terminada**; configuración congelada en `740066a`. Resumen: [INFORME_FINAL_3.md](INFORME_FINAL_3.md). Decisiones: [DECISIONES.md](DECISIONES.md).
 
 | Paso | Estado | Commit | Cifras reales | Doc |
 |---|---|---|---|---|
@@ -43,4 +43,6 @@
 |---|---|---|---|---|
 | 1 — Auditoría del contexto (sin cambios) | ✅ | `762cadd` | System prompt **13,084 caracteres / 3,340 tokens**, idéntico para toda pregunta; notas 38 % de los tokens. Tablas base sin descripción; sin glosario (porcentaje, retraso, ticket, top N); 18 de 54 columnas ambiguas (14 sin explicación); ~26 % describe objetos que el modelo casi no usa; 2 notas derivadas del oráculo (n05, q5 v1) | [CONTEXTO_ACTUAL.md](CONTEXTO_ACTUAL.md) |
 | 2 — Oráculo v4 (DESARROLLO 30 + PRUEBA_2 20), anti-fugas, T=0.3 | ✅ | `8f7d5f2` (base en `9100a04`) | 50/50 verificadas con pandas; ningún fragmento de 4 palabras de las 50 en el prompt; D-27 (notas que calcaban n05 y q5 v1). **Base T=0.3: 13/14/13 de 30** (Wilson por pregunta 30.2–63.9 %); control T=0.1: 16/16/17. n05 3/3 → 0/3 al quitar la nota contaminada | [E3_PASO_2.md](E3_PASO_2.md) |
-| 3 — Experimentos E1-E7 (DESARROLLO, ×3, D-23) | ✅ | (este commit = configuración congelada) | Base 13.33 → **E7 autoconsistencia k=5: 17/15/14 (15.33)**. E1 10.67, E2 13.67, E3 13.67, E4 12.33, E5 8.33, E6 9.33: revertidos. Prompt 9,088–15,155 caracteres sin relación monótona con la precisión. qwen2.5-coder con la configuración final: **20/16/19 (18.33)**, 50 s por pregunta | [E3_PASO_3.md](E3_PASO_3.md) |
+| 3 — Experimentos E1-E7 (DESARROLLO, ×3, D-23) | ✅ | `740066a` (configuración congelada) | Base 13.33 → **E7 autoconsistencia k=5: 17/15/14 (15.33)**. E1 10.67, E2 13.67, E3 13.67, E4 12.33, E5 8.33, E6 9.33: revertidos. Prompt 9,088–15,155 caracteres sin relación monótona con la precisión. qwen2.5-coder con la configuración final: **20/16/19 (18.33)**, 50 s por pregunta | [E3_PASO_3.md](E3_PASO_3.md) |
+| 4 — PRUEBA_2 una sola vez (`740066a` + autoconsistencia k=5) | ✅ | (este commit) | llama3.1 **14/13/12 de 20** (Wilson sobre 20 preguntas 43.3–81.9 %); qwen 11/14/13. Sin caída notable frente a las preguntas comparables de DESARROLLO (70 % → 65 %). La ventaja de qwen en DESARROLLO no se replicó. Modelo por defecto → qwen por la regla (D-31, revertible) | [E3_PASO_4.md](E3_PASO_4.md) |
+| 5 — Informe | ✅ | (este commit) | Contexto 13,084 → 12,984 caracteres; ningún experimento de contexto ayudó; solo la votación (+2) | [INFORME_FINAL_3.md](INFORME_FINAL_3.md) |

@@ -17,11 +17,17 @@ del modelo.
 
 ## Resultados (léelos con sus limitaciones)
 
-Configuración final congelada en el commit `02f3dba` (llama3.1 8B, Ollama 0.40.3):
-**DESARROLLO 10, 7, 9 de 20** (media 8.67) y **PRUEBA 8, 8, 8 de 10**, evaluada una sola vez.
-Los dos conjuntos **no son comparables**, y las 10 necesidades del dashboard siguen en 9/30.
-Resumen honesto en [docs/RESUMEN_PARA_ENTREGA.md](docs/RESUMEN_PARA_ENTREGA.md); detalle en
-[docs/INFORME_FINAL_2.md](docs/INFORME_FINAL_2.md).
+**Etapa 3** (configuración congelada en `740066a`: autoconsistencia k=5, temperatura de evaluación 0.3, Ollama 0.40.3).
+Oráculo v4: DESARROLLO 30 / PRUEBA_2 20 (nuevo, evaluado una sola vez).
+
+| Modelo | DESARROLLO (de 30) | PRUEBA_2 (de 20) | Latencia por pregunta (DESARROLLO / PRUEBA_2) |
+|---|---|---|---|
+| llama3.1 8B | 17, 15, 14 (media 15.33) | 14, 13, 12 (media 13.0) | 38 s / 34 s |
+| **qwen2.5-coder 7B** (nuevo por defecto, D-31) | 20, 16, 19 (media 18.33) | 11, 14, 13 (media 12.67) | 50 s / 39 s |
+
+Los dos conjuntos **no son comparables** (las 10 necesidades difíciles del dashboard están solo en DESARROLLO), y el
+intervalo de PRUEBA_2 calculado sobre sus 20 preguntas es ancho (43–82 % con llama3.1). Detalle y limitaciones en
+[docs/INFORME_FINAL_3.md](docs/INFORME_FINAL_3.md); etapa 2 en [docs/RESUMEN_PARA_ENTREGA.md](docs/RESUMEN_PARA_ENTREGA.md).
 
 ## Reproducir desde cero
 
@@ -32,8 +38,8 @@ Resumen honesto en [docs/RESUMEN_PARA_ENTREGA.md](docs/RESUMEN_PARA_ENTREGA.md);
 | Python | **3.14.3** (Windows 11; `py` launcher) |
 | Paquetes de Python | `requirements.lock.txt` (versiones exactas) |
 | Ollama | **0.40.3**. Se actualizó **solo** de 0.40.2 a 0.40.3 a mitad del A/B de la etapa 2; las corridas afectadas se repitieron en 0.40.3 y las de 0.40.2 están archivadas en `eval/baselines/etapa2/ollama_0402/`. Instalador: <https://github.com/ollama/ollama/releases/tag/v0.40.3>. Desactiva las actualizaciones automáticas para no cambiar de versión a mitad de una medición |
-| Modelo (por defecto) | `llama3.1:8b-instruct-q4_K_M`, ID `46e0c10c039e` (4.9 GB) |
-| Modelos comparados (opcionales) | `qwen2.5-coder:7b-instruct-q4_K_M` ID `dae161e27b0e` (4.7 GB) · `llama3.2:3b-instruct-q4_K_M` ID `a80c4f17acd5` (2.0 GB) |
+| Modelo (por defecto desde la etapa 3) | `qwen2.5-coder:7b-instruct-q4_K_M`, ID `dae161e27b0e` (4.7 GB) |
+| Modelos comparados | `llama3.1:8b-instruct-q4_K_M` ID `46e0c10c039e` (4.9 GB; por defecto hasta la etapa 2) · `llama3.2:3b-instruct-q4_K_M` ID `a80c4f17acd5` (2.0 GB) |
 | Datos | los 9 CSV de Olist, incluidos en el repo (`data/olist/`, 122 MB) |
 
 ### Comandos (Git Bash en Windows; en Linux/macOS cambia `py -3.14` por `python3.14` y `Scripts` por `bin`)
@@ -46,35 +52,37 @@ export PYTHONUTF8=1                                # Windows: sin esto, run_eval
 python --version                                   # Python 3.14.3
 python -m pip install -r requirements.lock.txt     # versiones exactas
 
-# 1) Base de datos: esquema + 9 CSV + 7 vistas -> db/olist.db (no se versiona; ~1-2 min)
+# 1) Base de datos: esquema + 9 CSV + 10 vistas -> db/olist.db (no se versiona; ~1 min)
 python seeder/load_olist_csv.py
 
 # 2) Oráculo: reconstruirlo debe dar EXACTAMENTE los archivos versionados, y pandas debe coincidir.
-#    El constructor parte del oráculo v2 (commit cb20411); se restaura desde git y el script lo convierte en v3
+#    Se parte del oráculo v2 (commit cb20411) y se convierte en v3 (etapa 2) y luego en v4 (etapa 3: DESARROLLO 30 + PRUEBA_2 20)
 git show cb20411:eval/ground_truth_olist.json > eval/ground_truth_olist.json
 python -m eval.construir_oraculo_v3
+python -m eval.construir_oraculo_v4
 git diff --exit-code eval/ground_truth_olist.json eval/split_oraculo.json && echo "oráculo idéntico"
 python -m dashboard.verify_pandas                  # todas las líneas deben decir [OK]
 
 # 3) Pruebas automáticas (no necesitan Ollama)
-python -m unittest discover -s tests -t .          # Ran 64 tests ... OK
+python -m unittest discover -s tests -t .          # Ran 78 tests ... OK
 
 # 4) Ollama 0.40.3 y el modelo (instálalo antes desde el enlace de la tabla)
 ollama --version                                   # ollama version is 0.40.3
-ollama pull llama3.1:8b-instruct-q4_K_M            # ~4.9 GB
-ollama list                                        # el ID debe ser 46e0c10c039e
+ollama pull qwen2.5-coder:7b-instruct-q4_K_M       # ~4.7 GB (modelo por defecto)
+ollama pull llama3.1:8b-instruct-q4_K_M            # ~4.9 GB (opcional: comparación / revertir D-31)
+ollama list                                        # IDs: dae161e27b0e (qwen2.5-coder), 46e0c10c039e (llama3.1)
 
-# 5) Evaluación en DESARROLLO (configuración final por defecto; ~5 min por repetición)
-for k in 1 2 3; do python eval/run_eval.py --sin-plantillas --conjunto desarrollo --output eval/eval_results_desarrollo_r$k.json; done
+# 5) Evaluación en DESARROLLO con la configuración final de la etapa 3 (autoconsistencia k=5; temperatura 0.3 por defecto en la evaluación; ~25 min por repetición)
+for k in 1 2 3; do TEXT2SQL_AUTOCONSISTENCIA=5 python eval/run_eval.py --sin-plantillas --conjunto desarrollo --output eval/eval_results_desarrollo_r$k.json; done
 
 # 6) Interfaz: chat en http://localhost:8501 y dashboard en la página "Dashboard"
 streamlit run app.py
 ```
 
 Notas:
-- **PRUEBA no se vuelve a evaluar para ajustar nada** (ya se usó una vez; ver docs/INFORME_FINAL_2.md §6). El comando exacto que se usó está en [docs/E2_PASO_5.md](docs/E2_PASO_5.md).
-- **Variación esperable:** con la misma configuración, DESARROLLO dio 8, 9, 8; luego 10, 7, 9; y 6, 8, 7 al reproducirlo desde un clon limpio (9 repeticiones: rango 6–10, media 8.0). Una repetición sola no basta para comparar.
-- **Variables del pipeline:** `OLLAMA_MODEL`, `OLLAMA_HOST`, `TEXT2SQL_CLASIFICADOR` (0 por defecto), `TEXT2SQL_VISTA_VALIDOS` (1 por defecto) y `TEXT2SQL_N_INTENTOS` (2). Ver [docs/ENTORNO.md](docs/ENTORNO.md).
+- **PRUEBA_2 no se vuelve a evaluar para ajustar nada** (ya se usó una vez; ver docs/INFORME_FINAL_3.md). El PRUEBA de la etapa 2 ya forma parte de DESARROLLO.
+- **Variación esperable:** en la etapa 2, la misma configuración dio en DESARROLLO (20 preguntas) 8, 9, 8; luego 10, 7, 9; y 6, 8, 7 desde un clon limpio. Una repetición sola no basta para comparar.
+- **Variables del pipeline:** `OLLAMA_MODEL` (qwen2.5-coder por defecto), `OLLAMA_HOST`, `TEXT2SQL_CLASIFICADOR` (0), `TEXT2SQL_VISTA_VALIDOS` (1), `TEXT2SQL_N_INTENTOS` (2) y `TEXT2SQL_AUTOCONSISTENCIA` (1 en el chat; 5 en la configuración evaluada). Los experimentos revertidos de la etapa 3 siguen detrás de `TEXT2SQL_GLOSARIO`, `TEXT2SQL_ESQUEMA_POR_PREGUNTA`, `TEXT2SQL_DESC_COLUMNAS`, `TEXT2SQL_VISTAS_NEGOCIO`, `TEXT2SQL_FEWSHOT_DINAMICO` y `TEXT2SQL_PLAN`. Ver [docs/ENTORNO.md](docs/ENTORNO.md).
 - Detalles de instalación y despliegue: [docs/DEPLOY.md](docs/DEPLOY.md). Diccionario de datos: [docs/esquema_olist.md](docs/esquema_olist.md).
 
 ## Estructura
@@ -84,7 +92,7 @@ Notas:
 | `db/` | Esquema Olist (SQLAlchemy ORM), conexión de solo lectura, vistas analíticas |
 | `seeder/` | `load_olist_csv.py` (loader de los CSV reales de Olist) |
 | `llm/` | Cliente de Ollama, contexto de esquema (con few-shot), guardas de seguridad SQL, pipeline Text-to-SQL, CLI |
-| `eval/` | Oráculo v3 de 30 preguntas (`ground_truth_olist.json`, split DESARROLLO 20 / PRUEBA 10), árbitro determinista (`comparador.py`), runner de evaluación, A/B con repeticiones (`ab.py`) y corridas guardadas (`eval/baselines/`) |
+| `eval/` | Oráculo v4 de 50 preguntas (`ground_truth_olist.json`, DESARROLLO 30 / PRUEBA_2 20), árbitro determinista (`comparador.py`), runner de evaluación, A/B con repeticiones (`ab.py`, `ab_acumulativo_e3.py`) y corridas guardadas (`eval/baselines/`) |
 | `docs/` | Diccionario de datos de Olist, guía de despliegue y documentación por fase (`PROGRESO.md`, `DECISIONES.md`, `FASE_XX.md`) |
 | `tests/` | Pruebas automáticas (`python -m unittest discover -s tests -t .`) |
 | `legacy/gimnasio/` | Dataset histórico del gimnasio ficticio (no se usa en el pipeline) |

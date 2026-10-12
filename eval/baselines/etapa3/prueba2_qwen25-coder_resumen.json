@@ -1,0 +1,73 @@
+{
+  "nombre": "prueba2_qwen25-coder",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "configuracion": {
+    "n_intentos": 2,
+    "cadena_con_arbitro": false,
+    "feedback": null,
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.3,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json",
+    "conjunto": "prueba_2"
+  },
+  "archivos": [
+    "eval\\baselines\\etapa3\\prueba2_qwen25-coder_r1.json",
+    "eval\\baselines\\etapa3\\prueba2_qwen25-coder_r2.json",
+    "eval\\baselines\\etapa3\\prueba2_qwen25-coder_r3.json"
+  ],
+  "preguntas": 20,
+  "aciertos": [
+    11,
+    14,
+    13
+  ],
+  "media": 12.67,
+  "minimo": 11,
+  "maximo": 14,
+  "pct_media": 63.3,
+  "wilson95_pct": [
+    50.7,
+    74.4
+  ],
+  "aciertos_por_pregunta": {
+    "p2_01_vendedores_rio": 0,
+    "p2_02_pagos_debito": 3,
+    "p2_03_productos_mas_10kg": 3,
+    "p2_04_resenas_con_mensaje": 3,
+    "p2_05_pct_entrega_7_dias": 3,
+    "p2_06_pct_vendedores_sin_ventas": 1,
+    "p2_07_pct_ingresos_vendedores_mg": 0,
+    "p2_08_pct_resenas_titulo_bajas": 3,
+    "p2_09_pct_articulos_flete_mayor_precio": 3,
+    "p2_10_pedidos_validos_2017": 3,
+    "p2_11_ticket_promedio": 1,
+    "p2_12_precio_promedio_nov_2017": 0,
+    "p2_13_articulos_clientes_rs": 2,
+    "p2_14_categoria_mas_articulos": 1,
+    "p2_15_top3_estados_vendedores": 3,
+    "p2_16_dia_semana_mas_pedidos": 3,
+    "p2_17_gasto_clientes_2_pedidos": 3,
+    "p2_18_dias_entrega_por_flete": 0,
+    "p2_19_vendedor_mejor_calificado": 0,
+    "p2_20_pct_pagado_varios_metodos": 3
+  },
+  "clasificacion_total": {
+    "semantico": 17,
+    "ok": 38,
+    "ejecucion": 5
+  },
+  "respuestas_descompuestas": 0,
+  "latencia_media_s": 39.46,
+  "prompt_sql_caracteres_medio": 13143,
+  "wilson95_pct_por_pregunta": {
+    "criterio": "acierta en > 1 de 3",
+    "aciertos": 12,
+    "preguntas": 20,
+    "wilson95_pct": [
+      38.7,
+      78.1
+    ]
+  }
+}

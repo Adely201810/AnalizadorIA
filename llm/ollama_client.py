@@ -21,7 +21,9 @@ OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 # Modelo objetivo (ver docs/DEPLOY.md para instrucciones de descarga).
 # Alternativas más ligeras/pesadas: "mistral:7b-instruct-q4_K_M", "qwen2.5:7b-instruct-q4_K_M".
-DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b-instruct-q4_K_M")
+# Etapa 3 (D-31): qwen2.5-coder pasa a ser el modelo por defecto por la regla establecida (mejor en
+# DESARROLLO y no peor en PRUEBA_2). Revertir: OLLAMA_MODEL=llama3.1:8b-instruct-q4_K_M.
+DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5-coder:7b-instruct-q4_K_M")
 
 # num_ctx: el esquema compacto (llm/schema_context.py) ya incluye notas,
 # ejemplos few-shot y ahora 6 vistas -- 8192 da margen para eso + la pregunta +

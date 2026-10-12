@@ -200,3 +200,9 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Modelos:** qwen2.5-coder superó a llama3.1 en DESARROLLO según D-23 (18.33 frente a 15.33). La regla establecida (etapa 2) exige además que no sea peor en PRUEBA. Por eso **PRUEBA_2 se evalúa una sola vez con ambos modelos** (3 repeticiones cada uno) y después no se ajusta nada.
 - **"No peor en PRUEBA_2"** (fijado antes de verla): media de qwen ≥ media de llama3.1 − 1 acierto (de 20).
 - **Valores por defecto del código:** no se cambian para el chat hasta tener el resultado. La autoconsistencia multiplica la latencia del chat (~3x) y necesita temperatura > 0.1 para tener efecto; activarla en el chat es decisión del usuario.
+
+## D-31 (C) Modelo por defecto: qwen2.5-coder (por la regla establecida)
+- **Datos:** DESARROLLO (E7 k=5): qwen 20/16/19 (18.33) frente a llama3.1 17/15/14 (15.33), D-23 cumplida. PRUEBA_2 (una sola vez): qwen 11/14/13 (12.67) frente a llama3.1 14/13/12 (13.00). Umbral "no peor" fijado antes (D-30): 12.67 ≥ 13.00 − 1.
+- **Decisión:** `llm/ollama_client.py` → `DEFAULT_MODEL = qwen2.5-coder:7b-instruct-q4_K_M`. README actualizado (modelo, ID y `ollama pull`).
+- **Reservas (para revisión del usuario):** la ventaja de DESARROLLO no se replicó en PRUEBA_2. qwen es más lento (+33 % en DESARROLLO y +16 % en PRUEBA_2). El chat no usa la autoconsistencia, y sin ella los dos modelos empataban en la etapa 2.
+- **Revertir:** `OLLAMA_MODEL=llama3.1:8b-instruct-q4_K_M`, o `git show 740066a:llm/ollama_client.py`.
