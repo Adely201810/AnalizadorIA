@@ -1,0 +1,289 @@
+{
+  "regla": "D-23",
+  "causas_objetivo": "E1: fallos semánticos en preguntas que disparan alguna entrada del glosario; E2: fallos con algún intento que usó una tabla/columna inexistente o mal ubicada; E3: fallos cuyo SQL final usa alguna columna ambigua (DESCRIPCIONES_COLUMNAS); E4: fallos cuyo SQL final une 2+ tablas de detalle (order_items/order_payments/order_reviews) o tiene subconsulta/CTE; E5: todos los fallos (el few-shot no ataca una causa concreta); E6: fallos semánticos (el SQL corre pero responde otra cosa); E7: fallos en preguntas cuyo SQL final cambia entre repeticiones.",
+  "final": {
+    "nombre": "E7_autoconsistencia_k5",
+    "env": {
+      "TEXT2SQL_AUTOCONSISTENCIA": "5"
+    }
+  },
+  "registro": [
+    {
+      "paso": "base",
+      "env": {},
+      "aciertos": [
+        13,
+        14,
+        13
+      ],
+      "media": 13.33,
+      "latencia_media_s": 13.08,
+      "prompt_sql_caracteres_medio": 13148,
+      "decision": "punto de partida"
+    },
+    {
+      "paso": "E1_glosario",
+      "env": {
+        "TEXT2SQL_GLOSARIO": "1"
+      },
+      "aciertos": [
+        10,
+        10,
+        12
+      ],
+      "media": 10.67,
+      "minimo": 10,
+      "maximo": 12,
+      "wilson95_pct": [
+        26.4,
+        45.9
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 10,
+        "preguntas": 30,
+        "wilson95_pct": [
+          19.2,
+          51.2
+        ]
+      },
+      "latencia_media_s": 19.69,
+      "prompt_sql_caracteres_medio": 14231,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 31,
+      "decision": "REVERTIDO"
+    },
+    {
+      "paso": "E2_esquema_por_pregunta",
+      "env": {
+        "TEXT2SQL_ESQUEMA_POR_PREGUNTA": "1"
+      },
+      "aciertos": [
+        15,
+        14,
+        12
+      ],
+      "media": 13.67,
+      "minimo": 12,
+      "maximo": 15,
+      "wilson95_pct": [
+        35.7,
+        55.8
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 14,
+        "preguntas": 30,
+        "wilson95_pct": [
+          30.2,
+          63.9
+        ]
+      },
+      "latencia_media_s": 19.81,
+      "prompt_sql_caracteres_medio": 9088,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 22,
+      "decision": "REVERTIDO"
+    },
+    {
+      "paso": "E3_desc_columnas",
+      "env": {
+        "TEXT2SQL_DESC_COLUMNAS": "1"
+      },
+      "aciertos": [
+        12,
+        13,
+        16
+      ],
+      "media": 13.67,
+      "minimo": 12,
+      "maximo": 16,
+      "wilson95_pct": [
+        35.7,
+        55.8
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 14,
+        "preguntas": 30,
+        "wilson95_pct": [
+          30.2,
+          63.9
+        ]
+      },
+      "latencia_media_s": 16.3,
+      "prompt_sql_caracteres_medio": 15155,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 25,
+      "decision": "REVERTIDO"
+    },
+    {
+      "paso": "E4_vistas_negocio",
+      "env": {
+        "TEXT2SQL_VISTAS_NEGOCIO": "1"
+      },
+      "aciertos": [
+        14,
+        10,
+        13
+      ],
+      "media": 12.33,
+      "minimo": 10,
+      "maximo": 14,
+      "wilson95_pct": [
+        31.5,
+        51.4
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 12,
+        "preguntas": 30,
+        "wilson95_pct": [
+          24.6,
+          57.7
+        ]
+      },
+      "latencia_media_s": 16.57,
+      "prompt_sql_caracteres_medio": 14582,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 19,
+      "decision": "REVERTIDO"
+    },
+    {
+      "paso": "E5_fewshot_dinamico",
+      "env": {
+        "TEXT2SQL_FEWSHOT_DINAMICO": "1"
+      },
+      "aciertos": [
+        8,
+        11,
+        6
+      ],
+      "media": 8.33,
+      "minimo": 6,
+      "maximo": 11,
+      "wilson95_pct": [
+        19.6,
+        37.8
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 7,
+        "preguntas": 30,
+        "wilson95_pct": [
+          11.8,
+          40.9
+        ]
+      },
+      "latencia_media_s": 32.2,
+      "prompt_sql_caracteres_medio": 11786,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 50,
+      "decision": "REVERTIDO"
+    },
+    {
+      "paso": "E6_plan",
+      "env": {
+        "TEXT2SQL_PLAN": "1"
+      },
+      "aciertos": [
+        12,
+        8,
+        8
+      ],
+      "media": 9.33,
+      "minimo": 8,
+      "maximo": 12,
+      "wilson95_pct": [
+        22.5,
+        41.3
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 7,
+        "preguntas": 30,
+        "wilson95_pct": [
+          11.8,
+          40.9
+        ]
+      },
+      "latencia_media_s": 17.02,
+      "prompt_sql_caracteres_medio": 13316,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 31,
+      "decision": "REVERTIDO"
+    },
+    {
+      "paso": "E7_autoconsistencia_k3",
+      "env": {
+        "TEXT2SQL_AUTOCONSISTENCIA": "3"
+      },
+      "aciertos": [
+        15,
+        14,
+        16
+      ],
+      "media": 15,
+      "minimo": 14,
+      "maximo": 16,
+      "wilson95_pct": [
+        39.9,
+        60.1
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 15,
+        "preguntas": 30,
+        "wilson95_pct": [
+          33.2,
+          66.8
+        ]
+      },
+      "latencia_media_s": 26.48,
+      "prompt_sql_caracteres_medio": 13148,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 47,
+      "decision": "pasa D-23"
+    },
+    {
+      "paso": "E7_autoconsistencia_k5",
+      "env": {
+        "TEXT2SQL_AUTOCONSISTENCIA": "5"
+      },
+      "aciertos": [
+        17,
+        15,
+        14
+      ],
+      "media": 15.33,
+      "minimo": 14,
+      "maximo": 17,
+      "wilson95_pct": [
+        41.0,
+        61.2
+      ],
+      "wilson95_por_pregunta": {
+        "criterio": "acierta en > 1 de 3",
+        "aciertos": 15,
+        "preguntas": 30,
+        "wilson95_pct": [
+          33.2,
+          66.8
+        ]
+      },
+      "latencia_media_s": 38.03,
+      "prompt_sql_caracteres_medio": 13148,
+      "comparado_con": "base",
+      "media_anterior": 13.33,
+      "fallos_con_la_causa_objetivo_antes": 47,
+      "decision": "CONSERVADO"
+    }
+  ]
+}

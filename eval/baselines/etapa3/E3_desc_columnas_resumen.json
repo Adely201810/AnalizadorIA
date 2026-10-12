@@ -1,0 +1,83 @@
+{
+  "nombre": "E3_desc_columnas",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "configuracion": {
+    "n_intentos": 2,
+    "cadena_con_arbitro": false,
+    "feedback": null,
+    "juez": false,
+    "usar_plantillas": false,
+    "temperature": 0.3,
+    "num_ctx": 8192,
+    "ground_truth": "ground_truth_olist.json",
+    "conjunto": "desarrollo"
+  },
+  "archivos": [
+    "eval\\baselines\\etapa3\\E3_desc_columnas_r1.json",
+    "eval\\baselines\\etapa3\\E3_desc_columnas_r2.json",
+    "eval\\baselines\\etapa3\\E3_desc_columnas_r3.json"
+  ],
+  "preguntas": 30,
+  "aciertos": [
+    12,
+    13,
+    16
+  ],
+  "media": 13.67,
+  "minimo": 12,
+  "maximo": 16,
+  "pct_media": 45.6,
+  "wilson95_pct": [
+    35.7,
+    55.8
+  ],
+  "aciertos_por_pregunta": {
+    "n01_pct_clientes_recurrentes": 0,
+    "n02_calificacion_retraso_vs_a_tiempo": 0,
+    "n03_pct_ingresos_top5_categorias": 0,
+    "n04_vendedores_problematicos": 0,
+    "n05_estado_mayor_peso_flete": 0,
+    "n06_metodo_pago_mas_usado": 0,
+    "n07_mes_mayores_ingresos": 3,
+    "n08_categoria_mas_resenas_1_estrella": 0,
+    "n09_categorias_mas_compra_unica": 1,
+    "n10_estado_mas_clientes_por_vendedor": 0,
+    "x01_pedidos_cancelados": 3,
+    "x02_pct_entregas_con_retraso": 2,
+    "x03_flete_promedio_por_articulo": 3,
+    "x04_pct_resenas_5_estrellas": 3,
+    "x05_vendedor_mas_ingresos": 1,
+    "x06_pct_pedidos_varios_articulos": 0,
+    "x07_calificacion_pedidos_bed_bath_table": 0,
+    "x08_dias_entrega_rj": 3,
+    "x09_mes_mas_cancelados": 3,
+    "x10_categoria_precio_promedio_mas_alto": 0,
+    "x11_clientes_unicos_sp": 3,
+    "x12_vendedores_health_beauty": 3,
+    "x13_estado_mayor_gasto_promedio": 0,
+    "x14_ingresos_vendedores_sp_fuera_sp": 2,
+    "x15_calificacion_pedidos_boleto": 2,
+    "x16_pct_productos_sin_categoria": 3,
+    "x17_top2_ciudades_vendedores": 0,
+    "x18_peso_promedio_furniture_decor": 3,
+    "x19_anio_mas_ingresos": 3,
+    "x20_pct_clientes_resena_1_estrella": 0
+  },
+  "clasificacion_total": {
+    "semantico": 34,
+    "ejecucion": 15,
+    "ok": 41
+  },
+  "respuestas_descompuestas": 0,
+  "latencia_media_s": 16.3,
+  "prompt_sql_caracteres_medio": 15155,
+  "wilson95_pct_por_pregunta": {
+    "criterio": "acierta en > 1 de 3",
+    "aciertos": 14,
+    "preguntas": 30,
+    "wilson95_pct": [
+      30.2,
+      63.9
+    ]
+  }
+}

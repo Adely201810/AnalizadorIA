@@ -194,3 +194,9 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **E6:** reemplaza la regla "solo el SQL" por "plan de 2 a 4 líneas y luego el SQL"; `num_predict` 350 → 700.
 - **E7:** solo en el primer intento. Genera k SQL, ejecuta los que pasan las validaciones y elige el resultado más frecuente (empate: el primero). No usa la referencia. Si ninguno corre con filas, sigue el flujo normal con el primero.
 - **Causa objetivo por experimento:** heurística escrita en `eval/ab_acumulativo_e3.py` (`DETALLE`). Es aproximada, igual que `eval/causas.py`.
+
+## D-30 (C) Configuración congelada para PRUEBA_2 y evaluación de los dos modelos
+- **Congelada:** el código del commit que añade esta decisión, más `TEXT2SQL_AUTOCONSISTENCIA=5`, T = 0.3 (la de evaluación), N=2 y sin plantillas. El resto de los interruptores de la etapa 3 quedan apagados (E1-E6 revertidos).
+- **Modelos:** qwen2.5-coder superó a llama3.1 en DESARROLLO según D-23 (18.33 frente a 15.33). La regla establecida (etapa 2) exige además que no sea peor en PRUEBA. Por eso **PRUEBA_2 se evalúa una sola vez con ambos modelos** (3 repeticiones cada uno) y después no se ajusta nada.
+- **"No peor en PRUEBA_2"** (fijado antes de verla): media de qwen ≥ media de llama3.1 − 1 acierto (de 20).
+- **Valores por defecto del código:** no se cambian para el chat hasta tener el resultado. La autoconsistencia multiplica la latencia del chat (~3x) y necesita temperatura > 0.1 para tener efecto; activarla en el chat es decisión del usuario.
