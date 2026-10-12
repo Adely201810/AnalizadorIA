@@ -1,0 +1,134 @@
+{
+ "version": 1,
+ "descripcion": "Banco de ejemplos GENÉRICOS pregunta -> SQL (Etapa 3, E5: few-shot dinámico). Escritos sobre temas distintos de los del oráculo; cada uno debe ser disjunto de las 50 preguntas (tests/test_fewshot_disjunto.py y tests/test_heldout.py) y ejecutar devolviendo filas. Con TEXT2SQL_FEWSHOT_DINAMICO=1 se eligen los 3 más parecidos a la pregunta (TF-IDF) en lugar de los 10 ejemplos fijos.",
+ "ejemplos": [
+  {
+   "pregunta": "¿Cuántos prefijos de código postal distintos tienen los clientes?",
+   "sql": "SELECT COUNT(DISTINCT customer_zip_code_prefix) AS prefijos FROM customers"
+  },
+  {
+   "pregunta": "¿Para cuántos artículos del catálogo falta el dato de número de imágenes?",
+   "sql": "SELECT COUNT(*) AS productos FROM products WHERE product_photos_qty IS NULL"
+  },
+  {
+   "pregunta": "¿Cuántas ciudades distintas tienen vendedores en el estado de SC?",
+   "sql": "SELECT COUNT(DISTINCT seller_city) AS ciudades FROM sellers WHERE seller_state = 'SC'"
+  },
+  {
+   "pregunta": "¿Cuántas personas distintas compraron desde la ciudad de campinas?",
+   "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS personas FROM customers WHERE customer_city = 'campinas'"
+  },
+  {
+   "pregunta": "¿Cuántas reseñas hay de cada puntuación, de 1 a 5?",
+   "sql": "SELECT review_score, COUNT(*) AS resenas FROM order_reviews GROUP BY review_score ORDER BY review_score"
+  },
+  {
+   "pregunta": "Sobre todos los pedidos registrados, ¿qué parte (en %) quedó en estatus shipped, enviado pero sin entregar?",
+   "sql": "SELECT ROUND(AVG(CASE WHEN order_status = 'shipped' THEN 100.0 ELSE 0 END), 2) AS pct_enviados FROM orders"
+  },
+  {
+   "pregunta": "Entre los pedidos con pago aprobado, ¿qué parte (en %) tardó más de un día en aprobarse desde la compra?",
+   "sql": "SELECT ROUND(AVG(CASE WHEN julianday(order_approved_at) - julianday(order_purchase_timestamp) > 1 THEN 100.0 ELSE 0 END), 2) AS pct_aprobacion_lenta FROM orders WHERE order_approved_at IS NOT NULL"
+  },
+  {
+   "pregunta": "De las encuestas de satisfacción respondidas, ¿qué parte (en %) se contestó como máximo un día después de enviarse?",
+   "sql": "SELECT ROUND(AVG(CASE WHEN julianday(review_answer_timestamp) - julianday(review_creation_date) <= 1 THEN 100.0 ELSE 0 END), 2) AS pct_respuesta_rapida FROM order_reviews WHERE review_answer_timestamp IS NOT NULL"
+  },
+  {
+   "pregunta": "¿Cuánto tarda en promedio, en días, la respuesta a la encuesta según la puntuación dada?",
+   "sql": "SELECT review_score, ROUND(AVG(julianday(review_answer_timestamp) - julianday(review_creation_date)), 2) AS dias_respuesta FROM order_reviews WHERE review_answer_timestamp IS NOT NULL GROUP BY review_score ORDER BY review_score"
+  },
+  {
+   "pregunta": "En los pedidos que no fueron anulados, ¿cuántos días pasan en promedio entre la aprobación del pago y la entrega a la transportista?",
+   "sql": "SELECT ROUND(AVG(julianday(v.order_delivered_carrier_date) - julianday(v.order_approved_at)), 2) AS dias FROM vw_pedidos_validos v WHERE v.order_delivered_carrier_date IS NOT NULL AND v.order_approved_at IS NOT NULL"
+  },
+  {
+   "pregunta": "¿Cuáles son las 5 categorías (en inglés) con más productos distintos en el catálogo?",
+   "sql": "SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, COUNT(*) AS productos FROM products p LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name GROUP BY categoria ORDER BY productos DESC LIMIT 5"
+  },
+  {
+   "pregunta": "¿Qué estado de los compradores registra menos pedidos no anulados y cuántos tiene?",
+   "sql": "SELECT v.customer_state, COUNT(*) AS pedidos FROM vw_pedidos_validos v GROUP BY v.customer_state ORDER BY pedidos ASC LIMIT 1"
+  },
+  {
+   "pregunta": "¿En qué mes (AAAA-MM) se enviaron más encuestas de satisfacción?",
+   "sql": "SELECT strftime('%Y-%m', review_creation_date) AS mes, COUNT(*) AS encuestas FROM order_reviews GROUP BY mes ORDER BY encuestas DESC LIMIT 1"
+  },
+  {
+   "pregunta": "¿Cuántos vendedores distintos participan en promedio en cada pedido?",
+   "sql": "SELECT ROUND(AVG(vendedores), 2) AS vendedores_por_pedido FROM (SELECT order_id, COUNT(DISTINCT seller_id) AS vendedores FROM order_items GROUP BY order_id)"
+  },
+  {
+   "pregunta": "Entre los pedidos no anulados con artículos, ¿qué parte (en %) reúne a más de un vendedor?",
+   "sql": "WITH vend AS (SELECT oi.order_id, COUNT(DISTINCT oi.seller_id) AS n FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.order_id) SELECT ROUND(AVG(CASE WHEN n > 1 THEN 100.0 ELSE 0 END), 2) AS pct_multivendedor FROM vend"
+  },
+  {
+   "pregunta": "¿Cuánto vale, en promedio, una transacción de pago de cada medio de pago?",
+   "sql": "SELECT payment_type, ROUND(AVG(payment_value), 2) AS valor_medio FROM order_payments GROUP BY payment_type ORDER BY valor_medio DESC"
+  },
+  {
+   "pregunta": "¿Cuántos vendedores despacharon más de 100 unidades en pedidos no anulados?",
+   "sql": "SELECT COUNT(*) AS vendedores FROM (SELECT oi.seller_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id HAVING COUNT(*) > 100)"
+  },
+  {
+   "pregunta": "¿Cuántas personas compraron (pedidos no anulados) tanto en 2017 como en 2018?",
+   "sql": "SELECT COUNT(*) AS personas FROM (SELECT customer_unique_id FROM vw_pedidos_validos GROUP BY customer_unique_id HAVING SUM(strftime('%Y', order_purchase_timestamp) = '2017') > 0 AND SUM(strftime('%Y', order_purchase_timestamp) = '2018') > 0)"
+  },
+  {
+   "pregunta": "¿Cuál es el largo promedio de la descripción de los productos de perfumería (perfumery)?",
+   "sql": "SELECT ROUND(AVG(p.product_description_lenght), 2) AS largo_promedio FROM products p JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE t.product_category_name_english = 'perfumery'"
+  },
+  {
+   "pregunta": "¿En qué categoría (nombre traducido) se concentran más productos sin dato de imágenes?",
+   "sql": "SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, COUNT(*) AS productos FROM products p LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE p.product_photos_qty IS NULL GROUP BY categoria ORDER BY productos DESC LIMIT 1"
+  },
+  {
+   "pregunta": "¿Cuántos pedidos no anulados tenían su entrega prometida para más de 30 días después de comprarse?",
+   "sql": "SELECT COUNT(*) AS pedidos FROM vw_pedidos_validos v WHERE julianday(v.order_estimated_delivery_date) - julianday(v.order_purchase_timestamp) > 30"
+  },
+  {
+   "pregunta": "¿Cuántas transacciones de pago tiene en promedio un pedido?",
+   "sql": "SELECT ROUND(AVG(n), 2) AS pagos_por_pedido FROM (SELECT order_id, COUNT(*) AS n FROM order_payments GROUP BY order_id)"
+  },
+  {
+   "pregunta": "Considerando solo los estados de compradores que suman 500 entregas o más, ¿dónde dura más, en promedio, el tramo de la transportista al comprador?",
+   "sql": "SELECT v.customer_state, ROUND(AVG(julianday(v.order_delivered_customer_date) - julianday(v.order_delivered_carrier_date)), 2) AS dias_tramo FROM vw_pedidos_validos v WHERE v.order_delivered_customer_date IS NOT NULL AND v.order_delivered_carrier_date IS NOT NULL GROUP BY v.customer_state HAVING COUNT(*) >= 500 ORDER BY dias_tramo DESC LIMIT 1"
+  },
+  {
+   "pregunta": "¿Qué producto (product_id) fue comprado por más personas distintas en pedidos no anulados?",
+   "sql": "SELECT oi.product_id, COUNT(DISTINCT v.customer_unique_id) AS personas FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.product_id ORDER BY personas DESC LIMIT 1"
+  },
+  {
+   "pregunta": "¿Cuántas personas pagaron en total más de 1000 sumando todos sus pedidos no anulados?",
+   "sql": "WITH pago AS (SELECT order_id, SUM(payment_value) AS total FROM order_payments GROUP BY order_id) SELECT COUNT(*) AS personas FROM (SELECT v.customer_unique_id, SUM(pago.total) AS gastado FROM vw_pedidos_validos v JOIN pago ON pago.order_id = v.order_id GROUP BY v.customer_unique_id HAVING gastado > 1000)"
+  },
+  {
+   "pregunta": "¿Cuántos vendedores distintos tuvieron ventas en pedidos no anulados cada año?",
+   "sql": "SELECT strftime('%Y', v.order_purchase_timestamp) AS anio, COUNT(DISTINCT oi.seller_id) AS vendedores FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY anio ORDER BY anio"
+  },
+  {
+   "pregunta": "¿Cuántos pedidos no anulados recibieron más de una reseña?",
+   "sql": "SELECT COUNT(*) AS pedidos FROM (SELECT r.order_id FROM order_reviews r JOIN vw_pedidos_validos v ON v.order_id = r.order_id GROUP BY r.order_id HAVING COUNT(*) > 1)"
+  },
+  {
+   "pregunta": "¿Qué producto (product_id) tuvo la unidad más cara despachada en un pedido no anulado, y a qué precio?",
+   "sql": "SELECT oi.product_id, oi.price FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id ORDER BY oi.price DESC LIMIT 1"
+  },
+  {
+   "pregunta": "¿Qué volumen medio (largo x alto x ancho, en cm3) tienen los productos con sus tres medidas registradas?",
+   "sql": "SELECT ROUND(AVG(product_length_cm * product_height_cm * product_width_cm), 2) AS volumen_promedio FROM products WHERE product_length_cm IS NOT NULL AND product_height_cm IS NOT NULL AND product_width_cm IS NOT NULL"
+  },
+  {
+   "pregunta": "Para cada número de cuotas entre 1 y 3, ¿cuántos pagos con tarjeta de crédito hubo?",
+   "sql": "SELECT payment_installments, COUNT(*) AS pagos FROM order_payments WHERE payment_type = 'credit_card' AND payment_installments BETWEEN 1 AND 3 GROUP BY payment_installments ORDER BY payment_installments"
+  },
+  {
+   "pregunta": "Considerando la suma de lo cobrado por pedido (pedidos no anulados), ¿cuál es el estado de compradores con el pedido medio más alto entre los que tienen al menos 2000 pedidos?",
+   "sql": "WITH pago AS (SELECT order_id, SUM(payment_value) AS total FROM order_payments GROUP BY order_id) SELECT v.customer_state, ROUND(AVG(pago.total), 2) AS pedido_medio FROM vw_pedidos_validos v JOIN pago ON pago.order_id = v.order_id GROUP BY v.customer_state HAVING COUNT(*) >= 2000 ORDER BY pedido_medio DESC LIMIT 1"
+  },
+  {
+   "pregunta": "¿Cuántos pedidos no anulados tuvieron comprador y vendedor en la misma ciudad?",
+   "sql": "SELECT COUNT(DISTINCT v.order_id) AS pedidos FROM vw_pedidos_validos v JOIN customers c ON c.customer_id = v.customer_id JOIN order_items oi ON oi.order_id = v.order_id JOIN sellers s ON s.seller_id = oi.seller_id WHERE s.seller_city = c.customer_city"
+  }
+ ]
+}

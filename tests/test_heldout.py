@@ -33,7 +33,9 @@ from llm.schema_context import EJEMPLOS_DENOMINADOR, EJEMPLOS_FEW_SHOT, EJEMPLOS
 from llm.text_to_sql import CLASIFICADOR_SYSTEM_PROMPT, SQL_SYSTEM_PROMPT_TEMPLATE
 
 # Incluye los few-shot de las mejoras con interruptor (Etapa 2, Paso 3) aunque estén apagados.
-TODOS_LOS_EJEMPLOS = list(dict.fromkeys(EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR + EJEMPLOS_MULTIPLICIDAD))
+# Etapa 3: también el banco del few-shot dinámico (E5), aunque esté apagado.
+from llm.contexto_e3 import banco as _banco_e5
+TODOS_LOS_EJEMPLOS = list(dict.fromkeys(EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR + EJEMPLOS_MULTIPLICIDAD + _banco_e5()))
 
 RAIZ = Path(__file__).resolve().parent.parent
 ORACULO = json.loads((RAIZ / "eval" / "ground_truth_olist.json").read_text(encoding="utf-8"))["preguntas"]
@@ -51,7 +53,11 @@ def _shingles(texto: str, n: int = N_TEJA) -> set[str]:
 
 
 def _prompt_completo() -> str:
-    return SQL_SYSTEM_PROMPT_TEMPLATE.format(schema=get_schema_context()) + "\n" + CLASIFICADOR_SYSTEM_PROMPT
+    # Etapa 3: incluye todo lo que algún interruptor podría inyectar (glosario, banco de ejemplos,
+    # descripciones de columnas, vistas de negocio, regla del plan), esté encendido o no.
+    from llm.contexto_e3 import todo_el_texto_opcional
+    return (SQL_SYSTEM_PROMPT_TEMPLATE.format(schema=get_schema_context()) + "\n" + CLASIFICADOR_SYSTEM_PROMPT
+            + "\n" + todo_el_texto_opcional())
 
 
 class TestSplit(unittest.TestCase):

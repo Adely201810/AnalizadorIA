@@ -50,14 +50,64 @@ USAR_REGLA_DENOMINADOR = os.environ.get("TEXT2SQL_REGLA_DENOMINADOR", "0") == "1
 USAR_VISTAS_DOC = os.environ.get("TEXT2SQL_VISTAS_DOC", "0") == "1"
 VISTAS_OCULTAS = {v.strip() for v in os.environ.get("TEXT2SQL_VISTAS_OCULTAS", "").split(",") if v.strip()}
 USAR_REGLA_MULTIPLICIDAD = os.environ.get("TEXT2SQL_REGLA_MULTIPLICIDAD", "0") == "1"
+# --- Etapa 3 (llm/contexto_e3.py tiene E1, E2, E5, E6 y E7). Apagadas por defecto:
+#   (E3) TEXT2SQL_DESC_COLUMNAS=1   una línea por columna ambigua, desde la documentación del dataset Olist
+#   (E4) TEXT2SQL_VISTAS_NEGOCIO=1  vistas de negocio genéricas (db/olist_views.sql) en el prompt
+USAR_DESC_COLUMNAS = os.environ.get("TEXT2SQL_DESC_COLUMNAS", "0") == "1"
+USAR_VISTAS_NEGOCIO = os.environ.get("TEXT2SQL_VISTAS_NEGOCIO", "0") == "1"
+VISTAS_NEGOCIO_DESCRIPCION = {
+    "vw_pedidos_entregados": ("UNA fila por pedido VÁLIDO con fecha de entrega; dias_entrega = compra -> entrega, "
+                              "dias_retraso = entrega - estimada (positivo = tarde), con_retraso 0/1"),
+    "vw_totales_pedido": ("UNA fila por pedido VÁLIDO con sus totales ya agregados por separado (articulos, "
+                          "valor_productos = SUM(price), flete_total, total_pagado = SUM(payment_value), calificacion "
+                          "= promedio de sus reseñas): úsala para no multiplicar filas"),
+    "vw_articulos_vendidos": ("UNA fila por artículo (unidad) de cada pedido VÁLIDO, con categoria (inglés o "
+                              "'sin_categoria'), vendedor y cliente ya unidos"),
+}
 
 if USAR_VISTA_VALIDOS:
     VISTAS_DESCRIPCION["vw_pedidos_validos"] = (
         "UNA fila por pedido VÁLIDO (ya excluye canceled/unavailable), con customer_unique_id y customer_state"
     )
+if USAR_VISTAS_NEGOCIO:
+    VISTAS_DESCRIPCION.update(VISTAS_NEGOCIO_DESCRIPCION)
 VISTAS_EN_PROMPT = [v for v in VISTAS_DESCRIPCION if v not in VISTAS_OCULTAS]
 # Para validar SQL se conocen todas las vistas que existen en la base, estén o no en el prompt.
-NOMBRES_VISTAS = list(dict.fromkeys(list(VISTAS_DESCRIPCION) + ["vw_pedidos_validos"]))
+NOMBRES_VISTAS = list(dict.fromkeys(list(VISTAS_DESCRIPCION) + ["vw_pedidos_validos"] + list(VISTAS_NEGOCIO_DESCRIPCION)))
+
+# (E3) Significado de las columnas que se prestan a confusión. Redactado a partir de la
+# documentación pública del dataset de Olist (descripción de cada columna), no de preguntas.
+DESCRIPCIONES_COLUMNAS = {
+    ("orders", "order_status"): "estatus del pedido (created, approved, invoiced, processing, shipped, delivered, unavailable, canceled)",
+    ("orders", "order_purchase_timestamp"): "momento de la compra; es la fecha de la venta",
+    ("orders", "order_approved_at"): "momento en que se aprobó el pago",
+    ("orders", "order_delivered_carrier_date"): "momento en que el vendedor entregó el pedido a la transportista",
+    ("orders", "order_delivered_customer_date"): "momento en que el cliente recibió el pedido (NULL si no llegó)",
+    ("orders", "order_estimated_delivery_date"): "fecha de entrega prometida al cliente al comprar",
+    ("order_items", "order_item_id"): "número secuencial del artículo dentro del pedido (1, 2, …): una fila por unidad; no hay columna de cantidad",
+    ("order_items", "price"): "precio de esa unidad",
+    ("order_items", "freight_value"): "flete de esa unidad (si el pedido tiene varios artículos, el flete se reparte entre ellos)",
+    ("order_items", "shipping_limit_date"): "plazo del vendedor para entregar el artículo a la transportista",
+    ("order_payments", "payment_sequential"): "número de pago dentro del pedido: un pedido puede pagarse con varios pagos o medios",
+    ("order_payments", "payment_installments"): "número de cuotas elegido",
+    ("order_payments", "payment_value"): "monto de ese pago",
+    ("order_reviews", "id"): "clave interna de la fila (no viene del dataset)",
+    ("order_reviews", "review_creation_date"): "fecha en que se envió la encuesta de satisfacción",
+    ("order_reviews", "review_answer_timestamp"): "momento en que el cliente respondió la encuesta",
+    ("products", "product_name_lenght"): "cantidad de caracteres del nombre del producto (la errata 'lenght' viene del dataset)",
+    ("products", "product_description_lenght"): "cantidad de caracteres de la descripción",
+    ("customers", "customer_zip_code_prefix"): "primeros 5 dígitos del código postal",
+    ("sellers", "seller_zip_code_prefix"): "primeros 5 dígitos del código postal",
+    ("geolocation", "geolocation_zip_code_prefix"): "primeros 5 dígitos del código postal; hay MUCHAS filas por prefijo, unir por él multiplica filas",
+}
+
+
+def texto_descripciones_columnas(tablas: set[str] | None = None) -> str:
+    lineas = ["Significado de columnas que se prestan a confusión (documentación del dataset):"]
+    for (t, c), d in DESCRIPCIONES_COLUMNAS.items():
+        if tablas is None or t in tablas:
+            lineas.append(f"- {t}.{c}: {d}")
+    return "\n".join(lineas)
 
 # (d1) Para qué sirve cada vista y qué columnas NO tiene (las que el modelo le pedía por error).
 USO_VISTAS = {
@@ -298,9 +348,9 @@ def _vista_line(nombre: str) -> str:
     return f"- {nombre}({', '.join(cols)}) -- {VISTAS_DESCRIPCION[nombre]}"
 
 
-def _vistas_texto() -> str:
+def _vistas_texto(vistas: list[str] | None = None) -> str:
     lineas = ["Vistas analíticas disponibles (úsalas en vez de recalcular a mano cuando aplique):"]
-    for v in VISTAS_EN_PROMPT:
+    for v in (VISTAS_EN_PROMPT if vistas is None else vistas):
         lineas.append(_vista_line(v))
         if USAR_VISTAS_DOC:
             cols = get_esquema_real().get(v, set())
@@ -337,12 +387,13 @@ def get_esquema_real() -> dict[str, set[str]]:
 COLUMNAS_UNION = ["order_id", "customer_id", "customer_unique_id", "seller_id", "product_id", "product_category_name"]
 
 
-def _columnas_de_union_texto() -> str:
+def _columnas_de_union_texto(vistas: list[str] | None = None, tablas: set[str] | None = None) -> str:
     esquema = get_esquema_real()
     lineas = [
         "Columnas de unión (JOIN) -- SOLO las tablas/vistas listadas tienen cada columna; en las demás NO existe:"
     ]
-    visibles = [t for t in esquema if not t.startswith("vw_") or t in VISTAS_EN_PROMPT]
+    en_prompt = VISTAS_EN_PROMPT if vistas is None else vistas
+    visibles = [t for t in esquema if (t in en_prompt if t.startswith("vw_") else (tablas is None or t in tablas))]
     for col in COLUMNAS_UNION:
         donde = [t for t in visibles if col in esquema[t]]
         lineas.append(f"- {col}: {', '.join(donde)}")
@@ -369,39 +420,57 @@ def get_known_names() -> set[str]:
     return {t.name for t in Base.metadata.sorted_tables} | set(NOMBRES_VISTAS)
 
 
-def _sin_vistas_ocultas(linea: str) -> str:
+def _sin_vistas_ocultas(linea: str, ocultas: set[str] | None = None) -> str:
     """(d2) Quita de una nota las frases que nombran una vista oculta. Si la nombra la primera
     frase, se quita la nota entera (las siguientes dependen de ella); '' si no queda nada."""
-    if not any(v in linea for v in VISTAS_OCULTAS):
+    ocultas = VISTAS_OCULTAS if ocultas is None else ocultas
+    if not any(v in linea for v in ocultas):
         return linea
     frases = re.split(r"(?<=\.) ", linea.removeprefix("- "))
-    if any(v in frases[0] for v in VISTAS_OCULTAS):
+    if any(v in frases[0] for v in ocultas):
         return ""
-    quedan = [f for f in frases if not any(v in f for v in VISTAS_OCULTAS)]
+    quedan = [f for f in frases if not any(v in f for v in ocultas)]
     return "- " + " ".join(quedan)
 
 
-def build_schema_context() -> str:
-    """Devuelve el esquema compacto en texto plano, listo para insertarse en el prompt del sistema."""
+def build_schema_context(tablas: set[str] | None = None, vistas_visibles: set[str] | None = None,
+                         con_ejemplos: bool = True) -> str:
+    """Devuelve el esquema compacto en texto plano, listo para insertarse en el prompt del sistema.
+
+    Sin argumentos es el contexto de siempre. Etapa 3: `tablas` / `vistas_visibles` limitan el
+    esquema a lo relevante para una pregunta (E2) y `con_ejemplos=False` quita los few-shot
+    fijos (E5 los pone, dinámicos, en el prompt de usuario)."""
     _verificar_bd_existe()
+    vistas = VISTAS_EN_PROMPT if vistas_visibles is None else [v for v in VISTAS_EN_PROMPT if v in vistas_visibles]
+    ocultas = VISTAS_OCULTAS | {v for v in VISTAS_DESCRIPCION if v not in vistas}
     lines = ["Tablas disponibles (SQLite):", ""]
     for table in Base.metadata.sorted_tables:
+        if tablas is not None and table.name not in tablas:
+            continue
         cols = ", ".join(_column_line(c) for c in table.columns)
         lines.append(f"{table.name}({cols})")
+    if USAR_DESC_COLUMNAS:
+        lines.append("")
+        lines.append(texto_descripciones_columnas(tablas))
     lines.append("")
-    lines.append(_vistas_texto())
+    lines.append(_vistas_texto(vistas))
     lines.append("")
-    lines.append(_columnas_de_union_texto())
+    lines.append(_columnas_de_union_texto(vistas, tablas))
 
     valores_texto = _valores_categoricos_texto()
+    if valores_texto and tablas is not None:
+        valores_texto = "\n".join(l for l in valores_texto.splitlines()
+                                  if not l.startswith("- ") or l[2:].split(".")[0] in tablas)
+        if not any(l.startswith("- ") for l in valores_texto.splitlines()):
+            valores_texto = None
     if valores_texto:
         lines.append("")
         lines.append(valores_texto)
 
     lines.append("")
     notas = NOTAS_TEXTO
-    if VISTAS_OCULTAS:
-        notas = "\n".join(_sin_vistas_ocultas(l) for l in notas.splitlines() if _sin_vistas_ocultas(l))
+    if ocultas:
+        notas = "\n".join(_sin_vistas_ocultas(l, ocultas) for l in notas.splitlines() if _sin_vistas_ocultas(l, ocultas))
     lines.append(notas)
     if USAR_VISTA_VALIDOS:
         lines.append(REGLA_VISTA_VALIDOS)
@@ -409,8 +478,9 @@ def build_schema_context() -> str:
         lines.append(REGLA_DENOMINADOR)
     if USAR_REGLA_MULTIPLICIDAD:
         lines.append(REGLA_MULTIPLICIDAD)
-    lines.append("")
-    lines.append(EJEMPLOS_TEXTO)
+    if con_ejemplos:
+        lines.append("")
+        lines.append(EJEMPLOS_TEXTO)
     return "\n".join(lines)
 
 

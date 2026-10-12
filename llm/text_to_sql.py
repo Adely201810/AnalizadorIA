@@ -48,6 +48,7 @@ from typing import Callable
 _logger = logging.getLogger(__name__)
 
 from db.olist_database import DATABASE_URL
+from llm import contexto_e3
 from llm.bitacora import BitacoraEsquema, detalles_de_error
 from llm.juez import JuezLLM
 from llm.ollama_client import OllamaClient, OllamaError
@@ -387,8 +388,17 @@ def generar_sql(
     sql_previo: str | None = None,
     notas: str | None = None,
 ) -> str:
+    if contexto_e3.depende_de_la_pregunta():  # Etapa 3: E2 / E5
+        schema_context = contexto_e3.esquema_para(pregunta)
     system_prompt = SQL_SYSTEM_PROMPT_TEMPLATE.format(schema=schema_context)
+    num_predict = 350
+    if contexto_e3.USAR_PLAN:  # Etapa 3: E6
+        system_prompt = system_prompt.replace(contexto_e3.REGLA_SOLO_SQL, contexto_e3.REGLA_PLAN)
+        num_predict = contexto_e3.NUM_PREDICT_CON_PLAN
     prompt = f"Pregunta: {pregunta}"
+    extra = contexto_e3.contexto_usuario(pregunta)  # Etapa 3: E1 / E5
+    if extra:
+        prompt += f"\n\n{extra}"
     if notas:
         # Va en el prompt de USUARIO: si fuera en el system, cada cambio de la
         # bitácora invalidaría la caché del prefijo del esquema (docs/FASE_04.md).
@@ -399,8 +409,46 @@ def generar_sql(
             f"\nPero tuvo este problema: {error_previo}"
             f"\nGenera una nueva consulta SQL corregida que resuelva el problema."
         )
-    respuesta = client.generate(prompt, system=system_prompt, num_predict=350)
+    respuesta = client.generate(prompt, system=system_prompt, num_predict=num_predict)
     return extract_sql(respuesta)
+
+
+def _firma_resultado(filas: list[tuple]) -> tuple:
+    """Resultado comparable entre candidatos: números redondeados a 2 decimales, filas en orden."""
+    def norm(v):
+        return round(v, 2) if isinstance(v, float) else v
+    return tuple(sorted((tuple(norm(v) for v in f) for f in filas[:50]), key=repr))
+
+
+def _elegir_por_autoconsistencia(client, pregunta, schema_context, notas, k, nombres_conocidos, esquema_real):
+    """Etapa 3, E7: genera k SQL, ejecuta los que pasan las validaciones y devuelve el SQL cuyo
+    resultado es el más frecuente (empate: el primero en aparecer). No usa la referencia, así
+    que también sirve en el chat. Si ninguno corre con filas, devuelve el primer SQL generado
+    para que el flujo normal (error -> reintento) siga igual que sin E7."""
+    candidatos, primero = [], None
+    for _ in range(k):
+        sql = generar_sql(client, pregunta, schema_context, notas=notas)
+        primero = primero if primero is not None else sql
+        try:
+            limpio, _ = sanitizar_alias_reservados(validate_select_only(sql))
+            check_literales_placeholder(limpio)
+            check_tablas_conocidas(limpio, nombres_conocidos)
+            check_columnas_existentes(limpio, esquema_real)
+            check_dominios_join(limpio)
+            _, filas = execute_readonly(limpio)
+        except (SQLValidationError, SQLQualityError, sqlite3.Error):
+            continue
+        if filas:
+            candidatos.append((sql, _firma_resultado(filas)))
+    info = {"k": k, "ejecutables_con_filas": len(candidatos), "resultados_distintos": len({f for _, f in candidatos})}
+    if not candidatos:
+        return primero or "", {**info, "votos_ganador": 0}
+    conteo = {}
+    for _, f in candidatos:
+        conteo[f] = conteo.get(f, 0) + 1
+    ganador = max(conteo.values())
+    sql = next(s for s, f in candidatos if conteo[f] == ganador)
+    return sql, {**info, "votos_ganador": ganador}
 
 
 def sintetizar_respuesta(
@@ -521,7 +569,11 @@ def _generar_y_ejecutar_llm(
     pista: str | None = None
     notas = bitacora.texto_para_prompt() if bitacora else None
 
+    info_autoconsistencia = None
+
     def registrar(tipo: str, sql: str | None, detalle: str | None, **extra) -> None:
+        if resultado.intentos == 1 and info_autoconsistencia:
+            extra["autoconsistencia"] = info_autoconsistencia
         resultado.intentos_detalle.append(
             {"intento": resultado.intentos, "sql": sql, "tipo": tipo, "detalle": detalle, **extra}
         )
@@ -530,9 +582,14 @@ def _generar_y_ejecutar_llm(
         resultado.intentos = intento
         ultimo = intento == n_intentos
         try:
-            sql_generado = generar_sql(
-                client, pregunta, schema_context, error_previo=pista, sql_previo=sql_generado, notas=notas,
-            )
+            if intento == 1 and contexto_e3.K_AUTOCONSISTENCIA > 1:  # Etapa 3: E7
+                sql_generado, info_autoconsistencia = _elegir_por_autoconsistencia(
+                    client, pregunta, schema_context, notas, contexto_e3.K_AUTOCONSISTENCIA,
+                    nombres_conocidos, esquema_real)
+            else:
+                sql_generado = generar_sql(
+                    client, pregunta, schema_context, error_previo=pista, sql_previo=sql_generado, notas=notas,
+                )
         except OllamaError as exc:
             registrar(clasificar_excepcion(exc), None, str(exc))
             if not ultimo:

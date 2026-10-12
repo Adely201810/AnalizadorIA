@@ -19,7 +19,9 @@ from eval.similitud import jaccard, preguntas_oraculo, tokens_sql, tokens_texto
 from llm.schema_context import EJEMPLOS_DENOMINADOR, EJEMPLOS_FEW_SHOT, EJEMPLOS_MULTIPLICIDAD, get_schema_context
 
 # Incluye los few-shot de las mejoras con interruptor (Etapa 2, Paso 3) aunque estén apagados.
-TODOS_LOS_EJEMPLOS = list(dict.fromkeys(EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR + EJEMPLOS_MULTIPLICIDAD))
+# Etapa 3: también el banco del few-shot dinámico (E5), aunque esté apagado.
+from llm.contexto_e3 import banco as _banco_e5
+TODOS_LOS_EJEMPLOS = list(dict.fromkeys(EJEMPLOS_FEW_SHOT + EJEMPLOS_DENOMINADOR + EJEMPLOS_MULTIPLICIDAD + _banco_e5()))
 from llm.text_to_sql import CLASIFICADOR_SYSTEM_PROMPT
 
 UMBRAL_TEXTO = 0.25

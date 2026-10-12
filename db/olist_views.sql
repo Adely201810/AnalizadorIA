@@ -12,6 +12,9 @@ DROP VIEW IF EXISTS vw_entregas_retrasos;
 DROP VIEW IF EXISTS vw_ingresos_por_categoria;
 DROP VIEW IF EXISTS vw_ingresos_por_vendedor;
 DROP VIEW IF EXISTS vw_retraso_por_rango;
+DROP VIEW IF EXISTS vw_pedidos_entregados;
+DROP VIEW IF EXISTS vw_totales_pedido;
+DROP VIEW IF EXISTS vw_articulos_vendidos;
 DROP VIEW IF EXISTS vw_pedidos_validos;
 
 -- ----------------------------------------------------------------------------
@@ -204,3 +207,78 @@ SELECT
 FROM orders o
 JOIN customers c ON c.customer_id = o.customer_id
 WHERE o.order_status NOT IN ('canceled', 'unavailable');
+
+-- ============================================================================
+-- Etapa 3, E4: vistas de NEGOCIO genéricas (bloques reutilizables). Cada una es
+-- un concepto de negocio, no la respuesta a una pregunta concreta. Todas parten
+-- de vw_pedidos_validos (pedido válido = order_status NOT IN ('canceled','unavailable')).
+-- Solo aparecen en el prompt con TEXT2SQL_VISTAS_NEGOCIO=1 (llm/schema_context.py).
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- vw_pedidos_entregados -- concepto "pedido entregado"
+-- Una fila por pedido VÁLIDO con fecha de entrega al cliente registrada.
+-- dias_entrega = compra -> entrega; dias_retraso = entrega - fecha estimada
+-- (positivo = llegó tarde); con_retraso = 1 si llegó después de la estimada.
+-- ----------------------------------------------------------------------------
+CREATE VIEW vw_pedidos_entregados AS
+SELECT
+    v.order_id,
+    v.customer_unique_id,
+    v.customer_state,
+    v.order_purchase_timestamp,
+    v.order_delivered_customer_date,
+    v.order_estimated_delivery_date,
+    julianday(v.order_delivered_customer_date) - julianday(v.order_purchase_timestamp) AS dias_entrega,
+    julianday(v.order_delivered_customer_date) - julianday(v.order_estimated_delivery_date) AS dias_retraso,
+    CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date)
+         THEN 1 ELSE 0 END AS con_retraso
+FROM vw_pedidos_validos v
+WHERE v.order_delivered_customer_date IS NOT NULL;
+
+-- ----------------------------------------------------------------------------
+-- vw_totales_pedido -- concepto "pedido con sus totales"
+-- Una fila por pedido VÁLIDO. Cada total se agrega por separado antes de unir,
+-- así que no hay multiplicación de filas entre artículos, pagos y reseñas.
+-- ----------------------------------------------------------------------------
+CREATE VIEW vw_totales_pedido AS
+SELECT
+    v.order_id,
+    v.customer_unique_id,
+    v.customer_state,
+    v.order_purchase_timestamp,
+    a.articulos,
+    a.valor_productos,
+    a.flete_total,
+    p.total_pagado,
+    r.calificacion
+FROM vw_pedidos_validos v
+LEFT JOIN (SELECT order_id, COUNT(*) AS articulos, SUM(price) AS valor_productos, SUM(freight_value) AS flete_total
+           FROM order_items GROUP BY order_id) a ON a.order_id = v.order_id
+LEFT JOIN (SELECT order_id, SUM(payment_value) AS total_pagado FROM order_payments GROUP BY order_id) p ON p.order_id = v.order_id
+LEFT JOIN (SELECT order_id, AVG(review_score) AS calificacion FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id;
+
+-- ----------------------------------------------------------------------------
+-- vw_articulos_vendidos -- concepto "artículo vendido"
+-- Una fila por artículo (unidad) de un pedido VÁLIDO, con su categoría (inglés;
+-- 'sin_categoria' si no tiene), su vendedor y su cliente ya unidos.
+-- ----------------------------------------------------------------------------
+CREATE VIEW vw_articulos_vendidos AS
+SELECT
+    oi.order_id,
+    oi.order_item_id,
+    oi.product_id,
+    COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,
+    oi.seller_id,
+    s.seller_city,
+    s.seller_state,
+    v.customer_unique_id,
+    v.customer_state,
+    v.order_purchase_timestamp,
+    oi.price,
+    oi.freight_value
+FROM order_items oi
+JOIN vw_pedidos_validos v ON v.order_id = oi.order_id
+JOIN products p ON p.product_id = oi.product_id
+LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name
+JOIN sellers s ON s.seller_id = oi.seller_id;

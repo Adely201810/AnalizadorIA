@@ -1,0 +1,167 @@
+{
+ "version": 1,
+ "descripcion": "Glosario de términos de negocio GENÉRICOS (Etapa 3, E1). Cada entrada: disparadores (regex sobre la pregunta normalizada, sin acentos y en minúsculas), definición y un fragmento SQL genérico con el denominador explícito. Redactado desde definiciones de negocio estándar y la estructura de la BD, nunca desde el oráculo (lo comprueban tests/test_heldout.py y tests/test_glosario.py).",
+ "entradas": [
+  {
+   "termino": "porcentaje",
+   "disparadores": [
+    "porcentaje",
+    "%",
+    "proporcion",
+    "que parte",
+    "fraccion",
+    "tasa"
+   ],
+   "definicion": "Un porcentaje (o tasa) es 100 × (casos que cumplen la condición) / (total del universo que nombra la pregunta). El universo (denominador) va en el FROM/WHERE; la condición solo en el numerador. Numerador y denominador cuentan la MISMA unidad (pedidos con pedidos, personas con personas).",
+   "sql": "ROUND(AVG(CASE WHEN <condición> THEN 100.0 ELSE 0 END), 2)  -- sobre una fila por unidad del universo"
+  },
+  {
+   "termino": "cliente único",
+   "disparadores": [
+    "cliente",
+    "comprador"
+   ],
+   "definicion": "La persona es customer_unique_id; customer_id cambia en cada pedido. Para contar personas usa COUNT(DISTINCT customer_unique_id).",
+   "sql": "COUNT(DISTINCT customer_unique_id)  -- nunca COUNT(customer_id) para contar personas"
+  },
+  {
+   "termino": "recurrente",
+   "disparadores": [
+    "recurrente",
+    "volvio a comprar",
+    "repit",
+    "una sola vez",
+    "recompra"
+   ],
+   "definicion": "Cliente recurrente = customer_unique_id con 2 o más pedidos distintos (distinct order_id); compra única = exactamente uno. Se cuenta por persona, no por customer_id.",
+   "sql": "GROUP BY customer_unique_id HAVING COUNT(DISTINCT order_id) >= 2"
+  },
+  {
+   "termino": "pedido válido",
+   "disparadores": [
+    "valido",
+    "cancelad",
+    "no disponible"
+   ],
+   "definicion": "Pedido válido = order_status NOT IN ('canceled','unavailable'). La vista vw_pedidos_validos ya trae una fila por pedido válido.",
+   "sql": "SELECT ... FROM vw_pedidos_validos v JOIN order_items oi ON oi.order_id = v.order_id"
+  },
+  {
+   "termino": "retraso",
+   "disparadores": [
+    "retras",
+    "tard",
+    "a tiempo",
+    "atras",
+    "puntual"
+   ],
+   "definicion": "Un pedido llega con retraso si order_delivered_customer_date > order_estimated_delivery_date (solo pedidos con fecha de entrega). Días de retraso = julianday(entrega) - julianday(estimada); positivo = tarde.",
+   "sql": "julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date)  -- condición de retraso"
+  },
+  {
+   "termino": "tiempo de entrega",
+   "disparadores": [
+    "dias",
+    "tarda",
+    "demora",
+    "tiempo de entrega",
+    "entrega"
+   ],
+   "definicion": "Tiempo de entrega = julianday(order_delivered_customer_date) - julianday(order_purchase_timestamp), solo pedidos con fecha de entrega registrada.",
+   "sql": "SELECT AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)) FROM orders o WHERE o.order_delivered_customer_date IS NOT NULL"
+  },
+  {
+   "termino": "ticket promedio",
+   "disparadores": [
+    "ticket",
+    "valor promedio de un pedido",
+    "gasto promedio por pedido",
+    "pagado promedio"
+   ],
+   "definicion": "Ticket promedio = promedio, por pedido, de lo cobrado en ese pedido (SUM(payment_value) agrupado por order_id). Primero se suma por pedido y luego se promedia.",
+   "sql": "SELECT AVG(total) FROM (SELECT order_id, SUM(payment_value) AS total FROM order_payments GROUP BY order_id)"
+  },
+  {
+   "termino": "ingresos",
+   "disparadores": [
+    "ingreso",
+    "ventas",
+    "facturac",
+    "vendio",
+    "vendieron"
+   ],
+   "definicion": "Ingresos = SUM(order_items.price) de pedidos válidos (sin flete). El monto cobrado al cliente (con flete) es SUM(order_payments.payment_value).",
+   "sql": "SELECT SUM(oi.price) FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id"
+  },
+  {
+   "termino": "top N / ranking",
+   "disparadores": [
+    "top",
+    "mas ",
+    "mayor",
+    "menor",
+    "ranking",
+    "primer",
+    "cuales son los",
+    "cuales son las"
+   ],
+   "definicion": "Para 'el que más/menos' o 'los N primeros': agrega por la entidad, ordena por la métrica (DESC para 'más') y usa LIMIT N. Devuelve la entidad y su valor.",
+   "sql": "SELECT <entidad>, <métrica> AS valor FROM ... GROUP BY <entidad> ORDER BY valor DESC LIMIT <N>"
+  },
+  {
+   "termino": "promedio por unidad",
+   "disparadores": [
+    "promedio",
+    "media",
+    "en promedio"
+   ],
+   "definicion": "Promedia sobre la unidad que nombra la pregunta. Si la unidad es el pedido o el cliente y la tabla tiene varias filas por unidad, primero agrega por esa unidad (subconsulta) y luego promedia. Una razón global es SUM(a)/SUM(b), no AVG(a/b).",
+   "sql": "SELECT AVG(valor_unidad) FROM (SELECT <unidad>, SUM(<columna>) AS valor_unidad FROM <tabla> GROUP BY <unidad>)"
+  },
+  {
+   "termino": "calificación",
+   "disparadores": [
+    "calificacion",
+    "resena",
+    "estrella",
+    "puntuacion",
+    "review"
+   ],
+   "definicion": "La calificación es order_reviews.review_score (1 a 5). Un pedido puede tener varias reseñas: la calificación de un pedido es AVG(review_score) por order_id.",
+   "sql": "SELECT order_id, AVG(review_score) AS calificacion FROM order_reviews GROUP BY order_id"
+  },
+  {
+   "termino": "flete",
+   "disparadores": [
+    "flete",
+    "envio",
+    "freight"
+   ],
+   "definicion": "El flete es order_items.freight_value (por artículo). Flete de un pedido = SUM(freight_value) por order_id. El flete como proporción del precio es SUM(freight_value)/SUM(price).",
+   "sql": "SELECT order_id, SUM(freight_value) AS flete FROM order_items GROUP BY order_id"
+  },
+  {
+   "termino": "artículo",
+   "disparadores": [
+    "articulo",
+    "unidad",
+    "item",
+    "producto vendido",
+    "productos vendidos"
+   ],
+   "definicion": "order_items tiene una fila por unidad vendida (order_item_id = 1, 2, … dentro del pedido). Artículos de un pedido = COUNT(*) por order_id.",
+   "sql": "SELECT order_id, COUNT(*) AS articulos FROM order_items GROUP BY order_id"
+  },
+  {
+   "termino": "mes / año",
+   "disparadores": [
+    "mes",
+    "ano",
+    "anio",
+    "fecha"
+   ],
+   "definicion": "Las fechas son texto ISO: mes = strftime('%Y-%m', fecha), año = strftime('%Y', fecha). La fecha de una venta es order_purchase_timestamp.",
+   "sql": "strftime('%Y-%m', order_purchase_timestamp) AS mes  -- y luego GROUP BY mes"
+  }
+ ]
+}
