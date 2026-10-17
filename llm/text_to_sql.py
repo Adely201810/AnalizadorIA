@@ -76,12 +76,13 @@ USAR_CLASIFICADOR_POR_DEFECTO = os.environ.get("TEXT2SQL_CLASIFICADOR", "0") == 
 # Límite de tiempo de ejecución del SQL generado. La consulta de referencia más
 # lenta del oráculo tarda ~10 s; 60 s deja margen (docs/FASE_03.md).
 LIMITE_EJECUCION_S = float(os.environ.get("TEXT2SQL_LIMITE_EJECUCION_S", "60"))
-# Cierre del juez (D-40). Apagados por defecto hasta el A/B con la regla D-23:
-#   TEXT2SQL_REPARAR_ESQUEMA=1  el reintento recibe, además del error, las columnas REALES del objeto
+# Cierre del juez (D-40). ENCENDIDOS por defecto: cumplieron D-23 juntos en DESARROLLO
+# (base 15/13/14, media 14.00 -> 14/15/17, media 15.33; mínimo 14 >= 14.00). =0 los apaga.
+#   TEXT2SQL_REPARAR_ESQUEMA    el reintento recibe, además del error, las columnas REALES del objeto
 #                               implicado y la ruta por tablas base (llm.juez.reparar_con_esquema; sin oráculo).
-#   TEXT2SQL_TEXTO_UMBRALES=1   el chequeo de "texto confiable" acepta los números que ya vienen en la pregunta.
-USAR_REPARAR_ESQUEMA = os.environ.get("TEXT2SQL_REPARAR_ESQUEMA", "0") == "1"
-USAR_TEXTO_UMBRALES = os.environ.get("TEXT2SQL_TEXTO_UMBRALES", "0") == "1"
+#   TEXT2SQL_TEXTO_UMBRALES     el chequeo de "texto confiable" acepta los números que ya vienen en la pregunta.
+USAR_REPARAR_ESQUEMA = os.environ.get("TEXT2SQL_REPARAR_ESQUEMA", "1") == "1"
+USAR_TEXTO_UMBRALES = os.environ.get("TEXT2SQL_TEXTO_UMBRALES", "1") == "1"
 MAX_FILAS_PARA_SINTESIS = 50  # filas mostradas al modelo al sintetizar una consulta simple
 MAX_FILAS_POR_SUBCONSULTA = 15  # filas por sub-tabla en la síntesis integradora (pregunta abierta)
 

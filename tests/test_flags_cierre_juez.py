@@ -1,7 +1,8 @@
 """
 Flags del cierre del juez (D-40): TEXT2SQL_REPARAR_ESQUEMA y TEXT2SQL_TEXTO_UMBRALES.
-Apagados, el chat se comporta igual que antes; encendidos, el reintento lleva las columnas
-reales y la ruta por tablas base, y la síntesis acepta los umbrales de la pregunta.
+Encendidos por defecto desde D-40 (cumplieron D-23). Apagados, el chat se comporta como antes;
+encendidos, el reintento lleva las columnas reales y la ruta por tablas base, y la síntesis
+acepta los umbrales de la pregunta.
 """
 from __future__ import annotations
 
@@ -48,9 +49,13 @@ class TestReparacionEnElChat(unittest.TestCase):
         self.assertIn("columnas reales de products", prompt)
         self.assertIn("products → order_items (por product_id) → order_payments (por order_id)", prompt)
 
-    def test_apagado_por_defecto(self):
-        self.assertFalse(t.USAR_REPARAR_ESQUEMA)
-        self.assertFalse(t.USAR_TEXTO_UMBRALES)
+    def test_encendidos_por_defecto_tras_d23(self):
+        # D-40: cumplieron D-23; se apagan con TEXT2SQL_REPARAR_ESQUEMA=0 / TEXT2SQL_TEXTO_UMBRALES=0.
+        import os
+        if "TEXT2SQL_REPARAR_ESQUEMA" not in os.environ:
+            self.assertTrue(t.USAR_REPARAR_ESQUEMA)
+        if "TEXT2SQL_TEXTO_UMBRALES" not in os.environ:
+            self.assertTrue(t.USAR_TEXTO_UMBRALES)
 
 
 class TestTextoUmbrales(unittest.TestCase):

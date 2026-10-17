@@ -267,3 +267,21 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
   - Sin pistas v2, la reparación da casi el mismo perfil que B (ejecución 5 frente a 4; resultado incorrecto 8 frente a 7). Así se cierra la limitación de D-37: el cambio de tipo de fallo es de la reparación.
   - El modo edición sube los reintentos con SQL repetido a 6/16.
 - **Recomendación (no aplicada):** si se lleva algo al chat, que sea la reparación sola, sin pistas v2 ni modo edición. Activarla en el chat queda para otra fase, con su propia medición sobre DESARROLLO.
+
+## D-40 (U+C) Cierre del juez: reparación con esquema y texto con umbrales, encendidos en el chat
+- **Decisión del usuario:** cerrar la línea del juez (no más rondas de pistas) y llevar al chat la reparación con esquema real (sin pistas v2) y el arreglo 5a, cada uno detrás de su flag, medidos juntos con D-23.
+- **Flags:** `TEXT2SQL_REPARAR_ESQUEMA` (el reintento recibe, además del error, las columnas reales del objeto y la ruta por tablas base; usa `llm.juez.reparar_con_esquema`, que solo lee el esquema) y `TEXT2SQL_TEXTO_UMBRALES` (el chequeo de "texto confiable" acepta los números de la pregunta). Los dos están en `llm/text_to_sql.py`.
+- **A/B (D-23):** DESARROLLO 30, 3 repeticiones, qwen2.5-coder 7B, T = 0.3 (la de evaluación), N = 2, sin plantillas, Ollama 0.40.5. La base se volvió a medir porque no había una corrida de la configuración actual (qwen sin autoconsistencia) y la versión de Ollama cambió.
+  - Base (configuración actual): **15, 13, 14** → media 14.00, mínimo 13. Archivos `eval/baselines/cierre/base_actual_*`.
+  - Con los dos flags: **14, 15, 17** → media 15.33, mínimo 14. Archivos `eval/baselines/cierre/reparar_umbrales_*`.
+  - **D-23 se cumple:** la media sube +1.33 (≥ 1) y el mínimo nuevo (14) es ≥ la media anterior (14.00). Por eso los dos quedan **encendidos por defecto**. Para apagarlos: `TEXT2SQL_REPARAR_ESQUEMA=0` / `TEXT2SQL_TEXTO_UMBRALES=0`.
+- **Qué hizo cada uno:**
+  - La reparación apareció en 36 de las 90 respuestas; 7 de ellas terminaron acertando. Las respuestas acertadas tras un reintento pasan de 6 (base) a 8.
+  - El texto con umbrales no cambia el acierto (que mide el SQL), pero bajó de 8 a 3 las síntesis reemplazadas por "No pude redactar un resumen confiable".
+  - La latencia media no cambió (18.35 s frente a 18.17 s).
+- **Reservas:**
+  - La ganancia es pequeña y los intervalos se solapan (Wilson 36.7-56.9 % frente a 41.0-61.2 %). Por pregunta (mayoría de 3): 14 → 15. Se aplicó la regla acordada, que no exige significancia.
+  - Los dos flags se midieron juntos, como se pidió.
+  - PRUEBA_2 no se tocó, así que no hay confirmación fuera de DESARROLLO.
+- **Tiempo:** 61 min (12:11 → 13:12), dentro del límite de ~1 h.
+- **Punto 2 de la tarea (qwen2.5-coder:14b):** no se hizo; queda pendiente de la confirmación del usuario.

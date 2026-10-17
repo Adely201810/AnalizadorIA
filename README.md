@@ -29,6 +29,23 @@ Los dos conjuntos **no son comparables** (las 10 necesidades difíciles del dash
 intervalo de PRUEBA_2 calculado sobre sus 20 preguntas es ancho (43–82 % con llama3.1). Detalle y limitaciones en
 [docs/INFORME_FINAL_3.md](docs/INFORME_FINAL_3.md); etapa 2 en [docs/RESUMEN_PARA_ENTREGA.md](docs/RESUMEN_PARA_ENTREGA.md).
 
+**Etapa 4 — juez con retroalimentación iterativa** (Ollama 0.40.5). Resumen de una página en
+[docs/INFORME_FINAL_4.md](docs/INFORME_FINAL_4.md); detalle en [docs/INFORME_JUEZ.md](docs/INFORME_JUEZ.md).
+- **El juez** decide sin LLM, comparando el resultado con la referencia del dashboard, y nunca deja ver la referencia al modelo. **No rescató ningún caso** en 11 configuraciones.
+- **Al chat pasaron dos mejoras que no usan la respuesta correcta.** Cumplieron D-23 en DESARROLLO (sin autoconsistencia, chat actual):
+
+| Chat (qwen2.5-coder 7B, T=0.3 de evaluación) | DESARROLLO (de 30) |
+|---|---|
+| Antes | 15, 13, 14 (media 14.00) |
+| Con reparación con esquema + texto con umbrales (por defecto) | 14, 15, 17 (media 15.33) |
+
+## Modo evaluación con juez (demo)
+En la barra lateral del chat (`streamlit run app.py`), activa **"🧪 Modo evaluación con juez"** (apagado por defecto).
+- Las preguntas de ejemplo se reemplazan por los 6 casos del juez (`eval/casos_juez.json`).
+- Puedes elegir de 1 a 5 intentos y activar o no la anti-repetición y la reparación con esquema.
+- Cada intento se muestra en vivo con su SQL, su error o sus filas, y la pista que recibió el modelo. Al final aparece la respuesta de referencia del dashboard.
+- Desde la terminal, lo mismo: `python -m eval.run_juez --max-iter 5 --reintento-temp --reparar-esquema --etiqueta demo`.
+
 ## Reproducir desde cero
 
 ### Versiones fijadas (las usadas para las cifras de arriba)
@@ -64,7 +81,7 @@ git diff --exit-code eval/ground_truth_olist.json eval/split_oraculo.json && ech
 python -m dashboard.verify_pandas                  # todas las líneas deben decir [OK]
 
 # 3) Pruebas automáticas (no necesitan Ollama)
-python -m unittest discover -s tests -t .          # Ran 78 tests ... OK
+python -m unittest discover -s tests -t .          # Ran 110 tests ... OK
 
 # 4) Ollama 0.40.3 y el modelo (instálalo antes desde el enlace de la tabla)
 ollama --version                                   # ollama version is 0.40.3
@@ -82,7 +99,26 @@ streamlit run app.py
 Notas:
 - **PRUEBA_2 no se vuelve a evaluar para ajustar nada** (ya se usó una vez; ver docs/INFORME_FINAL_3.md). El PRUEBA de la etapa 2 ya forma parte de DESARROLLO.
 - **Variación esperable:** en la etapa 2, la misma configuración dio en DESARROLLO (20 preguntas) 8, 9, 8; luego 10, 7, 9; y 6, 8, 7 desde un clon limpio. Una repetición sola no basta para comparar.
-- **Variables del pipeline:** `OLLAMA_MODEL` (qwen2.5-coder por defecto), `OLLAMA_HOST`, `TEXT2SQL_CLASIFICADOR` (0), `TEXT2SQL_VISTA_VALIDOS` (1), `TEXT2SQL_N_INTENTOS` (2) y `TEXT2SQL_AUTOCONSISTENCIA` (1 en el chat; 5 en la configuración evaluada). Los experimentos revertidos de la etapa 3 siguen detrás de `TEXT2SQL_GLOSARIO`, `TEXT2SQL_ESQUEMA_POR_PREGUNTA`, `TEXT2SQL_DESC_COLUMNAS`, `TEXT2SQL_VISTAS_NEGOCIO`, `TEXT2SQL_FEWSHOT_DINAMICO` y `TEXT2SQL_PLAN`. Ver [docs/ENTORNO.md](docs/ENTORNO.md).
+- **Variables del pipeline (valor por defecto entre paréntesis).** Ver también [docs/ENTORNO.md](docs/ENTORNO.md).
+
+| Variable | Por defecto | Qué hace | Decisión |
+|---|---|---|---|
+| `OLLAMA_MODEL` | `qwen2.5-coder:7b-instruct-q4_K_M` | Modelo del chat y de la evaluación | D-31 |
+| `OLLAMA_HOST` / `OLLAMA_NUM_CTX` | `http://localhost:11434` / 8192 | Servidor y contexto | — |
+| `TEXT2SQL_VISTA_VALIDOS` | **1** | Vista `vw_pedidos_validos` en el prompt | D-25 |
+| `TEXT2SQL_REPARAR_ESQUEMA` | **1** | El reintento recibe columnas reales y ruta por tablas base | D-40 |
+| `TEXT2SQL_TEXTO_UMBRALES` | **1** | "Texto confiable" acepta los números de la pregunta | D-40 |
+| `TEXT2SQL_N_INTENTOS` | 2 | Intentos totales por pregunta | Fase 6 |
+| `TEXT2SQL_CLASIFICADOR` | 0 | Partir preguntas en sub-consultas | D-25 |
+| `TEXT2SQL_AUTOCONSISTENCIA` | 1 (apagada) | k SQL por pregunta con votación; 5 en la configuración evaluada de la etapa 3 | D-30 |
+| `TEXT2SQL_ESQUEMA` | `compacto` | `completo` = esquema largo (no ayudó) | D-33 |
+| `TEXT2SQL_JUEZ_CHAT` | 1 | Revisión de sensatez del SQL en el chat (no verifica cifras) | Fase 10 |
+
+  Los experimentos revertidos siguen apagados detrás de su flag:
+  - etapa 2: `TEXT2SQL_REGLA_DENOMINADOR`, `TEXT2SQL_VISTAS_DOC`, `TEXT2SQL_VISTAS_OCULTAS`, `TEXT2SQL_REGLA_MULTIPLICIDAD`;
+  - etapa 3: `TEXT2SQL_GLOSARIO`, `TEXT2SQL_ESQUEMA_POR_PREGUNTA`, `TEXT2SQL_DESC_COLUMNAS`, `TEXT2SQL_VISTAS_NEGOCIO`, `TEXT2SQL_FEWSHOT_DINAMICO`, `TEXT2SQL_PLAN`.
+
+  Las opciones del juez (`--reintento-temp`, `--reparar-esquema`, `--modo-edicion`, `--pistas-v2`) son solo de `eval/run_juez.py`.
 - Detalles de instalación y despliegue: [docs/DEPLOY.md](docs/DEPLOY.md). Diccionario de datos: [docs/esquema_olist.md](docs/esquema_olist.md).
 
 ## Estructura
@@ -92,7 +128,7 @@ Notas:
 | `db/` | Esquema Olist (SQLAlchemy ORM), conexión de solo lectura, vistas analíticas |
 | `seeder/` | `load_olist_csv.py` (loader de los CSV reales de Olist) |
 | `llm/` | Cliente de Ollama, contexto de esquema (con few-shot), guardas de seguridad SQL, pipeline Text-to-SQL, CLI |
-| `eval/` | Oráculo v4 de 50 preguntas (`ground_truth_olist.json`, DESARROLLO 30 / PRUEBA_2 20), árbitro determinista (`comparador.py`), runner de evaluación, A/B con repeticiones (`ab.py`, `ab_acumulativo_e3.py`) y corridas guardadas (`eval/baselines/`) |
+| `eval/` | Oráculo v4 de 50 preguntas (`ground_truth_olist.json`, DESARROLLO 30 / PRUEBA_2 20), árbitro determinista (`comparador.py`), runner de evaluación, A/B con repeticiones (`ab.py`, `ab_acumulativo_e3.py`), juez iterativo (`casos_juez.json`, `run_juez.py`, `tabla_juez.py`; lógica en `llm/juez.py`) y corridas guardadas (`eval/baselines/`) |
 | `docs/` | Diccionario de datos de Olist, guía de despliegue y documentación por fase (`PROGRESO.md`, `DECISIONES.md`, `FASE_XX.md`) |
 | `tests/` | Pruebas automáticas (`python -m unittest discover -s tests -t .`) |
 | `legacy/gimnasio/` | Dataset histórico del gimnasio ficticio (no se usa en el pipeline) |
