@@ -246,3 +246,17 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Guarda en el ciclo:** si `ContextoInsuficienteError` salta a mitad de un caso, el caso se cierra como fallo y queda registrado (no se continúa con un prompt recortado). No saltó en ninguna corrida (máximo 4,822 tokens).
 - **Interrupción:** Windows Update reinició el equipo (05:07 y 05:09, KB5127648) durante qwen-llm. n08 se repitió en `ciclo_qwen2_5-coder_llm_n08/` con el mismo código de `llm/juez.py` (commit d2c7ecf) y la misma semilla; `eval/tabla_juez.py` recalcula las métricas uniendo los JSON por caso.
 - **No se cambió nada entre corridas** (p. ej. el patrón "no filtra pedidos válidos", demasiado amplio): queda como lección en `docs/INFORME_JUEZ.md` para no mezclar condiciones.
+
+## D-37 (C) Ronda 2 del juez: diseño y corrida
+- **Todo apagado por defecto:** con los valores por defecto, `resolver_con_juez` hace exactamente el ciclo de la ronda 1 (prueba `test_sin_flags_el_ciclo_es_el_de_la_ronda_1`).
+- **Normalización del SQL:** tokens en minúsculas, sin `;` final, alias de tabla sustituidos por el nombre de la tabla y alias de columna anonimizados. No reordena cláusulas, así que dos consultas equivalentes escritas en otro orden cuentan como distintas.
+- **Remuestreo:** semillas `seed + intento − 1 + 1000·k`. Si tras 3 remuestreos sigue igual, el intento se gasta y queda marcado `sql_repetido`.
+- **Reparación:** solo con errores de columna o tabla (validador: `SQLQualityError.detalles`; SQLite: "no such column/table"). La ruta es la más corta por las columnas de unión de `COLUMNAS_UNION`, con tablas base como intermedias. Si el texto de reparación activara el filtro anti-fuga, se descarta y se cuenta como bloqueo (no pasó).
+- **B junta reparación y pistas v2** porque las dos cambian el texto de la pista y el tiempo no daba para separarlas. Limitación: el efecto de B no es atribuible solo a la reparación.
+- **C (modo edición) cortado por tiempo:** A + B = 27 min; C habría pasado de ~40.
+- **Arreglos baratos:** 5a como parámetro opcional (`numeros_extra`), que el chat no usa; 5b regenerando `eval/casos_juez.json` (las referencias no cambian, 0 fallos).
+
+## D-38 (C) Modo evaluación con juez en la app (Fase 6)
+- Interruptor en la barra lateral, apagado por defecto. Apagado, la app es idéntica a antes (mismas preguntas de ejemplo, mismo flujo).
+- Usa el modelo y el cliente del chat (`get_client()`), con pistas de plantilla, intento 1 a T=0 y casillas para anti-repetición y reparación (marcadas por defecto, como la configuración B). La reparación activa también las pistas v2, igual que en B.
+- Muestra la respuesta de referencia del dashboard al final, en un desplegable: es una demo de evaluación, no el chat. El modelo nunca la ve (la garantía es la misma prueba de no fuga del juez).

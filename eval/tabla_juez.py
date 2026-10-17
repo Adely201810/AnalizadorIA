@@ -25,6 +25,19 @@ def cargar(directorios: list[str]) -> dict[str, list[dict]]:
     return grupos
 
 
+def ronda2(directorios: list[str]) -> None:
+    """Tabla compacta de la ronda 2 (D-37): repetición, remuestreos y tipo de resultado por intento."""
+    print("| configuración | acierto@1 | acierto@N | reintentos | con SQL repetido | remuestreos | "
+          "tipo de resultado por intento | latencia/intento (s) | fugas bloqueadas |")
+    print("|---|---|---|---|---|---|---|---|---|")
+    for config, regs in cargar(directorios).items():
+        r = resumir(regs)
+        etapas = ", ".join(f"{k} {v}" for k, v in r["etapas"].items())
+        print(f"| {config.split('__')[4]} | {r['acierto_1']}/{r['corridas_caso']} | {r['acierto_N']}/{r['corridas_caso']} | "
+              f"{r['reintentos']} | {r['reintentos_sql_repetido']} | {r['remuestreos']} | {etapas} | "
+              f"{r['latencia_media_por_intento_s']} | {r['fugas_bloqueadas']} |")
+
+
 def main(directorios: list[str]) -> None:
     print("| modelo | esquema | T | retroalimentación | semillas | acierto@1 | acierto@N | intentos hasta acertar | "
           "latencia/intento (s) | fugas bloqueadas | pistas LLM → plantilla | prompt_eval máx | por caso (@1 → @N) |")
@@ -44,4 +57,7 @@ def main(directorios: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    if sys.argv[1:2] == ["--ronda2"]:
+        ronda2(sys.argv[2:])
+    else:
+        main(sys.argv[1:])

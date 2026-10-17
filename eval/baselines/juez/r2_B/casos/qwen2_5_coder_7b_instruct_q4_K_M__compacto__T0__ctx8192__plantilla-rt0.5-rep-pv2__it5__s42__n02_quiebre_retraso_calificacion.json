@@ -1,0 +1,362 @@
+{
+  "caso": "n02_quiebre_retraso_calificacion",
+  "necesidad": "2 · Retraso vs reseñas",
+  "pregunta": "Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 5,
+  "ronda2": {
+    "reintento_temp": 0.5,
+    "reparar_esquema": true,
+    "modo_edicion": false,
+    "pistas_v2": true
+  },
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\"\n}",
+      "sql": "SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: review_score",
+        "columnas": [],
+        "segundos": 0.0014196999982232228
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 15.711057299999084,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3603,
+        "eval_count": 175,
+        "estimados": 3757
+      },
+      "load_duration_s": 0.0058276,
+      "temperatura_usada": 0.0,
+      "seed_usada": 42,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "ejecucion: no such column: review_score",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: no such column: review_score). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Reparación con el esquema real: columnas reales de vw_retraso_por_rango: calificacion_promedio, orden, pct_1_2_estrellas, pedidos, rango_retraso. La columna review_score existe en las tablas order_reviews.",
+        "reparacion": "Reparación con el esquema real: columnas reales de vw_retraso_por_rango: calificacion_promedio, orden, pct_1_2_estrellas, pedidos, rango_retraso. La columna review_score existe en las tablas order_reviews."
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 2,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: review_score)\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: review_score). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Reparación con el esquema real: columnas reales de vw_retraso_por_rango: calificacion_promedio, orden, pct_1_2_estrellas, pedidos, rango_retraso. La columna review_score existe en las tablas order_reviews.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN calificacion_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\"\n}",
+      "sql": "SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN calificacion_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_2_o_menos",
+          "pct_a_tiempo"
+        ],
+        "segundos": 1.5520710999990115
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "1-3",
+          1,
+          0.0,
+          0.0
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": false,
+            "motivo": "el valor clave no aparece (dentro de tolerancia)"
+          }
+        ]
+      },
+      "segundos_generacion": 16.976959999999963,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3935,
+        "eval_count": 177,
+        "estimados": 4171
+      },
+      "load_duration_s": 0.0063831,
+      "temperatura_usada": 0.5,
+      "seed_usada": 43,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.",
+        "reparacion": null
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 3,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN calificacion_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\n```\n\nResumen de su resultado: 1 fila(s); columnas: rango_retraso, pedidos, pct_2_o_menos, pct_a_tiempo\n1-3 | 1 | 0.0 | 0.0\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: review_score). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Reparación con el esquema real: columnas reales de vw_retraso_por_rango: calificacion_promedio, orden, pct_1_2_estrellas, pedidos, rango_retraso. La columna review_score existe en las tablas order_reviews.\n2. La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN calificacion_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\"\n}",
+      "sql": "SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN calificacion_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_2_o_menos",
+          "pct_a_tiempo"
+        ],
+        "segundos": 1.5204565999993065
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "1-3",
+          1,
+          0.0,
+          0.0
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": false,
+            "motivo": "el valor clave no aparece (dentro de tolerancia)"
+          }
+        ]
+      },
+      "segundos_generacion": 56.92969439999797,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4091,
+        "eval_count": 177,
+        "estimados": 4387
+      },
+      "load_duration_s": 0.0052664,
+      "temperatura_usada": 0.5,
+      "seed_usada": 44,
+      "remuestreos": 3,
+      "sql_repetido": true,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.",
+        "reparacion": null
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 4,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN calificacion_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\n```\n\nResumen de su resultado: 1 fila(s); columnas: rango_retraso, pedidos, pct_2_o_menos, pct_a_tiempo\n1-3 | 1 | 0.0 | 0.0\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: review_score). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Reparación con el esquema real: columnas reales de vw_retraso_por_rango: calificacion_promedio, orden, pct_1_2_estrellas, pedidos, rango_retraso. La columna review_score existe en las tablas order_reviews.\n2. La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n3. La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN pct_1_2_estrellas <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\"\n}",
+      "sql": "SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN pct_1_2_estrellas <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_2_o_menos",
+          "pct_a_tiempo"
+        ],
+        "segundos": 1.5512931000012031
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "1-3",
+          1,
+          0.0,
+          0.0
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": false,
+            "motivo": "el valor clave no aparece (dentro de tolerancia)"
+          }
+        ]
+      },
+      "segundos_generacion": 15.078315300001123,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4216,
+        "eval_count": 180,
+        "estimados": 4586
+      },
+      "load_duration_s": 0.005883,
+      "temperatura_usada": 0.5,
+      "seed_usada": 45,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.",
+        "reparacion": null
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 5,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN pct_1_2_estrellas <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_retraso_por_rango WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\n```\n\nResumen de su resultado: 1 fila(s); columnas: rango_retraso, pedidos, pct_2_o_menos, pct_a_tiempo\n1-3 | 1 | 0.0 | 0.0\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: review_score). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Reparación con el esquema real: columnas reales de vw_retraso_por_rango: calificacion_promedio, orden, pct_1_2_estrellas, pedidos, rango_retraso. La columna review_score existe en las tablas order_reviews.\n2. La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n3. La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n4. La consulta anterior se ejecutó, pero su resultado NO responde correctamente la pregunta. Posible causa: No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN pct_1_2_estrellas <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_entregas_retrasos WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1\"\n}",
+      "sql": "SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN pct_1_2_estrellas <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN rango_retraso = 'a_tiempo' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_tiempo FROM vw_entregas_retrasos WHERE rango_retraso IN ('a_tiempo', '1-3', '4-7', '8-14') GROUP BY rango_retraso HAVING pct_2_o_menos >= 2 * pct_a_tiempo ORDER BY rango_retraso ASC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: rango_retraso",
+        "columnas": [],
+        "segundos": 0.0012644000016734935
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 48.03919330000281,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4344,
+        "eval_count": 180,
+        "estimados": 4783
+      },
+      "load_duration_s": 0.0060341,
+      "temperatura_usada": 0.5,
+      "seed_usada": 46,
+      "remuestreos": 2,
+      "sql_repetido": false
+    }
+  ],
+  "segundos_caso": 157.37
+}

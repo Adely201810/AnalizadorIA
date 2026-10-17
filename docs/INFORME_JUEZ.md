@@ -93,3 +93,57 @@ Errores que se repitieron en el barrido y el ciclo:
 - 6 casos, T=0 y una sola semilla en el ciclo. Una diferencia de 1 caso no es señal.
 - `patrones_error` y los chequeos de sensatez son heurísticos; un patrón activado es un indicio, no un veredicto.
 - PRUEBA_2 no se tocó. Los casos del juez reutilizan necesidades del dashboard, que ya estaban en DESARROLLO.
+
+---
+
+# Ronda 2 — romper el atasco y reparar con el esquema real
+
+Fecha: 2026-10-17 · Decisiones D-37 (cambios y corrida) y D-38 (modo evaluación en la app) en [DECISIONES.md](DECISIONES.md).
+
+## R2.1 Qué se cambió (todo con flags, apagado por defecto)
+| Cambio | Flag (`eval/run_juez.py` / `resolver_con_juez`) | Qué hace |
+|---|---|---|
+| 1. Anti-repetición | `--reintento-temp` (sin valor: 0.5) | Los reintentos usan T=0.5 y la semilla `seed + intento − 1`. El SQL se normaliza (minúsculas, espacios, `;` final, alias de tabla → nombre de tabla, alias de columna anonimizados). Si coincide con uno ya probado en el caso, se vuelve a muestrear hasta 3 veces sin gastar intento. |
+| 2. Reparación con esquema real | `--reparar-esquema` | Si el validador o SQLite rechazan una columna o tabla, la pista añade: el mensaje real, las columnas REALES del objeto implicado (PRAGMA de la base, vía `get_esquema_real`) y la ruta más corta por tablas base hasta una tabla que tenga la columna (BFS por las columnas de unión). No usa el oráculo y pasa por el filtro anti-fuga. |
+| 3. Modo edición | `--modo-edicion` | El reintento pide "corrígelo cambiando SOLO lo necesario", con el SQL anterior y su error. **Implementado y con pruebas, pero no medido** (ver R2.2). |
+| 4. Pistas v2 | `--pistas-v2` | Se empieza en el nivel de concepto (sin el nivel 1 vago). Con pistas LLM, el diagnóstico determinista va primero. |
+| 5a. Texto confiable | `numeros_extra` en `_respuesta_respaldada_por_datos` (el chat no lo pasa) | El juez registra además `texto_confiable_con_umbrales`, que acepta los números que ya vienen en la pregunta. |
+| 5b. Patrón "no filtra pedidos válidos" | `eval/casos_juez.json` regenerado | Ya no se activa con las 8 vistas que excluyen cancelados (`vw_ingresos_por_*`, `vw_totales_pedido`, …). Referencias re-verificadas contra qNN(): 0 fallos. |
+
+## R2.2 Corrida (qwen2.5-coder, compacto, intento 1 a T=0, num_ctx 8192, plantilla, max-iter 5, los mismos 6 casos)
+- **A** = anti-repetición. **B** = A + reparación + pistas v2. Las pistas v2 van junto con la reparación porque las dos cambian el texto de la pista (D-37), así que **el efecto de B no se puede atribuir solo a la reparación**.
+- **C (modo edición) se cortó por tiempo.** A tardó 778 s y B 845 s (27 min); C, con un costo parecido, habría pasado el límite de ~40 min.
+
+| configuración | acierto@1 | acierto@N | reintentos | con SQL repetido | remuestreos | tipo de resultado por intento | latencia/intento (s) | fugas bloqueadas |
+|---|---|---|---|---|---|---|---|---|
+| Ronda 1 (plantilla) | 2/6 | 2/6 | 16 | 9 | 0 | correcto 2, ejecución 10, validación 10 | 18.78 | 0 |
+| **A** anti-repetición | 2/6 | **2/6** | 16 | **3** | 15 | correcto 2, ejecución 11, resultado incorrecto 2, validación 7 | 31.45 | 0 |
+| **B** A + reparación + pistas v2 | 2/6 | **2/6** | 16 | 4 | 17 | correcto 2, **ejecución 4**, **resultado incorrecto 7**, validación 9 | 35.54 | 0 |
+| C | — | — | — | — | — | no corrida (tiempo) | — | — |
+
+"Con SQL repetido" usa la misma métrica normalizada en las tres filas (en la ronda 1 coincide con la comparación exacta: 9).
+
+## R2.3 Qué pasó caso por caso
+- **Ningún caso se rescató.** c01 y n05 aciertan en el intento 1, igual que en la ronda 1. **n02, n04, n06 y n08 siguen en 0** con todas las configuraciones probadas en las dos rondas (barrido, ciclo con plantilla y LLM, A, B). Es, con probabilidad, **un límite del modelo de 7B** con estas preguntas de varios pasos, no algo que se arregle con más pistas.
+- **La anti-repetición funciona como mecanismo:** los reintentos con SQL repetido bajan de 9/16 a 3/16. Pero no cambia el acierto y casi duplica la latencia (18.8 → 31.5 s por intento). En n06 (B), 3 remuestreos a T=0.5 con semillas distintas devolvieron el mismo SQL normalizado: el modelo está muy seguro de una respuesta incorrecta.
+- **La reparación cambia el tipo de fallo:** de "no corre" a "corre pero da otra cifra" (ejecución 11 → 4; resultado incorrecto 2 → 7).
+  - **n06:** el intento 1 unía `products` con `order_payments` por un `order_id` que no existe. La reparación dio la ruta `products → order_items (por product_id) → order_payments (por order_id)` y el intento 2 la usó tal cual y ejecutó. Devolvió la categoría correcta con otro porcentaje (91.16 % frente al esperado). Cayó en el abanico artículos × pagos. La pista siguiente nombra la causa ("las cuotas del pedido son el máximo entre sus pagos; hay que agregar order_payments por pedido"), pero el modelo repitió el SQL.
+  - **n02:** tras recibir las columnas reales de `vw_retraso_por_rango`, el intento 2 ejecutó, con una lógica de rangos equivocada.
+  - **n04:** el modelo insistió 4 intentos seguidos en `vw_ingresos_por_vendedor.order_id`, aunque la pista listaba las columnas reales de la vista.
+  - **n08:** pasó de `product_category_name_english` (sin tabla) a `t3.categoria_ingles` sobre `order_items`. Cambió de error, pero no lo resolvió.
+- **Fugas:** 0 bloqueos. Las pruebas comprueban que la reparación no revela nada en ningún caso (`test_la_reparacion_nunca_revela_la_respuesta`).
+- **Arreglo 5a medido:** la síntesis de n05 (correcta, 3/3 cifras clave) sale "no confiable" con el chequeo actual y "confiable" con umbrales, en A y en B. El chequeo solo mira que los números estén respaldados por las filas, no que la respuesta sea correcta: la síntesis de n06 (incorrecta) sale "confiable".
+
+## R2.4 Recomendación para el chat (NO activado)
+- **Activar primero el cambio 2 (reparación con esquema real).** No usa el oráculo, no hace llamadas extra al modelo (solo alarga la pista; el prompt máximo pasó de 4,550 a 5,470 tokens, lejos del límite de 7,373) y ataca el error más frecuente del chat: columnas que no existen en la vista. Encaja en el reintento que el chat ya tiene (N=2). Lo que se gana es que la consulta corra, no necesariamente que acierte. Medido junto con pistas v2, sin separar sus efectos.
+- **No activar todavía el cambio 1 (anti-repetición).** Reduce la repetición, pero no subió ningún acierto y suma 13-17 s por intento. Si se quiere algo barato: detectar el SQL repetido y remuestrear una sola vez, sin cambiar la temperatura del primer intento.
+- **Arreglo 5a:** conviene pasarlo al chat. Hoy oculta síntesis correctas que citan el umbral de la pregunta. Es un cambio de una línea en el llamador; no se hizo, porque cambia el comportamiento por defecto.
+
+## R2.5 Modo evaluación con juez en la app (Fase 6)
+Interruptor "🧪 Modo evaluación con juez" en la barra lateral de `app.py`, apagado por defecto.
+- **Al activarlo:** las preguntas de ejemplo se reemplazan por los 6 casos del catálogo. Se elige el número de intentos (1-5) y se activan o no la anti-repetición y la reparación.
+- **Durante la corrida:** cada intento aparece en vivo en un bloque de estado, con el SQL, el error o hasta 5 filas, y la pista que recibió el modelo. Al terminar se muestra el veredicto, la síntesis si acertó y la respuesta de referencia del dashboard en un desplegable.
+- **Verificado en el navegador:**
+  - c01: "✅ Respuesta correcta en el intento 1 de 5" (99,441 pedidos).
+  - n06 con 2 intentos: "❌ El modelo no acertó en 2 intento(s)", con el desplegable "Intento 1 — ❌ incorrecto" y su SQL.
+  - Sin errores en la consola.
