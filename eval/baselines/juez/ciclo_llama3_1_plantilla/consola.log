@@ -1,0 +1,11 @@
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 96.4s
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=5 fugas=0 108.2s
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=5 fugas=0 111.0s
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5 s42 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=5 fugas=0 42.1s
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=5 fugas=0 70.3s
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=5 fugas=0 103.4s
+
+=== Resumen ===
+llama3_1_8b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla__it5: acierto@1 1/6 | acierto@N 1/6 | intentos hasta acertar 1 | latencia/intento media 17.82 s | fugas bloqueadas 0 | prompt_eval_count máx 4510
+Tiempo total: 531.4 s · salida: C:\Users\alexp\OneDrive\Documentos\GitHub\AnalizadorIA\eval\baselines\juez\ciclo_llama3_1_plantilla
+exit 0

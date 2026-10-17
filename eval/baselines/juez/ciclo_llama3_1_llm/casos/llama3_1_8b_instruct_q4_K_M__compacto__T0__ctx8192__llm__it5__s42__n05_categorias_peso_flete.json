@@ -1,0 +1,266 @@
+{
+  "caso": "n05_categorias_peso_flete",
+  "necesidad": "5 · Flete",
+  "pregunta": "Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "juez_modelo": "llama3.1:8b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 1,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: price",
+        "columnas": [],
+        "segundos": 0.0015720999999757623
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 6.540401999999631,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3477,
+        "eval_count": 76,
+        "estimados": 3593
+      },
+      "load_duration_s": 0.0060147,
+      "diagnostico": {
+        "error": "ejecucion: no such column: price",
+        "forma": [],
+        "patrones": [
+          "Falta el umbral de ingresos de la categoría (al menos R$ 5,000).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 6.651748700000098,
+        "load_duration_s": 0.0060139,
+        "texto": "El tipo de error es de granularidad."
+      }
+    },
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 2,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: price)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: price",
+        "columnas": [],
+        "segundos": 0.0013994999999340507
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 7.118367099999887,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3609,
+        "eval_count": 76,
+        "estimados": 3780
+      },
+      "load_duration_s": 0.0069032,
+      "diagnostico": {
+        "error": "ejecucion: no such column: price",
+        "forma": [],
+        "patrones": [
+          "Falta el umbral de ingresos de la categoría (al menos R$ 5,000).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 4.489210500000354,
+        "load_duration_s": 0.0058834,
+        "texto": "El error se debe a que la columna \"price\" no existe en la tabla o vista que está siendo consultada. La columna \"price\" se refiere al precio del producto, pero en la consulta del junior, no se está especificando la tabla o vista desde la cual se está extrayendo esta información."
+      }
+    },
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 3,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: price)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. El error se debe a que la columna \"price\" no existe en la tabla o vista que está siendo consultada. La columna \"price\" se refiere al precio del producto, pero en la consulta del junior, no se está especificando la tabla o vista desde la cual se está extrayendo esta información.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: price",
+        "columnas": [],
+        "segundos": 0.001465999999709311
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 6.379176599999937,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3675,
+        "eval_count": 76,
+        "estimados": 3893
+      },
+      "load_duration_s": 0.0052435,
+      "diagnostico": {
+        "error": "ejecucion: no such column: price",
+        "forma": [],
+        "patrones": [
+          "Falta el umbral de ingresos de la categoría (al menos R$ 5,000).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 6.678669500000069,
+        "load_duration_s": 0.0053256,
+        "texto": "La trampa en la que cayó la consulta es que no se está considerando el umbral de ingresos de la categoría, que es de al menos R$ 5,000. Esto significa que la consulta está incluyendo categorías con ingresos menores a ese umbral, lo que puede dar como resultado un resultado incorrecto.\n\nPara evitar esta trampa, es importante agregar una condición de filtrado para asegurarse de que solo se consideren categorías con ingresos de al menos R$ 5,000. Esto se puede hacer utilizando la cláusula HAVING en lugar de la cláusula WHERE."
+      }
+    },
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 4,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: price)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. El error se debe a que la columna \"price\" no existe en la tabla o vista que está siendo consultada. La columna \"price\" se refiere al precio del producto, pero en la consulta del junior, no se está especificando la tabla o vista desde la cual se está extrayendo esta información.\n3. La trampa en la que cayó la consulta es que no se está considerando el umbral de ingresos de la categoría, que es de al menos R$ 5,000. Esto significa que la consulta está incluyendo categorías con ingresos menores a ese umbral, lo que puede dar como resultado un resultado incorrecto.\n\nPara evitar esta trampa, es importante agregar una condición de filtrado para asegurarse de que solo se consideren categorías con ingresos de al menos R$ 5,000. Esto se puede hacer utilizando la cláusula HAVING en lugar de la cláusula WHERE.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles HAVING SUM(price) >= 5000 ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles HAVING SUM(price) >= 5000 ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: price",
+        "columnas": [],
+        "segundos": 0.0014289000000644592
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 7.6890417999998135,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3812,
+        "eval_count": 85,
+        "estimados": 4106
+      },
+      "load_duration_s": 0.0067534,
+      "diagnostico": {
+        "error": "ejecucion: no such column: price",
+        "forma": [],
+        "patrones": [
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 9.548982199999955,
+        "load_duration_s": 0.0053483,
+        "texto": "La trampa en la que cayó la consulta es que no filtra los pedidos válidos, lo que significa que incluye pedidos cancelados o no disponibles en el cálculo de los ingresos y el flete total. Esto puede dar lugar a resultados incorrectos, especialmente si hay categorías con pocos pedidos válidos pero muchos cancelados o no disponibles.\n\nPara evitar esta trampa, es importante excluir los pedidos con estatus 'canceled' y 'unavailable' del cálculo de los ingresos y el flete total. Esto se puede hacer utilizando una condición WHERE o un JOIN con una subconsulta que filtre los pedidos válidos."
+      }
+    },
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 5,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM vw_ingresos_por_categoria WHERE categoria_ingles != 'sin_categoria' GROUP BY categoria_ingles HAVING SUM(price) >= 5000 ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: price)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. El error se debe a que la columna \"price\" no existe en la tabla o vista que está siendo consultada. La columna \"price\" se refiere al precio del producto, pero en la consulta del junior, no se está especificando la tabla o vista desde la cual se está extrayendo esta información.\n3. La trampa en la que cayó la consulta es que no se está considerando el umbral de ingresos de la categoría, que es de al menos R$ 5,000. Esto significa que la consulta está incluyendo categorías con ingresos menores a ese umbral, lo que puede dar como resultado un resultado incorrecto.\n\nPara evitar esta trampa, es importante agregar una condición de filtrado para asegurarse de que solo se consideren categorías con ingresos de al menos R$ 5,000. Esto se puede hacer utilizando la cláusula HAVING en lugar de la cláusula WHERE.\n4. La trampa en la que cayó la consulta es que no filtra los pedidos válidos, lo que significa que incluye pedidos cancelados o no disponibles en el cálculo de los ingresos y el flete total. Esto puede dar lugar a resultados incorrectos, especialmente si hay categorías con pocos pedidos válidos pero muchos cancelados o no disponibles.\n\nPara evitar esta trampa, es importante excluir los pedidos con estatus 'canceled' y 'unavailable' del cálculo de los ingresos y el flete total. Esto se puede hacer utilizando una condición WHERE o un JOIN con una subconsulta que filtre los pedidos válidos.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM (SELECT categoria_ingles, SUM(price) AS ingresos, SUM(freight_value) AS flete FROM vw_pedidos_validos GROUP BY categoria_ingles) AS subquery WHERE ingresos >= 5000 GROUP BY categoria_ingles HAVING SUM(freight_value) / SUM(price) > 0 ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(freight_value) / SUM(price) * 100, 2) AS flete_peso FROM (SELECT categoria_ingles, SUM(price) AS ingresos, SUM(freight_value) AS flete FROM vw_pedidos_validos GROUP BY categoria_ingles) AS subquery WHERE ingresos >= 5000 GROUP BY categoria_ingles HAVING SUM(freight_value) / SUM(price) > 0 ORDER BY SUM(freight_value) / SUM(price) DESC LIMIT 3",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: categoria_ingles",
+        "columnas": [],
+        "segundos": 0.0012539999997898121
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 12.838939899999787,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3966,
+        "eval_count": 120,
+        "estimados": 4354
+      },
+      "load_duration_s": 0.0058124
+    }
+  ],
+  "segundos_caso": 67.95
+}

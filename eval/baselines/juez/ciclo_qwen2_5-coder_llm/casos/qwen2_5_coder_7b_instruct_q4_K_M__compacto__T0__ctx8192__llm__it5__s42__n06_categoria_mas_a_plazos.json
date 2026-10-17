@@ -1,0 +1,312 @@
+{
+  "caso": "n06_categoria_mas_a_plazos",
+  "necesidad": "6 · Pagos",
+  "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": {
+    "texto": "La categoría de producto con el mayor porcentaje de pedidos pagados a plazos es \"computers\", con un 91.16%.",
+    "texto_confiable": true,
+    "cifras_clave": 1,
+    "cifras_clave_presentes": 0,
+    "segundos": 5.785775100000137
+  },
+  "intentos": [
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_payments t3 ON t3.order_id = t2.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_payments t3 ON t3.order_id = t2.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 't2.payment_installments': la tabla/vista 'products' no tiene la columna 'payment_installments'. Esa columna sí existe en: order_payments. 't2.order_id': la tabla/vista 'products' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 13.618870100000095,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3524,
+        "eval_count": 155,
+        "estimados": 3678
+      },
+      "load_duration_s": 0.0047448,
+      "diagnostico": {
+        "error": "validacion: La consulta usa columnas que no existen en la tabla indicada: 't2.payment_installments': la tabla/vista 'products' no tiene la columna 'payment_installments'. Esa columna sí existe en: order_payments. 't2.order_id': la tabla/vista 'products' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "forma": [],
+        "patrones": [
+          "Las cuotas del pedido son el máximo entre sus pagos; hay que agregar order_payments por pedido.",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 13.084233999999924,
+        "load_duration_s": 0.0052821,
+        "texto": "El junior cometió un error de **unión**. La consulta intenta unir `order_items` con `order_payments` antes de agregar, lo que duplica las filas y da resultados incorrectos. Además, no está filtrando correctamente los pedidos válidos y no está considerando el método de pago 'not_defined'."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 2,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_payments t3 ON t3.order_id = t2.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (validacion: La consulta usa columnas que no existen en la tabla indicada: 't2.payment_installments': la tabla/vista 'products' no tiene la columna 'payment_installments'. Esa columna sí existe en: order_payments. 't2.order_id': la tabla/vista 'products' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.)\n\nRetroalimentación de un revisor:\n1. El junior cometió un error de **unión**. La consulta intenta unir `order_items` con `order_payments` antes de agregar, lo que duplica las filas y da resultados incorrectos. Además, no está filtrando correctamente los pedidos válidos y no está considerando el método de pago 'not_defined'.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_payments t3 ON t3.order_id = t2.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_payments t3 ON t3.order_id = t2.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 't2.order_id': la tabla/vista 'products' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 17.868321099999775,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3936,
+        "eval_count": 174,
+        "estimados": 4288
+      },
+      "load_duration_s": 0.0049974,
+      "diagnostico": {
+        "error": "validacion: La consulta usa columnas que no existen en la tabla indicada: 't2.order_id': la tabla/vista 'products' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "forma": [],
+        "patrones": [
+          "Las cuotas del pedido son el máximo entre sus pagos; hay que agregar order_payments por pedido."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 9.300766999999723,
+        "load_duration_s": 0.0053755,
+        "texto": "El error está en la tabla `products`. La columna `order_id` no existe en esa tabla. Necesitas unir la tabla `order_items` en lugar de `products`."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 3,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_payments t3 ON t3.order_id = t2.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (validacion: La consulta usa columnas que no existen en la tabla indicada: 't2.order_id': la tabla/vista 'products' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.)\n\nRetroalimentación de un revisor:\n1. El junior cometió un error de **unión**. La consulta intenta unir `order_items` con `order_payments` antes de agregar, lo que duplica las filas y da resultados incorrectos. Además, no está filtrando correctamente los pedidos válidos y no está considerando el método de pago 'not_defined'.\n2. El error está en la tabla `products`. La columna `order_id` no existe en esa tabla. Necesitas unir la tabla `order_items` en lugar de `products`.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "product_category_name_english",
+          "pct_pagos_a_plazos"
+        ],
+        "segundos": 5.253742400000192
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "computers",
+          91.16
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          }
+        ]
+      },
+      "segundos_generacion": 18.88088919999973,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3962,
+        "eval_count": 190,
+        "estimados": 4318
+      },
+      "load_duration_s": 0.0052841,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [
+          "Las cuotas del pedido son el máximo entre sus pagos; hay que agregar order_payments por pedido."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 13.611036600000261,
+        "load_duration_s": 0.0049981,
+        "texto": "La consulta del junior tiene dos problemas principales. Primero, no está considerando correctamente el número de cuotas de un pedido, lo que puede dar resultados incorrectos. Segundo, está contando pedidos en lugar de categorías, lo que no es lo que se pide en la pregunta. Para evitar estos errores, es importante unir las tablas de manera correcta y asegurarse de contar los pedidos por categoría y no por artículo. Además, al calcular el porcentaje de pedidos pagados a plazos, es crucial usar la función SUM en lugar de COUNT para contar los pedidos que cumplen la condición."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 4,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\n```\n\nResumen de su resultado: 1 fila(s); columnas: product_category_name_english, pct_pagos_a_plazos\ncomputers | 91.16\n\nRetroalimentación de un revisor:\n1. El junior cometió un error de **unión**. La consulta intenta unir `order_items` con `order_payments` antes de agregar, lo que duplica las filas y da resultados incorrectos. Además, no está filtrando correctamente los pedidos válidos y no está considerando el método de pago 'not_defined'.\n2. El error está en la tabla `products`. La columna `order_id` no existe en esa tabla. Necesitas unir la tabla `order_items` en lugar de `products`.\n3. La consulta del junior tiene dos problemas principales. Primero, no está considerando correctamente el número de cuotas de un pedido, lo que puede dar resultados incorrectos. Segundo, está contando pedidos en lugar de categorías, lo que no es lo que se pide en la pregunta. Para evitar estos errores, es importante unir las tablas de manera correcta y asegurarse de contar los pedidos por categoría y no por artículo. Además, al calcular el porcentaje de pedidos pagados a plazos, es crucial usar la función SUM en lugar de COUNT para contar los pedidos que cumplen la condición.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "product_category_name_english",
+          "pct_pagos_a_plazos"
+        ],
+        "segundos": 4.686576799999784
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "computers",
+          91.16
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          }
+        ]
+      },
+      "segundos_generacion": 18.769812399999864,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4016,
+        "eval_count": 190,
+        "estimados": 4425
+      },
+      "load_duration_s": 0.0057115,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [
+          "Las cuotas del pedido son el máximo entre sus pagos; hay que agregar order_payments por pedido."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 10.22786350000024,
+        "load_duration_s": 0.0057698,
+        "texto": "La consulta del junior tiene dos problemas principales. Primero, no está considerando correctamente el número de cuotas de un pedido, lo que puede dar resultados incorrectos. Segundo, está contando pedidos en lugar de categorías, lo que no es lo que se pide en la pregunta. Para evitar estos errores, es importante unir las tablas de manera correcta y asegurarse de contar los pedidos por categoría y no por artículo. Además, al calcular el porcentaje de pedidos pagados a plazos, es crucial usar la función SUM en lugar de COUNT para contar los pedidos que cumplen la condición."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 5,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\n```\n\nResumen de su resultado: 1 fila(s); columnas: product_category_name_english, pct_pagos_a_plazos\ncomputers | 91.16\n\nRetroalimentación de un revisor:\n1. El junior cometió un error de **unión**. La consulta intenta unir `order_items` con `order_payments` antes de agregar, lo que duplica las filas y da resultados incorrectos. Además, no está filtrando correctamente los pedidos válidos y no está considerando el método de pago 'not_defined'.\n2. El error está en la tabla `products`. La columna `order_id` no existe en esa tabla. Necesitas unir la tabla `order_items` en lugar de `products`.\n3. La consulta del junior tiene dos problemas principales. Primero, no está considerando correctamente el número de cuotas de un pedido, lo que puede dar resultados incorrectos. Segundo, está contando pedidos en lugar de categorías, lo que no es lo que se pide en la pregunta. Para evitar estos errores, es importante unir las tablas de manera correcta y asegurarse de contar los pedidos por categoría y no por artículo. Además, al calcular el porcentaje de pedidos pagados a plazos, es crucial usar la función SUM en lugar de COUNT para contar los pedidos que cumplen la condición.\n4. La consulta del junior tiene dos problemas principales. Primero, no está considerando correctamente el número de cuotas de un pedido, lo que puede dar resultados incorrectos. Segundo, está contando pedidos en lugar de categorías, lo que no es lo que se pide en la pregunta. Para evitar estos errores, es importante unir las tablas de manera correcta y asegurarse de contar los pedidos por categoría y no por artículo. Además, al calcular el porcentaje de pedidos pagados a plazos, es crucial usar la función SUM en lugar de COUNT para contar los pedidos que cumplen la condición.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t3.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN products t2 ON t1.product_category_name = t2.product_category_name LEFT JOIN order_items t4 ON t4.product_id = t2.product_id LEFT JOIN order_payments t3 ON t3.order_id = t4.order_id INNER JOIN vw_pedidos_validos vpv ON vpv.order_id = t3.order_id WHERE t3.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "product_category_name_english",
+          "pct_pagos_a_plazos"
+        ],
+        "segundos": 4.65351869999995
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "computers",
+          91.16
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          }
+        ]
+      },
+      "segundos_generacion": 15.967094699999507,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4150,
+        "eval_count": 190,
+        "estimados": 4658
+      },
+      "load_duration_s": 0.0060748
+    }
+  ],
+  "segundos_caso": 151.72
+}

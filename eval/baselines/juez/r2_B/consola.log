@@ -1,0 +1,11 @@
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 49.1s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=5 fugas=0 157.4s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=5 fugas=0 187.9s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5 s42 n05_categorias_peso_flete            @1=✔ @N=✔ intentos=1 fugas=0 25.3s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=5 fugas=0 232.6s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=5 fugas=0 192.7s
+
+=== Resumen ===
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep-pv2__it5: acierto@1 2/6 | acierto@N 2/6 | intentos hasta acertar 1 | latencia/intento media 35.54 s | fugas bloqueadas 0 | prompt_eval_count máx 5470
+Tiempo total: 845.0 s · salida: C:\Users\alexp\OneDrive\Documentos\GitHub\AnalizadorIA\eval\baselines\juez\r2_B
+exit 0

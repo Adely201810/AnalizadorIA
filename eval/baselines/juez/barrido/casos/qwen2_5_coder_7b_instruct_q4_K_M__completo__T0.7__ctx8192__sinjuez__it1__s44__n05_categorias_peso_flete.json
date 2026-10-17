@@ -1,0 +1,84 @@
+{
+  "caso": "n05_categorias_peso_flete",
+  "necesidad": "5 · Flete",
+  "pregunta": "Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.7,
+  "seed": 44,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.7,
+      "seed": 44,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t.categoria_ingles, ROUND(100.0 * SUM(t.flete_total) / SUM(t.ingresos), 2) AS porcentaje_flete FROM ( SELECT COALESCE(pc.product_category_name_english, 'sin_categoria') AS categoria_ingles, SUM(oi.price) AS ingresos, SUM(oi.freight_value) AS flete_total FROM order_items oi JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_translation pc ON p.product_category_name = pc.product_category_name JOIN vw_pedidos_validos v ON oi.order_id = v.order_id GROUP BY categoria_ingles HAVING SUM(oi.price) >= 5000 ) t ORDER BY porcentaje_flete DESC LIMIT 3\"\n}",
+      "sql": "SELECT t.categoria_ingles, ROUND(100.0 * SUM(t.flete_total) / SUM(t.ingresos), 2) AS porcentaje_flete FROM ( SELECT COALESCE(pc.product_category_name_english, 'sin_categoria') AS categoria_ingles, SUM(oi.price) AS ingresos, SUM(oi.freight_value) AS flete_total FROM order_items oi JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_translation pc ON p.product_category_name = pc.product_category_name JOIN vw_pedidos_validos v ON oi.order_id = v.order_id GROUP BY categoria_ingles HAVING SUM(oi.price) >= 5000 ) t ORDER BY porcentaje_flete DESC LIMIT 3",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria_ingles",
+          "porcentaje_flete"
+        ],
+        "segundos": 2.3965311000001748
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "agro_industry_and_commerce",
+          16.59
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "top_k_igual",
+            "ok": false,
+            "motivo": "menos filas que el top pedido"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          }
+        ]
+      },
+      "segundos_generacion": 14.387746999999763,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5439,
+        "eval_count": 164,
+        "estimados": 5558
+      },
+      "load_duration_s": 0.0058081
+    }
+  ],
+  "segundos_caso": 16.79
+}

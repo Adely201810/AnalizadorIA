@@ -1,0 +1,77 @@
+{
+  "fecha": "2026-10-17T04:15:01",
+  "modelos": {
+    "qwen2.5-coder:7b-instruct-q4_K_M": {
+      "tokens_system": {
+        "compacto": 3333,
+        "completo": 5294
+      },
+      "caracteres_system": {
+        "compacto": 12984,
+        "completo": 18671
+      },
+      "num_ctx": {
+        "8192": {
+          "segundos_llamada": 25.15,
+          "load_duration_s": 22.72,
+          "size": 5148633988,
+          "size_vram": 5148633988,
+          "todo_en_vram": true,
+          "context_length": 8192
+        },
+        "12288": {
+          "segundos_llamada": 24.2,
+          "load_duration_s": 21.8,
+          "size": 5233547672,
+          "size_vram": 5233547672,
+          "todo_en_vram": true,
+          "context_length": 12288
+        },
+        "16384": {
+          "segundos_llamada": 23.53,
+          "load_duration_s": 21.12,
+          "size": 5472623000,
+          "size_vram": 5472623000,
+          "todo_en_vram": true,
+          "context_length": 16384
+        }
+      }
+    },
+    "llama3.1:8b-instruct-q4_K_M": {
+      "tokens_system": {
+        "compacto": 3329,
+        "completo": 5151
+      },
+      "caracteres_system": {
+        "compacto": 12984,
+        "completo": 18671
+      },
+      "num_ctx": {
+        "8192": {
+          "segundos_llamada": 22.21,
+          "load_duration_s": 20.01,
+          "size": 5821169663,
+          "size_vram": 5821169663,
+          "todo_en_vram": true,
+          "context_length": 8192
+        },
+        "12288": {
+          "segundos_llamada": 22.33,
+          "load_duration_s": 20.12,
+          "size": 6362234879,
+          "size_vram": 6362234879,
+          "todo_en_vram": true,
+          "context_length": 12288
+        },
+        "16384": {
+          "segundos_llamada": 23.64,
+          "load_duration_s": 21.36,
+          "size": 7262762433,
+          "size_vram": 6504306442,
+          "todo_en_vram": false,
+          "context_length": 16384
+        }
+      }
+    }
+  }
+}

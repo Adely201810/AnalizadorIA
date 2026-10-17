@@ -12,6 +12,7 @@ Pensado para hardware modesto (Ryzen 5 7000-series, 16 GB RAM totales):
 from __future__ import annotations
 
 import os
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -38,6 +39,27 @@ DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("OLLAMA_TIMEOUT", "300"))
 
 class OllamaError(RuntimeError):
     """Error de comunicación con el servidor de Ollama (no disponible, timeout, etc.)."""
+
+
+# Juez iterativo (Fase 2, D-33): Ollama recorta el prompt EN SILENCIO si no cabe en num_ctx.
+# Si prompt + num_predict deja menos de este margen libre, se corta con error explícito.
+MARGEN_CONTEXTO = 0.10
+CARACTERES_POR_TOKEN_CONSERVADOR = 2.5  # por exceso: el esquema auditado da 12,984 car / 3,329 tokens ≈ 3.9
+
+
+class ContextoInsuficienteError(RuntimeError):
+    """El prompt + num_predict no cabe en num_ctx con el margen exigido: Ollama lo truncaría."""
+
+
+def verificar_margen_contexto(tokens_prompt: int, num_predict: int, num_ctx: int,
+                              margen: float = MARGEN_CONTEXTO, origen: str = "") -> None:
+    limite = (1 - margen) * num_ctx
+    if tokens_prompt + num_predict > limite:
+        raise ContextoInsuficienteError(
+            f"{origen or 'prompt'}: {tokens_prompt} tokens de prompt + {num_predict} de num_predict = "
+            f"{tokens_prompt + num_predict} > {limite:.0f} ({100 * (1 - margen):.0f} % de num_ctx={num_ctx}). "
+            "Ollama recortaría el prompt en silencio: sube num_ctx o acorta el contexto."
+        )
 
 
 @dataclass
@@ -101,3 +123,80 @@ class OllamaClient:
 
         data = resp.json()
         return data.get("response", "").strip()
+
+    # --- Juez iterativo (Fase 2-3). No cambia generate(): el chat sigue igual. ---------------
+
+    def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
+        try:
+            resp = requests.post(f"{self.host}/api/generate", json=payload, timeout=self.timeout)
+        except requests.exceptions.ConnectionError as exc:
+            raise OllamaError(f"No se pudo conectar a Ollama en {self.host}.") from exc
+        except requests.exceptions.Timeout as exc:
+            raise OllamaError(f"Ollama no respondió en {self.timeout}s.") from exc
+        if resp.status_code != 200:
+            raise OllamaError(f"Ollama respondió con error {resp.status_code}: {resp.text[:300]}")
+        return resp.json()
+
+    def contar_tokens(self, texto: str, keep_alive: str | None = None) -> int:
+        """Tokens reales de `texto` con el tokenizador del modelo (raw, num_predict=1).
+        Un prefijo único evita que la caché de prefijos de Ollama descuente tokens."""
+        marca = f"[{uuid.uuid4().hex[:8]}]\n"
+
+        def pec(t: str) -> int:
+            p = {"model": self.model, "prompt": t, "raw": True, "stream": False,
+                 "options": {"num_predict": 1, "num_ctx": self.num_ctx, "temperature": 0}}
+            if keep_alive:
+                p["keep_alive"] = keep_alive
+            return int(self._post(p)["prompt_eval_count"])
+
+        return pec(marca + texto) - pec(marca)
+
+    def generate_detallado(
+        self,
+        prompt: str,
+        system: str | None = None,
+        num_predict: int = 400,
+        temperature: float | None = None,
+        seed: int | None = None,
+        formato: dict | str | None = None,
+        keep_alive: str | None = None,
+        tokens_system: int | None = None,
+    ) -> dict[str, Any]:
+        """Como generate(), pero devuelve el JSON completo de Ollama (prompt_eval_count,
+        load_duration, ...) y admite `format` (JSON schema), `seed` y `keep_alive`.
+
+        Guarda de truncamiento: si se da `tokens_system` (medido con contar_tokens), ANTES de
+        llamar se estima el total (system + prompt por exceso + plantilla de chat) y se corta si
+        no deja el margen. DESPUÉS se repite con prompt_eval_count (que puede ser menor por la
+        caché de prefijos, así que se usa el máximo de ambas cifras)."""
+        estimado = None
+        if tokens_system is not None:
+            estimado = tokens_system + int(len(prompt) / CARACTERES_POR_TOKEN_CONSERVADOR) + 64
+            verificar_margen_contexto(estimado, num_predict, self.num_ctx, origen="antes de llamar")
+        options: dict[str, Any] = {
+            "num_ctx": self.num_ctx,
+            "num_predict": num_predict,
+            "temperature": self.temperature if temperature is None else temperature,
+        }
+        if seed is not None:
+            options["seed"] = seed
+        payload: dict[str, Any] = {"model": self.model, "prompt": prompt, "stream": False, "options": options}
+        if system:
+            payload["system"] = system
+        if formato is not None:
+            payload["format"] = formato
+        if keep_alive:
+            payload["keep_alive"] = keep_alive
+        data = self._post(payload)
+        reportado = int(data.get("prompt_eval_count") or 0)
+        verificar_margen_contexto(max(reportado, estimado or 0), num_predict, self.num_ctx,
+                                  origen="según Ollama")
+        data["response"] = (data.get("response") or "").strip()
+        data["tokens_prompt_estimados"] = estimado
+        return data
+
+    def procesos_cargados(self) -> list[dict[str, Any]]:
+        """/api/ps: modelos cargados con size y size_vram (size_vram < size = parte en CPU)."""
+        r = requests.get(f"{self.host}/api/ps", timeout=10)
+        r.raise_for_status()
+        return r.json().get("models", [])

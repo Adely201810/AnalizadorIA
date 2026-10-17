@@ -1,0 +1,69 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.3,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.3,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT v.seller_id) AS num_vendedores, SUM(v.ingresos) AS ingresos_totales FROM ( SELECT s.seller_id, SUM(oi.price) AS ingresos, AVG(rv.review_score) AS calificacion, SUM(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(e.order_id) AS pct_retrasos FROM sellers s JOIN order_items oi ON s.seller_id = oi.seller_id JOIN vw_pedidos_validos p ON oi.order_id = p.order_id LEFT JOIN order_reviews rv ON p.order_id = rv.order_id LEFT JOIN vw_entregas_retrasos e ON p.order_id = e.order_id GROUP BY s.seller_id HAVING COUNT(DISTINCT p.order_id) >= 30 ) v WHERE v.calificacion < 3.5 OR v.pct_retrasos >= 15\"\n}",
+      "sql": "SELECT COUNT(DISTINCT v.seller_id) AS num_vendedores, SUM(v.ingresos) AS ingresos_totales FROM ( SELECT s.seller_id, SUM(oi.price) AS ingresos, AVG(rv.review_score) AS calificacion, SUM(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(e.order_id) AS pct_retrasos FROM sellers s JOIN order_items oi ON s.seller_id = oi.seller_id JOIN vw_pedidos_validos p ON oi.order_id = p.order_id LEFT JOIN order_reviews rv ON p.order_id = rv.order_id LEFT JOIN vw_entregas_retrasos e ON p.order_id = e.order_id GROUP BY s.seller_id HAVING COUNT(DISTINCT p.order_id) >= 30 ) v WHERE v.calificacion < 3.5 OR v.pct_retrasos >= 15",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "num_vendedores",
+          "ingresos_totales"
+        ],
+        "segundos": 6.982714699999633
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          80,
+          994901.8
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          }
+        ]
+      },
+      "segundos_generacion": 17.60625660000005,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5522,
+        "eval_count": 208,
+        "estimados": 5678
+      },
+      "load_duration_s": 0.0047381
+    }
+  ],
+  "segundos_caso": 24.59
+}

@@ -1,0 +1,267 @@
+{
+  "caso": "n08_categorias_problema_producto",
+  "necesidad": "8 · Insatisfacción",
+  "pregunta": "Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name_english",
+        "columnas": [],
+        "segundos": 0.002272500000117361
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 41.99823649999985,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3583,
+        "eval_count": 266,
+        "estimados": 3778
+      },
+      "load_duration_s": 0.0060549,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name_english",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 10.143228500000077,
+        "load_duration_s": 0.0069805,
+        "texto": "El error es de agregación."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 2,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name_english)\n\nRetroalimentación de un revisor:\n1. El error es de agregación.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name_english",
+        "columnas": [],
+        "segundos": 0.0018518000001677137
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 22.61524139999983,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3902,
+        "eval_count": 269,
+        "estimados": 4224
+      },
+      "load_duration_s": 0.0065211,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name_english",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 11.443325799999911,
+        "load_duration_s": 0.0057366,
+        "texto": "El error indica que la columna `product_category_name_english` no existe en la consulta. Esto podría deberse a que la columna no está correctamente seleccionada o a que la tabla no contiene esa columna. Asegúrate de que estás seleccionando la columna correcta y que la tabla tiene la columna que estás intentando usar."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 3,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name_english)\n\nRetroalimentación de un revisor:\n1. El error es de agregación.\n2. El error indica que la columna `product_category_name_english` no existe en la consulta. Esto podría deberse a que la columna no está correctamente seleccionada o a que la tabla no contiene esa columna. Asegúrate de que estás seleccionando la columna correcta y que la tabla tiene la columna que estás intentando usar.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name_english",
+        "columnas": [],
+        "segundos": 0.0014297999996415456
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 20.676094899999953,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3977,
+        "eval_count": 269,
+        "estimados": 4354
+      },
+      "load_duration_s": 0.0059473,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name_english",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 9.711225099999865,
+        "load_duration_s": 0.0059293,
+        "texto": "La consulta del junior tiene dos problemas principales. Primero, intenta calcular el promedio global de reseñas y el porcentaje de entregas tardías en la misma subconsulta, lo que puede dar resultados incorrectos porque cruza filas. Segundo, no filtra correctamente los pedidos válidos, incluyendo aquellos que están cancelados o no disponibles. Para evitar estos errores, debes separar los cálculos en subconsultas distintas y asegurarte de que solo se consideren pedidos válidos en todas las partes de la consulta."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 4,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name_english)\n\nRetroalimentación de un revisor:\n1. El error es de agregación.\n2. El error indica que la columna `product_category_name_english` no existe en la consulta. Esto podría deberse a que la columna no está correctamente seleccionada o a que la tabla no contiene esa columna. Asegúrate de que estás seleccionando la columna correcta y que la tabla tiene la columna que estás intentando usar.\n3. La consulta del junior tiene dos problemas principales. Primero, intenta calcular el promedio global de reseñas y el porcentaje de entregas tardías en la misma subconsulta, lo que puede dar resultados incorrectos porque cruza filas. Segundo, no filtra correctamente los pedidos válidos, incluyendo aquellos que están cancelados o no disponibles. Para evitar estos errores, debes separar los cálculos en subconsultas distintas y asegurarte de que solo se consideren pedidos válidos en todas las partes de la consulta.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name_english",
+        "columnas": [],
+        "segundos": 0.0013902999999118038
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 20.63723779999964,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4097,
+        "eval_count": 269,
+        "estimados": 4562
+      },
+      "load_duration_s": 0.0055878,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name_english",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 9.400499100000161,
+        "load_duration_s": 0.0053208,
+        "texto": "La consulta del junior tiene dos problemas principales. Primero, intenta calcular el promedio global de reseñas y el porcentaje de entregas tardías en la misma subconsulta, lo que puede dar resultados incorrectos porque cruza filas. Segundo, no filtra correctamente los pedidos válidos, incluyendo aquellos que están cancelados o no disponibles. Para evitar estos errores, debes separar los cálculos en subconsultas distintas y asegurarte de que solo se consideren pedidos válidos en todas las partes de la consulta."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 5,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name_english)\n\nRetroalimentación de un revisor:\n1. El error es de agregación.\n2. El error indica que la columna `product_category_name_english` no existe en la consulta. Esto podría deberse a que la columna no está correctamente seleccionada o a que la tabla no contiene esa columna. Asegúrate de que estás seleccionando la columna correcta y que la tabla tiene la columna que estás intentando usar.\n3. La consulta del junior tiene dos problemas principales. Primero, intenta calcular el promedio global de reseñas y el porcentaje de entregas tardías en la misma subconsulta, lo que puede dar resultados incorrectos porque cruza filas. Segundo, no filtra correctamente los pedidos válidos, incluyendo aquellos que están cancelados o no disponibles. Para evitar estos errores, debes separar los cálculos en subconsultas distintas y asegurarte de que solo se consideren pedidos válidos en todas las partes de la consulta.\n4. La consulta del junior tiene dos problemas principales. Primero, intenta calcular el promedio global de reseñas y el porcentaje de entregas tardías en la misma subconsulta, lo que puede dar resultados incorrectos porque cruza filas. Segundo, no filtra correctamente los pedidos válidos, incluyendo aquellos que están cancelados o no disponibles. Para evitar estos errores, debes separar los cálculos en subconsultas distintas y asegurarte de que solo se consideren pedidos válidos en todas las partes de la consulta.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_entregas_retrasos WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name_english",
+        "columnas": [],
+        "segundos": 0.002008200000091165
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 20.682484299999942,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4217,
+        "eval_count": 269,
+        "estimados": 4770
+      },
+      "load_duration_s": 0.0068208
+    }
+  ],
+  "segundos_caso": 235.32
+}

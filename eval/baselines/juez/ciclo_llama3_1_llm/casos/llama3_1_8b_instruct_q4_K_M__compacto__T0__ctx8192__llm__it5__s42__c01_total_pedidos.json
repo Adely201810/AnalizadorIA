@@ -1,0 +1,73 @@
+{
+  "caso": "c01_total_pedidos",
+  "necesidad": "Control (caso sencillo)",
+  "pregunta": "¿Cuántos pedidos hay en total en la base, contando todos los estatus (incluidos los cancelados y los no disponibles)?",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "juez_modelo": "llama3.1:8b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": true,
+  "acierto_final": true,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": {
+    "texto": "Hay un total de 99,441 pedidos en la base de datos. Esto se debe a que se contaron todos los pedidos, incluidos los cancelados y los no disponibles.",
+    "texto_confiable": true,
+    "cifras_clave": 1,
+    "cifras_clave_presentes": 1,
+    "segundos": 3.5298924000003353
+  },
+  "intentos": [
+    {
+      "caso": "c01_total_pedidos",
+      "intento": 1,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: ¿Cuántos pedidos hay en total en la base, contando todos los estatus (incluidos los cancelados y los no disponibles)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT COUNT(*) FROM orders\"}",
+      "sql": "SELECT COUNT(*) FROM orders",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "COUNT(*)"
+        ],
+        "segundos": 0.007999600000403007
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          99441
+        ]
+      ],
+      "veredicto": {
+        "correcto": true,
+        "comprobaciones": [
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": true,
+            "motivo": "valor encontrado"
+          }
+        ]
+      },
+      "segundos_generacion": 3.4696493999999802,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3395,
+        "eval_count": 11,
+        "estimados": 3469
+      },
+      "load_duration_s": 0.0060957
+    }
+  ],
+  "segundos_caso": 53.88
+}

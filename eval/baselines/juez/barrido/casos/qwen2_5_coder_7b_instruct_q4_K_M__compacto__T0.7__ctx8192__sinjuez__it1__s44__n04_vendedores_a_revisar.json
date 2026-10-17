@@ -1,0 +1,55 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.7,
+  "seed": 44,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.7,
+      "seed": 44,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM (SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias FROM vw_ventas_pedido WHERE order_status IN ('approved', 'shipped') AND review_score IS NOT NULL GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30) WHERE (calificacion < 3.5 OR pct_entregas_tardias > 15)\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM (SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias FROM vw_ventas_pedido WHERE order_status IN ('approved', 'shipped') AND review_score IS NOT NULL GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30) WHERE (calificacion < 3.5 OR pct_entregas_tardias > 15)",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: review_score",
+        "columnas": [],
+        "segundos": 0.0014217999996617436
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 13.957040700000107,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3561,
+        "eval_count": 154,
+        "estimados": 3717
+      },
+      "load_duration_s": 0.005817
+    }
+  ],
+  "segundos_caso": 13.96
+}

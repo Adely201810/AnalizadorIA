@@ -206,3 +206,82 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Decisión:** `llm/ollama_client.py` → `DEFAULT_MODEL = qwen2.5-coder:7b-instruct-q4_K_M`. README actualizado (modelo, ID y `ollama pull`).
 - **Reservas (para revisión del usuario):** la ventaja de DESARROLLO no se replicó en PRUEBA_2. qwen es más lento (+33 % en DESARROLLO y +16 % en PRUEBA_2). El chat no usa la autoconsistencia, y sin ella los dos modelos empataban en la etapa 2.
 - **Revertir:** `OLLAMA_MODEL=llama3.1:8b-instruct-q4_K_M`, o `git show 740066a:llm/ollama_client.py`.
+
+## D-32 (C) Casos del juez iterativo (Fase 1): diseño y verificación
+- **Casos** (`eval/casos_juez.json`, generado por `python -m eval.construir_casos_juez`): control (total de pedidos, todos los estatus) + necesidades 2, 4, 5, 6 y 8. Cada necesidad toma **una** cifra de su qNN() que no repite la pregunta del oráculo v4 de esa pestaña. La excepción es la n04, que coincide en cifra con n04 del oráculo (13). Elegidas: n02 = rango de quiebre, n05 = top 3 de categorías por flete, n06 = categoría más pagada a plazos y n08 = conjunto de categorías con "problema de producto".
+- **Referencias:** mismos CTE, filtros y redondeos que q02/q04/q05/q06/q08. Lo que qNN() resuelve en pandas (quiebre de q02, filtro de q04, clasificación de q08) se reescribió en SQL. Verificado: las 6 referencias corren contra olist.db y sus cifras son idénticas a la salida de las qNN() (0 fallos).
+- **Definiciones fijadas en la pregunta** (para que haya una sola respuesta): n02 usa el criterio del dashboard ("cae notablemente" = primer rango cuyo % de calificación ≤ 2 es ≥ 2 veces el de a tiempo), con días con decimales y calificación del pedido = promedio de sus reseñas. n04 usa los parámetros por defecto de q04.
+- **Robustez medida** (alternativas razonables que NO cambian la respuesta): en n04, CUME_DIST vs PERCENT_RANK, ≥ 30 pedidos válidos vs de cualquier estatus y sin redondeo dan 13 y R$ 574,541.26; en n08, el conjunto no cambia sin redondeo; en n02, el filtro de válidos no cambia nada. Trampas que **sí** la cambian (se registran en `dificultades` y en `patrones_error`): reseñas sin promediar por pedido (n02, n04), días enteros (n02), AVG de razones o sin umbral (n05), conteo por artículo o MIN de cuotas (n06).
+- **Comparadores:** `criterio_aceptacion.comprobaciones` es una lista y deben cumplirse todas. Se reutilizan las tolerancias de `eval/comparador.py` (conteo exacto, dinero ±0.01 o 0.1 %, porcentaje ±0.006). La etiqueta de rango de n02 no se compara.
+- **Patrones de error:** ninguno se activa sobre su propia referencia (verificado en el generador). Son heurísticos: un patrón activado es un indicio para el diagnóstico, no un veredicto.
+
+## D-33 (C) Esquema `completo` y guarda contra truncamiento (Fase 2)
+- **Variante seleccionable:** `get_schema_context("completo")` o `TEXT2SQL_ESQUEMA=completo`. Por defecto sigue la compacta, así que el chat y la configuración congelada no cambian (system prompt compacto idéntico: 12,984 caracteres).
+- **Contenido:** por tabla, para qué sirve; por columna, descripción, tipo, PK/FK/NULL, formato real leído de la base y la lista completa de valores si la columna tiene ≤ 12 valores distintos (order_status, payment_type, review_score). Luego vistas, columnas de unión, las notas de siempre, la nota nueva de división entera (`100.0 * a / b`) y los mismos 10 ejemplos.
+- **Hallazgo:** las fechas reales son `'YYYY-MM-DD HH:MM:SS.ffffff'`, con microsegundos, no `'YYYY-MM-DD HH:MM:SS'` como decía la tarea. El esquema completo dice el formato real.
+- **Tamaño medido** (`prompt_eval_count`, con un prefijo único para neutralizar la caché): system compacto 3,333 tokens (qwen) / 3,329 (llama3.1); completo 18,671 caracteres, 5,294 / 5,151 tokens.
+- **Guarda:** `OllamaClient.generate_detallado` estima ANTES de llamar (tokens del system medidos + prompt de usuario a 2.5 caracteres/token, por exceso, + 64 de plantilla) y DESPUÉS usa el máximo de esa cifra y `prompt_eval_count`. Si prompt + num_predict deja menos del 10 % libre de num_ctx, lanza `ContextoInsuficienteError`. No se compara solo contra `prompt_eval_count` porque la caché de prefijos de Ollama lo reduce.
+- **`generate()` no cambió:** lo nuevo (`format`, `seed`, `keep_alive`, conteo de tokens, `/api/ps`) son métodos aparte.
+
+## D-34 (C) Juez iterativo (Fase 3)
+- **Dónde:** `llm/juez.py` ya existía y lo usa el chat (opinar, diagnosticar, evaluar_sensatez). Se añadió una sección nueva con las funciones del juez iterativo; las clases existentes no se tocaron.
+- **Veredicto:** 100 % determinista (`veredicto_caso`), con las tolerancias de `eval/comparador.py`. El LLM solo redacta pistas.
+- **Diagnóstico sin valores:** la forma se describe de manera cualitativa ("la pregunta pide una sola fila", "más filas de las esperadas") y nunca se da el número de filas esperado, porque en n08 ese número es la respuesta (11).
+- **Escalado de pistas:** intento 1 = tipo de error; 2 = concepto implicado (en la plantilla, los patrones activados); 3+ = la trampa concreta (en la plantilla, además, la lista de conceptos de revisión).
+- **Filtro anti-fuga** (`detectar_fuga`), aplicado a TODA pista (LLM o plantilla) antes de que llegue al candidato:
+  - Números del resultado esperado y de las cifras clave, también redondeados (19.1 por 19.08). Se permiten los que ya aparecen en la pregunta (umbrales) y los enteros < 10.
+  - Valores de texto esperados (categorías), comparados por palabra completa: "art" no bloquea "artículos".
+  - 6 o más tokens seguidos del SQL de referencia.
+  - Si la pista LLM revela algo, se regenera una vez; si vuelve a revelar, se usa la plantilla. Si aun así algo se cuela, se reemplaza por un texto genérico.
+- **Prompt del candidato:** solo la pregunta, su SQL anterior, el resumen de su propio resultado (≤ 5 filas) y las pistas acumuladas. El system prompt es el mismo esquema (se aprovecha la caché). Salida con `format` = JSON schema `{"sql": ...}`, `seed` fija y `keep_alive` de 30 min.
+- **Prueba de no fuga:** `tests/test_juez_iterativo.py` corre el ciclo con un candidato falso y un juez que intenta filtrar la respuesta y el SQL de referencia. Comprueba que ningún prompt del candidato contiene el SQL de referencia, la respuesta de referencia ni cifras o valores esperados. Excepción documentada: el SQL anterior del propio candidato puede compartir n-gramas genéricos con la referencia (p. ej. `SELECT COUNT(*) AS`), así que el chequeo de n-gramas excluye ese bloque.
+
+## D-35 (C) Experimentos del juez (Fase 4): modelo juez y num_ctx
+- **Juez = mismo modelo que el candidato.** Cargar un modelo cuesta unos 20-23 s (`load_duration` medido: qwen 21-23 s, llama3.1 20-21 s). qwen (5.15 GB) y llama3.1 (5.82 GB) no caben juntos en los 8 GB de la RX 6600, así que alternar candidato y juez recargaría un modelo en cada pista.
+- **VRAM por num_ctx** (`/api/ps`): qwen 8192 = 5.15 GB, 12288 = 5.23 GB, 16384 = 5.47 GB, todo en VRAM. llama3.1 8192 = 5.82 GB, 12288 = 6.36 GB, todo en VRAM; 16384 = 7.26 GB con solo 6.50 GB en VRAM (**descarga a CPU**). 16384 queda descartado para llama3.1.
+- **num_ctx del barrido (solo intento 1): 8192.** Es el menor que cabe con margen en ambos esquemas: completo 5,294 + ~300 de pregunta + 600 de num_predict ≈ 6,200 < 7,373 (90 %).
+
+## D-36 (C) Configuración del ciclo con juez y manejo de la interrupción
+- **Configuración del ciclo:** compacto, T = 0, num_ctx 8192. Se eligió con la regla fijada tras el barrido y antes de correr el ciclo: mayor % de acierto@1 (2/6); si empatan, esquema más corto y T más baja. Toda la diferencia viene de un caso (n05): es ruido.
+- **Guarda en el ciclo:** si `ContextoInsuficienteError` salta a mitad de un caso, el caso se cierra como fallo y queda registrado (no se continúa con un prompt recortado). No saltó en ninguna corrida (máximo 4,822 tokens).
+- **Interrupción:** Windows Update reinició el equipo (05:07 y 05:09, KB5127648) durante qwen-llm. n08 se repitió en `ciclo_qwen2_5-coder_llm_n08/` con el mismo código de `llm/juez.py` (commit d2c7ecf) y la misma semilla; `eval/tabla_juez.py` recalcula las métricas uniendo los JSON por caso.
+- **No se cambió nada entre corridas** (p. ej. el patrón "no filtra pedidos válidos", demasiado amplio): queda como lección en `docs/INFORME_JUEZ.md` para no mezclar condiciones.
+
+## D-37 (C) Ronda 2 del juez: diseño y corrida
+- **Todo apagado por defecto:** con los valores por defecto, `resolver_con_juez` hace exactamente el ciclo de la ronda 1 (prueba `test_sin_flags_el_ciclo_es_el_de_la_ronda_1`).
+- **Normalización del SQL:** tokens en minúsculas, sin `;` final, alias de tabla sustituidos por el nombre de la tabla y alias de columna anonimizados. No reordena cláusulas, así que dos consultas equivalentes escritas en otro orden cuentan como distintas.
+- **Remuestreo:** semillas `seed + intento − 1 + 1000·k`. Si tras 3 remuestreos sigue igual, el intento se gasta y queda marcado `sql_repetido`.
+- **Reparación:** solo con errores de columna o tabla (validador: `SQLQualityError.detalles`; SQLite: "no such column/table"). La ruta es la más corta por las columnas de unión de `COLUMNAS_UNION`, con tablas base como intermedias. Si el texto de reparación activara el filtro anti-fuga, se descarta y se cuenta como bloqueo (no pasó).
+- **B junta reparación y pistas v2** porque las dos cambian el texto de la pista y el tiempo no daba para separarlas. Limitación: el efecto de B no es atribuible solo a la reparación.
+- **C (modo edición) cortado por tiempo:** A + B = 27 min; C habría pasado de ~40.
+- **Arreglos baratos:** 5a como parámetro opcional (`numeros_extra`), que el chat no usa; 5b regenerando `eval/casos_juez.json` (las referencias no cambian, 0 fallos).
+
+## D-38 (C) Modo evaluación con juez en la app (Fase 6)
+- Interruptor en la barra lateral, apagado por defecto. Apagado, la app es idéntica a antes (mismas preguntas de ejemplo, mismo flujo).
+- Usa el modelo y el cliente del chat (`get_client()`), con pistas de plantilla, intento 1 a T=0 y casillas para anti-repetición y reparación (marcadas por defecto, como la configuración B). La reparación activa también las pistas v2, igual que en B.
+- Muestra la respuesta de referencia del dashboard al final, en un desplegable: es una demo de evaluación, no el chat. El modelo nunca la ve (la garantía es la misma prueba de no fuga del juez).
+
+## D-39 (C) Ronda 2 del juez: mediciones de C y de la reparación sola
+- **Cómo se corrió:** las dos corridas pendientes de D-37 (C = B + `--modo-edicion`, y A + `--reparar-esquema` sin `--pistas-v2`) se corrieron en serie con el código de e4b146a, sin cambios entre ellas, con la misma semilla y los mismos 6 casos. Los JSON por caso están en `eval/baselines/juez/r2_C/` y `r2_B_sin_pv2/`. `consola.log` es la salida estándar de cada corrida, guardada aparte.
+- **Resultado:** 0 rescates en las dos (acierto@N = acierto@1 = 2/6).
+  - Sin pistas v2, la reparación da casi el mismo perfil que B (ejecución 5 frente a 4; resultado incorrecto 8 frente a 7). Así se cierra la limitación de D-37: el cambio de tipo de fallo es de la reparación.
+  - El modo edición sube los reintentos con SQL repetido a 6/16.
+- **Recomendación (no aplicada):** si se lleva algo al chat, que sea la reparación sola, sin pistas v2 ni modo edición. Activarla en el chat queda para otra fase, con su propia medición sobre DESARROLLO.
+
+## D-40 (U+C) Cierre del juez: reparación con esquema y texto con umbrales, encendidos en el chat
+- **Decisión del usuario:** cerrar la línea del juez (no más rondas de pistas) y llevar al chat la reparación con esquema real (sin pistas v2) y el arreglo 5a, cada uno detrás de su flag, medidos juntos con D-23.
+- **Flags:** `TEXT2SQL_REPARAR_ESQUEMA` (el reintento recibe, además del error, las columnas reales del objeto y la ruta por tablas base; usa `llm.juez.reparar_con_esquema`, que solo lee el esquema) y `TEXT2SQL_TEXTO_UMBRALES` (el chequeo de "texto confiable" acepta los números de la pregunta). Los dos están en `llm/text_to_sql.py`.
+- **A/B (D-23):** DESARROLLO 30, 3 repeticiones, qwen2.5-coder 7B, T = 0.3 (la de evaluación), N = 2, sin plantillas, Ollama 0.40.5. La base se volvió a medir porque no había una corrida de la configuración actual (qwen sin autoconsistencia) y la versión de Ollama cambió.
+  - Base (configuración actual): **15, 13, 14** → media 14.00, mínimo 13. Archivos `eval/baselines/cierre/base_actual_*`.
+  - Con los dos flags: **14, 15, 17** → media 15.33, mínimo 14. Archivos `eval/baselines/cierre/reparar_umbrales_*`.
+  - **D-23 se cumple:** la media sube +1.33 (≥ 1) y el mínimo nuevo (14) es ≥ la media anterior (14.00). Por eso los dos quedan **encendidos por defecto**. Para apagarlos: `TEXT2SQL_REPARAR_ESQUEMA=0` / `TEXT2SQL_TEXTO_UMBRALES=0`.
+- **Qué hizo cada uno:**
+  - La reparación apareció en 36 de las 90 respuestas; 7 de ellas terminaron acertando. Las respuestas acertadas tras un reintento pasan de 6 (base) a 8.
+  - El texto con umbrales no cambia el acierto (que mide el SQL), pero bajó de 8 a 3 las síntesis reemplazadas por "No pude redactar un resumen confiable".
+  - La latencia media no cambió (18.35 s frente a 18.17 s).
+- **Reservas:**
+  - La ganancia es pequeña y los intervalos se solapan (Wilson 36.7-56.9 % frente a 41.0-61.2 %). Por pregunta (mayoría de 3): 14 → 15. Se aplicó la regla acordada, que no exige significancia.
+  - Los dos flags se midieron juntos, como se pidió.
+  - PRUEBA_2 no se tocó, así que no hay confirmación fuera de DESARROLLO.
+- **Tiempo:** 61 min (12:11 → 13:12), dentro del límite de ~1 h.
+- **Punto 2 de la tarea (qwen2.5-coder:14b):** no se hizo; queda pendiente de la confirmación del usuario.

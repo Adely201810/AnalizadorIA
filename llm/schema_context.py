@@ -484,18 +484,155 @@ def build_schema_context(tablas: set[str] | None = None, vistas_visibles: set[st
     return "\n".join(lines)
 
 
-# Se calcula una sola vez por proceso (el esquema no cambia en tiempo de ejecución).
+# ---------------------------------------------------------------------------
+# Variante COMPLETA del esquema (juez iterativo, Fase 2; D-33). Seleccionable con
+# TEXT2SQL_ESQUEMA=completo o get_schema_context("completo"). La compacta (la de
+# siempre, configuración congelada) sigue siendo la variante por defecto.
+# ---------------------------------------------------------------------------
+VARIANTES_ESQUEMA = ("compacto", "completo")
+VARIANTE_ESQUEMA_POR_DEFECTO = os.environ.get("TEXT2SQL_ESQUEMA", "compacto")
+
+# Para qué sirve cada tabla y cada columna (documentación pública del dataset de Olist).
+DESCRIPCION_TABLAS = {
+    "customers": "un registro por PEDIDO-cliente: customer_id cambia en cada pedido; la persona real es customer_unique_id",
+    "geolocation": "coordenadas por prefijo de código postal; MUCHAS filas por prefijo (unir por él multiplica filas)",
+    "product_category_translation": "traducción portugués -> inglés del nombre de categoría (incompleta: unir con LEFT JOIN)",
+    "products": "catálogo de productos",
+    "sellers": "vendedores del marketplace",
+    "orders": "un registro por pedido, con su estatus y sus fechas",
+    "order_items": "una fila por UNIDAD vendida de cada pedido (no hay columna de cantidad); varias filas por pedido",
+    "order_payments": "una fila por pago; un pedido puede tener varios pagos y métodos",
+    "order_reviews": "reseñas de satisfacción; un pedido puede tener varias reseñas",
+}
+DESCRIPCIONES_COMPLETAS = {
+    ("customers", "customer_id"): "llave del cliente EN ESE PEDIDO (une con orders.customer_id); no identifica a la persona",
+    ("customers", "customer_unique_id"): "identificador real de la persona; se repite entre sus pedidos. Clientes únicos = COUNT(DISTINCT customer_unique_id)",
+    ("customers", "customer_city"): "ciudad del cliente, en minúsculas y sin acentos",
+    ("customers", "customer_state"): "estado (UF) de Brasil del cliente, código de 2 letras mayúsculas",
+    ("geolocation", "id"): "clave interna de la fila (no viene del dataset)",
+    ("geolocation", "geolocation_lat"): "latitud",
+    ("geolocation", "geolocation_lng"): "longitud",
+    ("geolocation", "geolocation_city"): "ciudad",
+    ("geolocation", "geolocation_state"): "estado (UF), 2 letras mayúsculas",
+    ("product_category_translation", "product_category_name"): "nombre de la categoría en portugués (une con products.product_category_name)",
+    ("product_category_translation", "product_category_name_english"): "nombre de la categoría en inglés (el que se reporta)",
+    ("products", "product_id"): "llave del producto",
+    ("products", "product_category_name"): "categoría en portugués; NULL si el producto no tiene categoría",
+    ("products", "product_photos_qty"): "cantidad de fotos publicadas",
+    ("products", "product_weight_g"): "peso en gramos",
+    ("products", "product_length_cm"): "largo en cm",
+    ("products", "product_height_cm"): "alto en cm",
+    ("products", "product_width_cm"): "ancho en cm",
+    ("sellers", "seller_id"): "llave del vendedor (une con order_items.seller_id)",
+    ("sellers", "seller_city"): "ciudad del vendedor, en minúsculas",
+    ("sellers", "seller_state"): "estado (UF) del vendedor, 2 letras mayúsculas",
+    ("orders", "order_id"): "llave del pedido",
+    ("orders", "customer_id"): "cliente de ese pedido (une con customers.customer_id)",
+    ("orders", "order_approved_at"): "momento en que se aprobó el pago (NULL si no se aprobó)",
+    ("orders", "order_delivered_carrier_date"): "momento en que el vendedor entregó el pedido a la transportista (NULL si no ocurrió)",
+    ("orders", "order_delivered_customer_date"): "momento en que el CLIENTE recibió el pedido (NULL si no llegó). Es la fecha de entrega real",
+    ("orders", "order_estimated_delivery_date"): "fecha de entrega prometida al cliente al comprar. Retraso = real − estimada",
+    ("order_items", "order_id"): "pedido al que pertenece la unidad",
+    ("order_items", "product_id"): "producto vendido",
+    ("order_items", "seller_id"): "vendedor de esa unidad (un pedido puede tener varios vendedores)",
+    ("order_items", "price"): "precio de esa unidad. Ingresos = SUM(price) de pedidos válidos",
+    ("order_payments", "order_id"): "pedido pagado",
+    ("order_payments", "payment_type"): "método de pago",
+    ("order_payments", "payment_installments"): "número de cuotas de ese pago (hay valores 0)",
+    ("order_payments", "payment_value"): "monto de ese pago (incluye flete); el total pagado del pedido es SUM(payment_value) por order_id",
+    ("order_reviews", "review_id"): "identificador de la reseña; NO es único",
+    ("order_reviews", "order_id"): "pedido reseñado; la calificación de un pedido es AVG(review_score) agrupado por order_id",
+    ("order_reviews", "review_score"): "calificación de 1 a 5 estrellas",
+    ("order_reviews", "review_comment_title"): "título del comentario (NULL si no escribió)",
+    ("order_reviews", "review_comment_message"): "texto del comentario (NULL si no escribió)",
+}
+NOTA_DIVISION_ENTERA = (
+    "- En SQLite entero/entero TRUNCA (3/4 = 0). Para porcentajes y razones usa 100.0 * a / b "
+    "(o multiplica por 1.0) para forzar decimales."
+)
+MAX_VALORES_CATEGORICOS = 12
+
+
+def _descripcion_completa(tabla: str, col: str) -> str:
+    return DESCRIPCIONES_COMPLETAS.get((tabla, col)) or DESCRIPCIONES_COLUMNAS.get((tabla, col), "")
+
+
+def _formato_y_valores(conn, tabla: str, col: str, tipo: str) -> str:
+    """Formato real (un valor de muestra) y, si la columna tiene pocos valores distintos,
+    la lista completa de valores reales. Solo lectura."""
+    distintos = [f[0] for f in conn.execute(text(
+        f"SELECT DISTINCT {col} FROM {tabla} WHERE {col} IS NOT NULL LIMIT {MAX_VALORES_CATEGORICOS + 1}"
+    )).fetchall()]
+    if not distintos:
+        return ""
+    if len(distintos) <= MAX_VALORES_CATEGORICOS:
+        valores = sorted(distintos, key=lambda v: (isinstance(v, str), v))
+        return "Valores reales: " + ", ".join(f"'{v}'" if isinstance(v, str) else str(v) for v in valores)
+    if tipo == "DATETIME":
+        return f"Formato: TEXT 'YYYY-MM-DD HH:MM:SS.ffffff' (ej. '{distintos[0]}')"
+    if tipo == "TEXT" and len(str(distintos[0])) == 32:
+        return "Formato: hash hexadecimal de 32 caracteres"
+    if tipo == "TEXT" and all(isinstance(v, str) and len(v) == 2 and v.isupper() for v in distintos):
+        return "Formato: código de 2 letras (ej. 'SP', 'RJ')"
+    return f"Ej.: {distintos[0]!r}"
+
+
+def build_schema_context_completo() -> str:
+    """Esquema COMPLETO: por tabla y columna, descripción, tipo, formato real y valores
+    reales de las columnas categóricas; luego vistas, llaves de unión, las notas de
+    siempre + la nota de división entera, y los mismos ejemplos que la compacta."""
+    _verificar_bd_existe()
+    lines = ["Tablas disponibles (SQLite). Las fechas se guardan como TEXT 'YYYY-MM-DD HH:MM:SS.ffffff' (julianday() y strftime() las leen bien).", ""]
+    with engine.connect() as conn:
+        for table in Base.metadata.sorted_tables:
+            lines.append(f"{table.name}: {DESCRIPCION_TABLAS.get(table.name, '')}")
+            for col in table.columns:
+                tipo = _tipo_corto(col.type.compile(dialect=engine.dialect))
+                marcas = [tipo]
+                if col.primary_key:
+                    marcas.append("PK")
+                fks = list(col.foreign_keys)
+                if fks:
+                    marcas.append(f"FK->{next(iter(fks)).target_fullname}")
+                if col.nullable and not col.primary_key:
+                    marcas.append("puede ser NULL")
+                partes = [p for p in (_descripcion_completa(table.name, col.name),
+                                      _formato_y_valores(conn, table.name, col.name, tipo)) if p]
+                lines.append(f"  - {col.name} ({', '.join(marcas)}): {'. '.join(partes)}")
+            lines.append("")
+    lines.append(_vistas_texto(VISTAS_EN_PROMPT))
+    lines.append("")
+    lines.append(_columnas_de_union_texto(VISTAS_EN_PROMPT))
+    lines.append("")
+    lines.append(NOTAS_TEXTO)
+    lines.append(NOTA_DIVISION_ENTERA)
+    if USAR_VISTA_VALIDOS:
+        lines.append(REGLA_VISTA_VALIDOS)
+    lines.append("")
+    lines.append(EJEMPLOS_TEXTO)
+    return "\n".join(lines)
+
+
+# Se calcula una sola vez por proceso y variante (el esquema no cambia en tiempo de ejecución).
 _CACHED_CONTEXT: str | None = None
+_CACHED_COMPLETO: str | None = None
 
 
-def get_schema_context() -> str:
-    global _CACHED_CONTEXT
+def get_schema_context(variante: str | None = None) -> str:
+    global _CACHED_CONTEXT, _CACHED_COMPLETO
+    variante = variante or VARIANTE_ESQUEMA_POR_DEFECTO
+    if variante not in VARIANTES_ESQUEMA:
+        raise ValueError(f"variante de esquema desconocida: {variante!r} (usa {', '.join(VARIANTES_ESQUEMA)})")
+    if variante == "completo":
+        if _CACHED_COMPLETO is None:
+            _CACHED_COMPLETO = build_schema_context_completo()
+        return _CACHED_COMPLETO
     if _CACHED_CONTEXT is None:
         _CACHED_CONTEXT = build_schema_context()
     return _CACHED_CONTEXT
 
 
 if __name__ == "__main__":
-    ctx = get_schema_context()
+    ctx = get_schema_context(sys.argv[1] if len(sys.argv) > 1 else None)
     print(ctx)
     print(f"\n--- ~{len(ctx.split())} palabras, {len(ctx)} caracteres ---")

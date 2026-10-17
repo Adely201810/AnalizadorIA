@@ -1,0 +1,88 @@
+{
+  "etiqueta": "r2_B_sin_pv2",
+  "inicio": "2026-10-17T11:41:09",
+  "argumentos": {
+    "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+    "juez_modelo": null,
+    "max_iter": 5,
+    "temperatura": [
+      0.0
+    ],
+    "num_ctx": [
+      8192
+    ],
+    "esquema": [
+      "compacto"
+    ],
+    "feedback": "plantilla",
+    "repeticiones": 3,
+    "seed": 42,
+    "casos": null,
+    "sin_sintesis": false,
+    "keep_alive": "30m",
+    "etiqueta": "r2_B_sin_pv2",
+    "salida": null,
+    "medir": false,
+    "reintento_temp": 0.5,
+    "reparar_esquema": true,
+    "modo_edicion": false,
+    "pistas_v2": false
+  },
+  "configuraciones": {
+    "qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__plantilla-rt0.5-rep__it5": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "semillas": [
+        42
+      ],
+      "corridas_caso": 6,
+      "acierto_1": 2,
+      "acierto_N": 2,
+      "pct_acierto_1": 33.3,
+      "pct_acierto_N": 33.3,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 22,
+      "latencia_media_por_intento_s": 31.26,
+      "latencia_mediana_por_intento_s": 26.16,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 5185,
+      "tokens_estimados_max": 6430,
+      "load_duration_total_s": 0.13,
+      "reintentos": 16,
+      "reintentos_sql_repetido": 3,
+      "remuestreos": 13,
+      "etapas": {
+        "correcto": 2,
+        "ejecucion": 5,
+        "resultado_incorrecto": 8,
+        "validacion": 7
+      },
+      "sintesis_texto_confiable": 3,
+      "sintesis_texto_confiable_con_umbrales": 4,
+      "sintesis_cifras_clave": "4/8",
+      "por_caso": {
+        "c01_total_pedidos": [
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          true
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false
+        ]
+      }
+    }
+  },
+  "segundos_totales": 757.2
+}

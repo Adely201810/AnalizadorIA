@@ -1,0 +1,295 @@
+{
+  "caso": "n08_categorias_problema_producto",
+  "necesidad": "8 · Insatisfacción",
+  "pregunta": "Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 5,
+  "ronda2": {
+    "reintento_temp": 0.5,
+    "reparar_esquema": true,
+    "modo_edicion": false,
+    "pistas_v2": false
+  },
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name_english",
+        "columnas": [],
+        "segundos": 0.0016336999979102984
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 20.927835200000118,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3583,
+        "eval_count": 266,
+        "estimados": 3778
+      },
+      "load_duration_s": 0.0052379,
+      "temperatura_usada": 0.0,
+      "seed_usada": 42,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name_english",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: no such column: product_category_name_english). Corrige ese error. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id) → product_category_translation (por product_category_name).",
+        "reparacion": "Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id) → product_category_translation (por product_category_name)."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 2,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name_english, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name_english IS NOT NULL GROUP BY product_category_name_english HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name_english = t2.product_category_name_english WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name_english)\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: product_category_name_english). Corrige ese error. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id) → product_category_translation (por product_category_name).\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name IS NOT NULL GROUP BY product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )\"\n}",
+      "sql": "SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name IS NOT NULL GROUP BY product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name",
+        "columnas": [],
+        "segundos": 0.0014221000019460917
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 23.767914399999427,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4066,
+        "eval_count": 262,
+        "estimados": 4526
+      },
+      "load_duration_s": 0.0061217,
+      "temperatura_usada": 0.5,
+      "seed_usada": 43,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Posible causa: No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).",
+        "reparacion": "Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id)."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 3,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name IS NOT NULL GROUP BY product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name)\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: product_category_name_english). Corrige ese error. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id) → product_category_translation (por product_category_name).\n2. La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Posible causa: No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name IS NOT NULL AND order_status IN ('delivered', 'shipped') GROUP BY product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )\"\n}",
+      "sql": "SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name IS NOT NULL AND order_status IN ('delivered', 'shipped') GROUP BY product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: product_category_name",
+        "columnas": [],
+        "segundos": 0.0013906999993196223
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 28.846316299997852,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4304,
+        "eval_count": 298,
+        "estimados": 4956
+      },
+      "load_duration_s": 0.0061682,
+      "temperatura_usada": 0.5,
+      "seed_usada": 44,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "ejecucion: no such column: product_category_name",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL)."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).",
+        "reparacion": "Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id)."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 4,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT product_category_name, AVG(review_score) AS mala_calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido WHERE product_category_name IS NOT NULL AND order_status IN ('delivered', 'shipped') GROUP BY product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: product_category_name)\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: product_category_name_english). Corrige ese error. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id) → product_category_translation (por product_category_name).\n2. La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Posible causa: No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).\n3. La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT t3.product_category_name, AVG(t4.review_score) AS mala_calificacion, SUM(CASE WHEN t2.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN t2.entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido t2 JOIN order_items t3 ON t2.order_id = t3.order_id JOIN products t4 ON t3.product_id = t4.product_id JOIN product_category_translation t1 ON t1.product_category_name = t4.product_category_name WHERE t2.order_status IN ('delivered', 'shipped') GROUP BY t3.product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )\"\n}",
+      "sql": "SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT t3.product_category_name, AVG(t4.review_score) AS mala_calificacion, SUM(CASE WHEN t2.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN t2.entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido t2 JOIN order_items t3 ON t2.order_id = t3.order_id JOIN products t4 ON t3.product_id = t4.product_id JOIN product_category_translation t1 ON t1.product_category_name = t4.product_category_name WHERE t2.order_status IN ('delivered', 'shipped') GROUP BY t3.product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 't3.product_category_name': la tabla/vista 'order_items' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 't4.review_score': la tabla/vista 'products' no tiene la columna 'review_score'. Esa columna sí existe en: order_reviews. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 35.00871350000307,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4630,
+        "eval_count": 354,
+        "estimados": 5524
+      },
+      "load_duration_s": 0.0055887,
+      "temperatura_usada": 0.5,
+      "seed_usada": 45,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "validacion: La consulta usa columnas que no existen en la tabla indicada: 't3.product_category_name': la tabla/vista 'order_items' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 't4.review_score': la tabla/vista 'products' no tiene la columna 'review_score'. Esa columna sí existe en: order_reviews. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL)."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 't3.product_category_name': la tabla/vista 'order_items' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 't4.review_score': la tabla/vista 'products' no tiene la columna 'review_score'. Esa columna sí existe en: order_reviews. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de order_items: freight_value, order_id, order_item_id, price, product_id, seller_id, shipping_limit_date. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde order_items: order_items → products (por product_id). columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. La columna review_score existe en las tablas order_reviews. Ruta por tablas base para llegar a review_score desde products: products → order_items (por product_id) → order_reviews (por order_id).",
+        "reparacion": "Reparación con el esquema real: columnas reales de order_items: freight_value, order_id, order_item_id, price, product_id, seller_id, shipping_limit_date. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde order_items: order_items → products (por product_id). columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. La columna review_score existe en las tablas order_reviews. Ruta por tablas base para llegar a review_score desde products: products → order_items (por product_id) → order_reviews (por order_id)."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 5,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT t3.product_category_name, AVG(t4.review_score) AS mala_calificacion, SUM(CASE WHEN t2.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN t2.entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido t2 JOIN order_items t3 ON t2.order_id = t3.order_id JOIN products t4 ON t3.product_id = t4.product_id JOIN product_category_translation t1 ON t1.product_category_name = t4.product_category_name WHERE t2.order_status IN ('delivered', 'shipped') GROUP BY t3.product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )\n```\n\nResumen de su resultado: no se pudo ejecutar (validacion: La consulta usa columnas que no existen en la tabla indicada: 't3.product_category_name': la tabla/vista 'order_items' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 't4.review_score': la tabla/vista 'products' no tiene la columna 'review_score'. Esa columna sí existe en: order_reviews. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.)\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (ejecucion: no such column: product_category_name_english). Corrige ese error. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id) → product_category_translation (por product_category_name).\n2. La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Posible causa: No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).\n3. La consulta anterior falló (ejecucion: no such column: product_category_name). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de vw_ventas_pedido: categoria_ingles, customer_state, customer_unique_id, freight_value, order_id, order_item_id, order_purchase_timestamp, order_status, price, review_score_promedio, seller_id, seller_state. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde product_category_translation: product_category_translation → products (por product_category_name). Ruta por tablas base para llegar a product_category_name desde vw_ventas_pedido: vw_ventas_pedido → order_items (por order_id) → products (por product_id).\n4. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 't3.product_category_name': la tabla/vista 'order_items' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 't4.review_score': la tabla/vista 'products' no tiene la columna 'review_score'. Esa columna sí existe en: order_reviews. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL). Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de order_items: freight_value, order_id, order_item_id, price, product_id, seller_id, shipping_limit_date. La columna product_category_name existe en las tablas product_category_translation, products. Ruta por tablas base para llegar a product_category_name desde order_items: order_items → products (por product_id). columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. La columna review_score existe en las tablas order_reviews. Ruta por tablas base para llegar a review_score desde products: products → order_items (por product_id) → order_reviews (por order_id).\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT t3.product_category_name, AVG(t4.review_score) AS mala_calificacion, SUM(CASE WHEN t2.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN t2.entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido t2 JOIN order_items t3 ON t2.order_id = t3.order_id JOIN products t4 ON t3.product_id = t4.product_id WHERE t2.order_status IN ('delivered', 'shipped') GROUP BY t3.product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )\"\n}",
+      "sql": "SELECT t1.product_category_name, t1.product_category_name_english, t2.mala_calificacion, t2.pct_entregas_tardias, t2.pct_global FROM product_category_translation t1 JOIN ( SELECT t3.product_category_name, AVG(t4.review_score) AS mala_calificacion, SUM(CASE WHEN t2.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias, SUM(CASE WHEN t2.entrega_con_retraso = 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_global FROM vw_ventas_pedido t2 JOIN order_items t3 ON t2.order_id = t3.order_id JOIN products t4 ON t3.product_id = t4.product_id WHERE t2.order_status IN ('delivered', 'shipped') GROUP BY t3.product_category_name HAVING COUNT(*) >= 100 ) t2 ON t1.product_category_name = t2.product_category_name WHERE t2.mala_calificacion < ( SELECT AVG(review_score) FROM vw_ventas_pedido WHERE order_status IN ('delivered', 'shipped') ) AND t2.pct_entregas_tardias < ( SELECT SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) FROM vw_ventas_pedido WHERE entrega_con_retraso IS NOT NULL AND order_status IN ('delivered', 'shipped') )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 't3.product_category_name': la tabla/vista 'order_items' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 't4.review_score': la tabla/vista 'products' no tiene la columna 'review_score'. Esa columna sí existe en: order_reviews. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 43.09330050000062,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 5185,
+        "eval_count": 336,
+        "estimados": 6430
+      },
+      "load_duration_s": 0.0058337,
+      "temperatura_usada": 0.5,
+      "seed_usada": 46,
+      "remuestreos": 0,
+      "sql_repetido": false
+    }
+  ],
+  "segundos_caso": 151.66
+}

@@ -1,0 +1,92 @@
+{
+  "caso": "n05_categorias_peso_flete",
+  "necesidad": "5 · Flete",
+  "pregunta": "Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.3,
+  "seed": 44,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": true,
+  "acierto_final": true,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.3,
+      "seed": 44,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete FROM order_items oi JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE oi.order_id IN (SELECT order_id FROM vw_pedidos_validos) GROUP BY categoria HAVING SUM(oi.price) >= 5000 ORDER BY porcentaje_flete DESC LIMIT 3\"\n}",
+      "sql": "SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete FROM order_items oi JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE oi.order_id IN (SELECT order_id FROM vw_pedidos_validos) GROUP BY categoria HAVING SUM(oi.price) >= 5000 ORDER BY porcentaje_flete DESC LIMIT 3",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "porcentaje_flete"
+        ],
+        "segundos": 1.600034200000664
+      },
+      "filas_obtenidas": 3,
+      "muestra_filas": [
+        [
+          "christmas_supplies",
+          36.66
+        ],
+        [
+          "signaling_and_security",
+          30.26
+        ],
+        [
+          "food_drink",
+          29.69
+        ]
+      ],
+      "veredicto": {
+        "correcto": true,
+        "comprobaciones": [
+          {
+            "comparador": "top_k_igual",
+            "ok": true,
+            "motivo": "top coincide"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": true,
+            "motivo": "fila encontrada"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": true,
+            "motivo": "fila encontrada"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": true,
+            "motivo": "fila encontrada"
+          }
+        ]
+      },
+      "segundos_generacion": 12.307584600000155,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5439,
+        "eval_count": 130,
+        "estimados": 5558
+      },
+      "load_duration_s": 0.0051461
+    }
+  ],
+  "segundos_caso": 13.91
+}

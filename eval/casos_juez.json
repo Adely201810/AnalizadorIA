@@ -1,0 +1,611 @@
+{
+  "version": 1,
+  "descripcion": "Casos del juez iterativo: necesidades 2, 4, 5, 6 y 8 de la entrega + 1 control. sql_referencia, resultado_referencia, respuesta_nl_referencia y cifras_clave_nl NUNCA entran al prompt del modelo candidato.",
+  "generado_con": "python -m eval.construir_casos_juez",
+  "casos": [
+    {
+      "id": "c01_total_pedidos",
+      "necesidad": "Control (caso sencillo)",
+      "origen": "métrica 'Pedidos' de la cabecera del dashboard (pages/1_Dashboard.py)",
+      "pregunta": "¿Cuántos pedidos hay en total en la base, contando todos los estatus (incluidos los cancelados y los no disponibles)?",
+      "sql_referencia": "SELECT COUNT(*) AS pedidos FROM orders",
+      "respuesta_nl_referencia": "Hay 99,441 pedidos en total, de cualquier estatus.",
+      "cifras_clave_nl": [
+        {
+          "tipo": "conteo",
+          "valor": 99441
+        }
+      ],
+      "criterio_aceptacion": {
+        "descripcion": "La primera fila contiene el total exacto de pedidos.",
+        "comprobaciones": [
+          {
+            "comparador": "valor_con_tolerancia",
+            "tipo": "conteo",
+            "valor": 99441,
+            "donde": "primera_fila"
+          }
+        ]
+      },
+      "dificultades": [
+        "La pregunta pide TODOS los estatus: filtrar pedidos válidos da 98,207 (incorrecto aquí).",
+        "Contar filas de order_items u order_payments en lugar de orders cuenta artículos o pagos, no pedidos."
+      ],
+      "patrones_error": [
+        {
+          "regex": "order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos",
+          "diagnostico": "La pregunta pide todos los estatus; no hay que filtrar por order_status ni usar vistas que excluyen cancelados."
+        },
+        {
+          "regex": "\\bFROM\\s+(order_items|order_payments|order_reviews)\\b",
+          "diagnostico": "Cuenta filas de una tabla de detalle (artículos, pagos o reseñas), no pedidos."
+        }
+      ],
+      "verificacion_dashboard": null,
+      "resultado_referencia": {
+        "columnas": [
+          "pedidos"
+        ],
+        "filas": [
+          [
+            99441
+          ]
+        ]
+      }
+    },
+    {
+      "id": "n02_quiebre_retraso_calificacion",
+      "necesidad": "2 · Retraso vs reseñas",
+      "origen": "dashboard/queries.py:q02",
+      "pregunta": "Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?",
+      "sql_referencia": "WITH entregas AS (\n    SELECT o.order_id,\n           julianday(o.order_delivered_customer_date) - julianday(o.order_estimated_delivery_date) AS dias_retraso\n    FROM orders o\n    WHERE o.order_delivered_customer_date IS NOT NULL\n      AND o.order_status NOT IN ('canceled', 'unavailable')\n),\nreview_pedido AS (\n    SELECT order_id, AVG(review_score) AS review_score_promedio\n    FROM order_reviews\n    GROUP BY order_id\n),\nrangos AS (\n    SELECT\n        CASE WHEN e.dias_retraso <= 0 THEN 'a_tiempo'\n             WHEN e.dias_retraso <= 3 THEN '1-3'\n             WHEN e.dias_retraso <= 7 THEN '4-7'\n             WHEN e.dias_retraso <= 14 THEN '8-14'\n             ELSE '15+' END AS rango_retraso,\n        CASE WHEN e.dias_retraso <= 0 THEN 1\n             WHEN e.dias_retraso <= 3 THEN 2\n             WHEN e.dias_retraso <= 7 THEN 3\n             WHEN e.dias_retraso <= 14 THEN 4\n             ELSE 5 END AS orden,\n        rp.review_score_promedio\n    FROM entregas e\n    JOIN review_pedido rp ON rp.order_id = e.order_id\n),\ntabla AS (\n    SELECT rango_retraso, orden, COUNT(*) AS pedidos,\n           ROUND(100.0 * SUM(CASE WHEN review_score_promedio <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_2_estrellas\n    FROM rangos\n    GROUP BY rango_retraso, orden\n)\nSELECT t.rango_retraso, t.pedidos, t.pct_1_2_estrellas, b.pct_1_2_estrellas AS pct_a_tiempo\nFROM tabla t\nCROSS JOIN (SELECT pct_1_2_estrellas FROM tabla WHERE orden = 1) b\nWHERE t.orden > 1 AND t.pct_1_2_estrellas >= 2 * b.pct_1_2_estrellas\nORDER BY t.orden\nLIMIT 1",
+      "respuesta_nl_referencia": "La calificación cae notablemente desde el primer rango con retraso (más de 0 y hasta 3 días): de sus 2,636 pedidos, el 19.08 % tiene calificación de 2 o menos, frente al 9.19 % de los pedidos entregados a tiempo (más del doble).",
+      "cifras_clave_nl": [
+        {
+          "tipo": "conteo",
+          "valor": 2636
+        },
+        {
+          "tipo": "porcentaje",
+          "valor": 19.08
+        },
+        {
+          "tipo": "porcentaje",
+          "valor": 9.19
+        }
+      ],
+      "criterio_aceptacion": {
+        "descripcion": "Alguna fila (de a lo sumo 2) contiene los pedidos y el % de calificaciones bajas del rango de quiebre; el % de los pedidos a tiempo aparece en alguna celda. No se compara la etiqueta del rango.",
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "fila": "cualquiera",
+            "max_filas": 2,
+            "valores": [
+              {
+                "tipo": "conteo",
+                "valor": 2636
+              },
+              {
+                "tipo": "porcentaje",
+                "valor": 19.08
+              }
+            ]
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "tipo": "porcentaje",
+            "valor": 9.19,
+            "donde": "cualquier_celda"
+          }
+        ]
+      },
+      "dificultades": [
+        "Reseñas duplicadas: un pedido puede tener varias reseñas; la calificación del pedido es su PROMEDIO (con reseñas crudas da 2,651 pedidos y 19.12 %).",
+        "Días con decimales: truncar a días enteros (date(), CAST) mueve pedidos entre rangos (da 1,852 pedidos y 32.18 %).",
+        "El rango 'más de 0 y hasta 3' incluye retrasos de fracciones de día (0 < retraso <= 3); 'a tiempo' es <= 0.",
+        "Fecha correcta: order_delivered_customer_date (no la del transportista) y fechas NULL fuera (no entregados).",
+        "Calificación baja es <= 2 (1 o 2 estrellas), no < 2.",
+        "El criterio compara porcentajes entre rangos (>= 2x el de 'a tiempo'), no calificaciones promedio.",
+        "Porcentaje: 100.0 * a / b para evitar división entera."
+      ],
+      "patrones_error": [
+        {
+          "regex": "CAST\\s*\\(\\s*\\(?\\s*julianday|\\bdate\\s*\\(\\s*(\\w+\\.)?order_(delivered_customer|estimated_delivery)_date",
+          "diagnostico": "Trunca el retraso a días enteros; debe ser la diferencia con decimales (julianday real − julianday estimada)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*GROUP\\s+BY\\s+(\\w+\\.)?order_id)",
+          "diagnostico": "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        },
+        {
+          "regex": "review_score\\w*\\s*<\\s*2\\b(?!\\.)",
+          "diagnostico": "'< 2' deja fuera las calificaciones de 2; la condición es <= 2."
+        },
+        {
+          "regex": "order_purchase_timestamp",
+          "diagnostico": "El retraso se mide contra la fecha ESTIMADA de entrega, no contra la fecha de compra."
+        },
+        {
+          "regex": "order_delivered_carrier_date",
+          "diagnostico": "Usa la fecha de entrega al transportista; la entrega al cliente es order_delivered_customer_date."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(100\\.0|1\\.0\\s*\\*|\\*\\s*1\\.0|AS\\s+REAL|AS\\s+FLOAT|AVG\\s*\\())",
+          "diagnostico": "El porcentaje se calcula sin forzar decimales: en SQLite entero/entero trunca (usa 100.0 * a / b)."
+        }
+      ],
+      "verificacion_dashboard": "q02",
+      "resultado_referencia": {
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_1_2_estrellas",
+          "pct_a_tiempo"
+        ],
+        "filas": [
+          [
+            "1-3",
+            2636,
+            19.08,
+            9.19
+          ]
+        ]
+      }
+    },
+    {
+      "id": "n04_vendedores_a_revisar",
+      "necesidad": "4 · Vendedores problemáticos",
+      "origen": "dashboard/queries.py:q04 (parámetros por defecto: 30 pedidos, 3.5, 15 %, 25 %)",
+      "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+      "sql_referencia": "WITH review_pedido AS (\n    SELECT order_id, AVG(review_score) AS review_score_promedio\n    FROM order_reviews\n    GROUP BY order_id\n),\npedidos_vendedor AS (\n    SELECT DISTINCT oi.seller_id, o.order_id, o.order_status\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n),\nresumen_pedidos AS (\n    SELECT seller_id, COUNT(DISTINCT order_id) AS pedidos_totales\n    FROM pedidos_vendedor\n    GROUP BY seller_id\n    HAVING COUNT(DISTINCT order_id) >= 30\n),\ningresos_vendedor AS (\n    SELECT oi.seller_id, SUM(oi.price) AS ingresos\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n    WHERE o.order_status NOT IN ('canceled', 'unavailable')\n    GROUP BY oi.seller_id\n),\nentregas_vendedor_raw AS (\n    SELECT DISTINCT oi.seller_id, o.order_id,\n           CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date)\n                THEN 1 ELSE 0 END AS entrega_tardia\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n    WHERE o.order_delivered_customer_date IS NOT NULL\n      AND o.order_status NOT IN ('canceled', 'unavailable')\n),\nentregas_vendedor AS (\n    SELECT seller_id, ROUND(100.0 * SUM(entrega_tardia) / COUNT(*), 2) AS pct_entregas_tardias\n    FROM entregas_vendedor_raw\n    GROUP BY seller_id\n),\ncalificacion_vendedor_raw AS (\n    SELECT DISTINCT oi.seller_id, o.order_id, rp.review_score_promedio\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n    JOIN review_pedido rp ON rp.order_id = o.order_id\n    WHERE o.order_status NOT IN ('canceled', 'unavailable')\n),\ncalificacion_vendedor AS (\n    SELECT seller_id, ROUND(AVG(review_score_promedio), 2) AS calificacion_promedio\n    FROM calificacion_vendedor_raw\n    GROUP BY seller_id\n),\nvendedores AS (\n    SELECT rp.seller_id,\n           ROUND(COALESCE(iv.ingresos, 0), 2) AS ingresos,\n           cv.calificacion_promedio,\n           ev.pct_entregas_tardias,\n           PERCENT_RANK() OVER (ORDER BY COALESCE(iv.ingresos, 0) DESC) AS percentil_ingresos_desc\n    FROM resumen_pedidos rp\n    LEFT JOIN ingresos_vendedor iv ON iv.seller_id = rp.seller_id\n    LEFT JOIN entregas_vendedor ev ON ev.seller_id = rp.seller_id\n    LEFT JOIN calificacion_vendedor cv ON cv.seller_id = rp.seller_id\n)\nSELECT COUNT(*) AS vendedores_a_revisar, ROUND(SUM(ingresos), 2) AS ingresos_combinados\nFROM vendedores\nWHERE percentil_ingresos_desc <= 0.25\n  AND (calificacion_promedio < 3.5 OR pct_entregas_tardias > 15)",
+      "respuesta_nl_referencia": "13 vendedores (de 634 con al menos 30 pedidos) están en el 25 % superior de ingresos y tienen calificación menor a 3.5 o más del 15 % de entregas tardías; en conjunto suman R$ 574,541.26 de ingresos.",
+      "cifras_clave_nl": [
+        {
+          "tipo": "conteo",
+          "valor": 13
+        },
+        {
+          "tipo": "dinero",
+          "valor": 574541.26
+        }
+      ],
+      "criterio_aceptacion": {
+        "descripcion": "La primera fila contiene el número de vendedores y la suma de sus ingresos.",
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "fila": "primera",
+            "max_filas": null,
+            "valores": [
+              {
+                "tipo": "conteo",
+                "valor": 13
+              },
+              {
+                "tipo": "dinero",
+                "valor": 574541.26
+              }
+            ]
+          }
+        ]
+      },
+      "dificultades": [
+        "Reseñas duplicadas: la calificación del pedido es el promedio de sus reseñas; con reseñas crudas salen 14 vendedores y R$ 597,265.18.",
+        "Abanico de JOIN: unir order_items con reseñas o pagos en el mismo nivel que SUM(price) multiplica los ingresos.",
+        "COUNT vs COUNT DISTINCT: un pedido con varios artículos del mismo vendedor cuenta una sola vez.",
+        "Universos distintos: el mínimo de 30 pedidos cuenta todos los estatus; ingresos, calificación y % tardías solo pedidos válidos.",
+        "% tardías: denominador = pedidos válidos ENTREGADOS (fecha de entrega al cliente no NULL).",
+        "La condición es calificación baja O muchas tardías (OR, no AND), y solo dentro del 25 % superior de ingresos.",
+        "El 25 % superior es por percentil sobre los vendedores elegibles (PERCENT_RANK o CUME_DIST dan lo mismo aquí), no LIMIT 25.",
+        "Agregar primero por vendedor y filtrar después (WHERE/HAVING sobre agregados en el nivel correcto)."
+      ],
+      "patrones_error": [
+        {
+          "regex": "\\bLIMIT\\s+25\\b",
+          "diagnostico": "'El 25 % con más ingresos' es un percentil de los vendedores elegibles, no los 25 primeros."
+        },
+        {
+          "regex": "calif\\w*\\s*<\\s*3\\.5\\s+AND\\b",
+          "diagnostico": "La condición es calificación < 3.5 O % tardías > 15 (OR), no AND."
+        },
+        {
+          "regex": "\\bAVG\\s*\\(\\s*(\\w+\\.)?price\\b",
+          "diagnostico": "Los ingresos son la SUMA de price, no su promedio."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*GROUP\\s+BY\\s+(\\w+\\.)?order_id)",
+          "diagnostico": "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas."
+        },
+        {
+          "regex": "JOIN\\s+order_(reviews|payments)\\b[\\s\\S]*SUM\\s*\\(\\s*(\\w+\\.)?price",
+          "diagnostico": "Posible abanico: un JOIN con reseñas o pagos antes de SUM(price) duplica artículos y multiplica los ingresos."
+        },
+        {
+          "regex": "payment_value",
+          "diagnostico": "Los ingresos/precio se miden con order_items.price, no con payment_value (que incluye flete y cuotas)."
+        },
+        {
+          "regex": "order_delivered_carrier_date",
+          "diagnostico": "Usa la fecha de entrega al transportista; la entrega al cliente es order_delivered_customer_date."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
+          "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        }
+      ],
+      "verificacion_dashboard": "q04",
+      "resultado_referencia": {
+        "columnas": [
+          "vendedores_a_revisar",
+          "ingresos_combinados"
+        ],
+        "filas": [
+          [
+            13,
+            574541.26
+          ]
+        ]
+      }
+    },
+    {
+      "id": "n05_categorias_peso_flete",
+      "necesidad": "5 · Flete",
+      "origen": "dashboard/queries.py:q05 (tabla de categorías, min_ingresos_categoria = 5000)",
+      "pregunta": "Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.",
+      "sql_referencia": "WITH ventas_validas AS (\n    SELECT oi.order_id, oi.price, oi.freight_value,\n           COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n    JOIN products p ON p.product_id = oi.product_id\n    LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n    WHERE o.order_status NOT IN ('canceled', 'unavailable')\n)\nSELECT categoria,\n       ROUND(SUM(price), 2) AS ingresos,\n       ROUND(SUM(freight_value), 2) AS flete_total,\n       ROUND(100.0 * SUM(freight_value) / NULLIF(SUM(price), 0), 2) AS pct_flete_sobre_precio\nFROM ventas_validas\nGROUP BY categoria\nHAVING SUM(price) >= 5000\nORDER BY pct_flete_sobre_precio DESC\nLIMIT 3",
+      "respuesta_nl_referencia": "Las 3 categorías donde más pesa el flete son christmas_supplies (36.66 %), signaling_and_security (30.26 %) y food_drink (29.69 %).",
+      "cifras_clave_nl": [
+        {
+          "tipo": "porcentaje",
+          "valor": 36.66
+        },
+        {
+          "tipo": "porcentaje",
+          "valor": 30.26
+        },
+        {
+          "tipo": "porcentaje",
+          "valor": 29.69
+        }
+      ],
+      "criterio_aceptacion": {
+        "descripcion": "Las 3 primeras filas son esas categorías en ese orden, cada una con su porcentaje.",
+        "comprobaciones": [
+          {
+            "comparador": "top_k_igual",
+            "k": 3,
+            "tipo": "texto",
+            "orden_importa": true,
+            "valores": [
+              "christmas_supplies",
+              "signaling_and_security",
+              "food_drink"
+            ]
+          },
+          {
+            "comparador": "fila_contiene",
+            "fila": "primera",
+            "max_filas": null,
+            "valores": [
+              {
+                "tipo": "texto",
+                "valor": "christmas_supplies"
+              },
+              {
+                "tipo": "porcentaje",
+                "valor": 36.66
+              }
+            ]
+          },
+          {
+            "comparador": "fila_contiene",
+            "fila": "cualquiera",
+            "max_filas": null,
+            "valores": [
+              {
+                "tipo": "texto",
+                "valor": "signaling_and_security"
+              },
+              {
+                "tipo": "porcentaje",
+                "valor": 30.26
+              }
+            ]
+          },
+          {
+            "comparador": "fila_contiene",
+            "fila": "cualquiera",
+            "max_filas": null,
+            "valores": [
+              {
+                "tipo": "texto",
+                "valor": "food_drink"
+              },
+              {
+                "tipo": "porcentaje",
+                "valor": 29.69
+              }
+            ]
+          }
+        ]
+      },
+      "dificultades": [
+        "SUM/SUM, no AVG de razones: el promedio fila a fila de flete/precio cambia el ranking (electronics 68.55 % pasaría al primer lugar).",
+        "El umbral de R$ 5,000 es sobre los ingresos de la CATEGORÍA (HAVING SUM(price) >= 5000), no sobre cada artículo; sin él ganan categorías minúsculas (home_comfort_2).",
+        "Solo pedidos válidos: con todos los estatus christmas_supplies da 36.69 % (fuera de tolerancia).",
+        "Nombre en inglés vía product_category_translation (LEFT JOIN); sin categoría = 'sin_categoria'.",
+        "Precio = order_items.price; payment_value no es el precio del producto.",
+        "Abanico: unir con pagos o reseñas duplica artículos y altera las sumas.",
+        "Porcentaje: 100.0 * a / b."
+      ],
+      "patrones_error": [
+        {
+          "regex": "\\bAVG\\s*\\([^)]*freight_value\\s*/",
+          "diagnostico": "Promedio de razones fila a fila: el peso del flete de la categoría es SUM(flete) / SUM(precio)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*\\b5000\\b)",
+          "diagnostico": "Falta el umbral de ingresos de la categoría (al menos R$ 5,000)."
+        },
+        {
+          "regex": "WHERE[^;]*?\\bprice\\s*>=?\\s*5000\\b",
+          "diagnostico": "El umbral de R$ 5,000 se aplica a la suma de ingresos de la categoría (HAVING), no al precio de cada artículo."
+        },
+        {
+          "regex": "JOIN\\s+order_(reviews|payments)\\b",
+          "diagnostico": "Unir con reseñas o pagos duplica artículos y altera las sumas de precio y flete."
+        },
+        {
+          "regex": "payment_value",
+          "diagnostico": "Los ingresos/precio se miden con order_items.price, no con payment_value (que incluye flete y cuotas)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(product_category_name_english|categoria_ingles|categoria_en))",
+          "diagnostico": "No usa el nombre de categoría en inglés (product_category_translation.product_category_name_english)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
+          "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        }
+      ],
+      "verificacion_dashboard": "q05",
+      "resultado_referencia": {
+        "columnas": [
+          "categoria",
+          "ingresos",
+          "flete_total",
+          "pct_flete_sobre_precio"
+        ],
+        "filas": [
+          [
+            "christmas_supplies",
+            8787.83,
+            3221.36,
+            36.66
+          ],
+          [
+            "signaling_and_security",
+            21509.23,
+            6507.82,
+            30.26
+          ],
+          [
+            "food_drink",
+            15119.48,
+            4488.62,
+            29.69
+          ]
+        ]
+      }
+    },
+    {
+      "id": "n06_categoria_mas_a_plazos",
+      "necesidad": "6 · Pagos",
+      "origen": "dashboard/queries.py:q06 (tabla de categorías a plazos, min_pedidos_categoria = 100)",
+      "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+      "sql_referencia": "WITH ventas_validas AS (\n    SELECT oi.order_id, oi.price, oi.freight_value,\n           COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n    JOIN products p ON p.product_id = oi.product_id\n    LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n    WHERE o.order_status NOT IN ('canceled', 'unavailable')\n),\npedido_pagos AS (\n    SELECT op.order_id, MAX(op.payment_installments) AS max_cuotas\n    FROM order_payments op\n    JOIN orders o ON o.order_id = op.order_id\n    WHERE op.payment_type != 'not_defined'\n      AND o.order_status NOT IN ('canceled', 'unavailable')\n    GROUP BY op.order_id\n),\ncategoria_pedido AS (\n    SELECT DISTINCT categoria, order_id FROM ventas_validas\n)\nSELECT cp.categoria,\n       COUNT(*) AS pedidos,\n       ROUND(100.0 * SUM(CASE WHEN pp.max_cuotas > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_mas_de_1_cuota\nFROM categoria_pedido cp\nJOIN pedido_pagos pp ON pp.order_id = cp.order_id\nGROUP BY cp.categoria\nHAVING COUNT(*) >= 100\nORDER BY pct_mas_de_1_cuota DESC\nLIMIT 1",
+      "respuesta_nl_referencia": "La categoría que más se paga a plazos es computers: el 79.01 % de sus 181 pedidos se pagó en más de una cuota.",
+      "cifras_clave_nl": [
+        {
+          "tipo": "porcentaje",
+          "valor": 79.01
+        }
+      ],
+      "criterio_aceptacion": {
+        "descripcion": "La primera fila contiene la categoría y su porcentaje de pedidos a plazos.",
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "fila": "primera",
+            "max_filas": null,
+            "valores": [
+              {
+                "tipo": "texto",
+                "valor": "computers"
+              },
+              {
+                "tipo": "porcentaje",
+                "valor": 79.01
+              }
+            ]
+          }
+        ]
+      },
+      "dificultades": [
+        "Granularidad: se cuentan PEDIDOS distintos por categoría, no artículos (por artículo: 203 y 78.82 %).",
+        "Varios pagos por pedido: las cuotas del pedido son el MÁXIMO entre sus pagos; tomar cada fila de pago o el mínimo cambia el % (con MIN: 75.69 %).",
+        "Abanico order_items × order_payments: unirlos sin agregar antes duplica filas.",
+        "'A plazos' es más de 1 cuota (> 1); hay pagos con 0 cuotas que no son a plazos.",
+        "Todos los métodos de pago cuentan (no solo tarjeta), excepto 'not_defined'.",
+        "Umbral de 100 pedidos por categoría (HAVING), no por artículo.",
+        "Porcentaje: 100.0 * a / b."
+      ],
+      "patrones_error": [
+        {
+          "regex": "payment_installments\\s*>=\\s*1\\b|payment_installments\\s*>\\s*0\\b",
+          "diagnostico": "Pagado a plazos es más de 1 cuota (> 1); >= 1 incluye los pagos de contado."
+        },
+        {
+          "regex": "payment_type\\s*=\\s*'credit_card'",
+          "diagnostico": "La pregunta incluye todos los métodos de pago (menos 'not_defined'), no solo tarjeta de crédito."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*\\bDISTINCT\\b)",
+          "diagnostico": "No usa DISTINCT: probablemente cuenta artículos (o filas de pago) en lugar de pedidos distintos."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*\\bMAX\\s*\\(\\s*(\\w+\\.)?payment_installments)",
+          "diagnostico": "Las cuotas del pedido son el máximo entre sus pagos; hay que agregar order_payments por pedido."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(>=|>)\\s*100\\b(?!\\.))",
+          "diagnostico": "Falta el mínimo de 100 pedidos por categoría."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(product_category_name_english|categoria_ingles|categoria_en))",
+          "diagnostico": "No usa el nombre de categoría en inglés (product_category_translation.product_category_name_english)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
+          "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(100\\.0|1\\.0\\s*\\*|\\*\\s*1\\.0|AS\\s+REAL|AS\\s+FLOAT|AVG\\s*\\())",
+          "diagnostico": "El porcentaje se calcula sin forzar decimales: en SQLite entero/entero trunca (usa 100.0 * a / b)."
+        }
+      ],
+      "verificacion_dashboard": "q06",
+      "resultado_referencia": {
+        "columnas": [
+          "categoria",
+          "pedidos",
+          "pct_mas_de_1_cuota"
+        ],
+        "filas": [
+          [
+            "computers",
+            181,
+            79.01
+          ]
+        ]
+      }
+    },
+    {
+      "id": "n08_categorias_problema_producto",
+      "necesidad": "8 · Insatisfacción",
+      "origen": "dashboard/queries.py:q08 (min_resenas = 100; clasificación 'problema_de_producto')",
+      "pregunta": "Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?",
+      "sql_referencia": "WITH ventas_validas AS (\n    SELECT oi.order_id, oi.price, oi.freight_value,\n           COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria\n    FROM order_items oi\n    JOIN orders o ON o.order_id = oi.order_id\n    JOIN products p ON p.product_id = oi.product_id\n    LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n    WHERE o.order_status NOT IN ('canceled', 'unavailable')\n),\ncategoria_pedido AS (\n    SELECT DISTINCT categoria, order_id FROM ventas_validas\n),\nresumen_categoria AS (\n    SELECT cp.categoria, COUNT(*) AS num_resenas, ROUND(AVG(r.review_score), 2) AS calificacion_promedio\n    FROM categoria_pedido cp\n    JOIN order_reviews r ON r.order_id = cp.order_id\n    GROUP BY cp.categoria\n    HAVING COUNT(*) >= 100\n),\ntardios_categoria AS (\n    SELECT cp.categoria,\n           ROUND(100.0 * SUM(CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date)\n                                  THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_tardios\n    FROM categoria_pedido cp\n    JOIN orders o ON o.order_id = cp.order_id\n    WHERE o.order_delivered_customer_date IS NOT NULL\n    GROUP BY cp.categoria\n),\nglobal AS (\n    SELECT\n        (SELECT ROUND(AVG(r.review_score), 4) FROM order_reviews r\n            JOIN orders o ON o.order_id = r.order_id\n            WHERE o.order_status NOT IN ('canceled', 'unavailable')) AS calificacion_global,\n        (SELECT ROUND(100.0 * SUM(CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date)\n                                       THEN 1 ELSE 0 END) / COUNT(*), 4)\n            FROM orders o\n            WHERE o.order_delivered_customer_date IS NOT NULL AND o.order_status NOT IN ('canceled', 'unavailable')) AS pct_tardios_global\n)\nSELECT rc.categoria\nFROM resumen_categoria rc\nJOIN tardios_categoria tc ON tc.categoria = rc.categoria\nCROSS JOIN global g\nWHERE rc.calificacion_promedio < g.calificacion_global\n  AND tc.pct_tardios < g.pct_tardios_global\nORDER BY rc.categoria",
+      "respuesta_nl_referencia": "11 categorías tienen mala calificación sin que la explique el retraso (insatisfacción por producto): agro_industry_and_commerce, air_conditioning, art, computers_accessories, construction_tools_safety, fashion_male_clothing, fixed_telephony, home_construction, kitchen_dining_laundry_garden_furniture, market_place, signaling_and_security.",
+      "cifras_clave_nl": [
+        {
+          "tipo": "conteo",
+          "valor": 11
+        }
+      ],
+      "criterio_aceptacion": {
+        "descripcion": "El conjunto de categorías devuelto es exactamente el esperado (sin importar el orden).",
+        "comprobaciones": [
+          {
+            "comparador": "conjunto_igual",
+            "tipo": "texto",
+            "valores": [
+              "agro_industry_and_commerce",
+              "air_conditioning",
+              "art",
+              "computers_accessories",
+              "construction_tools_safety",
+              "fashion_male_clothing",
+              "fixed_telephony",
+              "home_construction",
+              "kitchen_dining_laundry_garden_furniture",
+              "market_place",
+              "signaling_and_security"
+            ]
+          }
+        ]
+      },
+      "dificultades": [
+        "Promedio global de TODAS las reseñas de pedidos válidos, no el promedio de los promedios por categoría.",
+        "Aquí la calificación usa las reseñas crudas (cada reseña cuenta), a diferencia de las necesidades 2 y 4.",
+        "Un pedido con varios artículos de la misma categoría aporta sus reseñas una sola vez a esa categoría (DISTINCT categoría-pedido antes de unir reseñas).",
+        "% tardías solo sobre pedidos ENTREGADOS al cliente (fecha no NULL), por categoría y global.",
+        "'Mala calificación' es relativa al promedio global, no a un número fijo como 3 o 4.",
+        "Umbral de 100 reseñas por categoría con HAVING (sobre el agregado, no en WHERE).",
+        "Dos agregados distintos (reseñas y entregas) por categoría: calcularlos en subconsultas separadas para no cruzar filas."
+      ],
+      "patrones_error": [
+        {
+          "regex": "\\A(?![\\s\\S]*order_delivered_customer_date\\s+IS\\s+NOT\\s+NULL)",
+          "diagnostico": "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(>=|>)\\s*100\\b(?!\\.))",
+          "diagnostico": "Falta el mínimo de 100 reseñas por categoría."
+        },
+        {
+          "regex": "(calif\\w*|review_score\\w*|avg\\w*)\\s*<\\s*[1-5](\\.\\d+)?\\b",
+          "diagnostico": "'Mala calificación' se compara con el promedio global de reseñas, no con un número fijo."
+        },
+        {
+          "regex": "\\bAVG\\s*\\(\\s*(\\w+\\.)?(calificacion\\w*|avg\\w*|promedio\\w*)\\s*\\)",
+          "diagnostico": "Posible promedio de promedios: el promedio global es sobre todas las reseñas, no sobre los promedios de cada categoría."
+        },
+        {
+          "regex": "order_delivered_carrier_date",
+          "diagnostico": "Usa la fecha de entrega al transportista; la entrega al cliente es order_delivered_customer_date."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(product_category_name_english|categoria_ingles|categoria_en))",
+          "diagnostico": "No usa el nombre de categoría en inglés (product_category_translation.product_category_name_english)."
+        },
+        {
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
+          "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
+        }
+      ],
+      "verificacion_dashboard": "q08",
+      "resultado_referencia": {
+        "columnas": [
+          "categoria"
+        ],
+        "filas": [
+          [
+            "agro_industry_and_commerce"
+          ],
+          [
+            "air_conditioning"
+          ],
+          [
+            "art"
+          ],
+          [
+            "computers_accessories"
+          ],
+          [
+            "construction_tools_safety"
+          ],
+          [
+            "fashion_male_clothing"
+          ],
+          [
+            "fixed_telephony"
+          ],
+          [
+            "home_construction"
+          ],
+          [
+            "kitchen_dining_laundry_garden_furniture"
+          ],
+          [
+            "market_place"
+          ],
+          [
+            "signaling_and_security"
+          ]
+        ]
+      }
+    }
+  ]
+}

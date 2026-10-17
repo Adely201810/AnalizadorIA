@@ -1,0 +1,306 @@
+{
+  "caso": "n08_categorias_problema_producto",
+  "necesidad": "8 · Insatisfacción",
+  "pregunta": "Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "juez_modelo": "llama3.1:8b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 1,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(vw_entregas_retrasos.dias_retraso) AS dias_retraso_promedio, AVG(vw_entregas_retrasos.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos))\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(vw_entregas_retrasos.dias_retraso) AS dias_retraso_promedio, AVG(vw_entregas_retrasos.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos))",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: vw_entregas_retrasos.dias_retraso",
+        "columnas": [],
+        "segundos": 0.0017588999999134103
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 13.843850600000223,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3585,
+        "eval_count": 252,
+        "estimados": 3774
+      },
+      "load_duration_s": 0.0059302,
+      "diagnostico": {
+        "error": "ejecucion: no such column: vw_entregas_retrasos.dias_retraso",
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).",
+          "Falta el mínimo de 100 reseñas por categoría."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 10.762269800000013,
+        "load_duration_s": 0.0063716,
+        "texto": "El tipo de error es de división entera."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 2,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(vw_entregas_retrasos.dias_retraso) AS dias_retraso_promedio, AVG(vw_entregas_retrasos.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos))\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: no such column: vw_entregas_retrasos.dias_retraso)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de división entera.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "calificacion_promedio",
+          "pct_entregas_tardias"
+        ],
+        "segundos": 7.808270999999877
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "conjunto_igual",
+            "ok": false,
+            "motivo": "sin filas"
+          }
+        ]
+      },
+      "segundos_generacion": 15.135169700000006,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3904,
+        "eval_count": 237,
+        "estimados": 4266
+      },
+      "load_duration_s": 0.0056703,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [
+          "El % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL)."
+        ],
+        "sanidad": [
+          "La consulta no devolvió ninguna fila (0 filas)."
+        ]
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 10.651331999999911,
+        "load_duration_s": 0.00584,
+        "texto": "\"Recuerda que el % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).\"\n\nLa columna/tabla implicada en el error es `vw_entregas_retrasos` y la condición en `WHERE` que debe ser movida a `HAVING`."
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 3,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\n```\n\nResumen de su resultado: 0 filas\n\nRetroalimentación de un revisor:\n1. El tipo de error es de división entera.\n2. \"Recuerda que el % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).\"\n\nLa columna/tabla implicada en el error es `vw_entregas_retrasos` y la condición en `WHERE` que debe ser movida a `HAVING`.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "calificacion_promedio",
+          "pct_entregas_tardias"
+        ],
+        "segundos": 7.759973400000035
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "conjunto_igual",
+            "ok": false,
+            "motivo": "sin filas"
+          }
+        ]
+      },
+      "segundos_generacion": 15.592970599999717,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3938,
+        "eval_count": 247,
+        "estimados": 4327
+      },
+      "load_duration_s": 0.0089166,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [],
+        "sanidad": [
+          "La consulta no devolvió ninguna fila (0 filas)."
+        ]
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 14.601121400000011,
+        "load_duration_s": 0.007831,
+        "texto": "La trampa en la que cayó la consulta es que calcula el promedio global de las reseñas de pedidos válidos de manera incorrecta. En lugar de calcular el promedio global de todas las reseñas de pedidos válidos, la consulta está calculando el promedio de los promedios por categoría. Esto significa que la consulta está comparando el promedio de las reseñas de cada categoría con el promedio de los promedios de las reseñas de cada categoría, en lugar de comparar el promedio de las reseñas de cada categoría con el promedio global de todas las reseñas de pedidos válidos.\n\nPara evitar esta trampa, es importante calcular el promedio global de todas las reseñas de pedidos válidos de manera correcta, utilizando una subconsulta o una vista que agrupe todas las reseñas de pedidos válidos y calcule su promedio. De esta manera, se puede comparar el promedio de las reseñas de cada categoría"
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 4,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\n```\n\nResumen de su resultado: 0 filas\n\nRetroalimentación de un revisor:\n1. El tipo de error es de división entera.\n2. \"Recuerda que el % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).\"\n\nLa columna/tabla implicada en el error es `vw_entregas_retrasos` y la condición en `WHERE` que debe ser movida a `HAVING`.\n3. La trampa en la que cayó la consulta es que calcula el promedio global de las reseñas de pedidos válidos de manera incorrecta. En lugar de calcular el promedio global de todas las reseñas de pedidos válidos, la consulta está calculando el promedio de los promedios por categoría. Esto significa que la consulta está comparando el promedio de las reseñas de cada categoría con el promedio de los promedios de las reseñas de cada categoría, en lugar de comparar el promedio de las reseñas de cada categoría con el promedio global de todas las reseñas de pedidos válidos.\n\nPara evitar esta trampa, es importante calcular el promedio global de todas las reseñas de pedidos válidos de manera correcta, utilizando una subconsulta o una vista que agrupe todas las reseñas de pedidos válidos y calcule su promedio. De esta manera, se puede comparar el promedio de las reseñas de cada categoría\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "calificacion_promedio",
+          "pct_entregas_tardias"
+        ],
+        "segundos": 7.83391789999996
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "conjunto_igual",
+            "ok": false,
+            "motivo": "sin filas"
+          }
+        ]
+      },
+      "segundos_generacion": 17.65166199999976,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4171,
+        "eval_count": 247,
+        "estimados": 4701
+      },
+      "load_duration_s": 0.0059866,
+      "diagnostico": {
+        "error": null,
+        "forma": [],
+        "patrones": [],
+        "sanidad": [
+          "La consulta no devolvió ninguna fila (0 filas)."
+        ]
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 9.021133499999905,
+        "load_duration_s": 0.0060022,
+        "texto": "La trampa en la que cayó la consulta es que calcula el promedio global de las reseñas de pedidos válidos de manera incorrecta. En lugar de calcular el promedio global de todas las reseñas de pedidos válidos, la consulta calcula el promedio de los promedios por categoría. Esto significa que la consulta está comparando el promedio de las reseñas de cada categoría con el promedio de los promedios de las reseñas de cada categoría, en lugar de comparar el promedio de las reseñas de cada categoría con el promedio global de todas las reseñas de pedidos válidos.\n\nPara evitar esta trampa, es importante calcular el promedio global de todas las reseñas de pedidos válidos de manera correcta, utilizando una subconsulta o una vista que agrupe todas las reseñas de pedidos válidos y calcule su promedio. De esta manera, se puede comparar el promedio de las reseñas de cada categoría con"
+      }
+    },
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 5,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nTu consulta anterior:\n```sql\nSELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\n```\n\nResumen de su resultado: 0 filas\n\nRetroalimentación de un revisor:\n1. El tipo de error es de división entera.\n2. \"Recuerda que el % de entregas tardías debe calcularse solo sobre pedidos entregados (fecha de entrega al cliente no NULL).\"\n\nLa columna/tabla implicada en el error es `vw_entregas_retrasos` y la condición en `WHERE` que debe ser movida a `HAVING`.\n3. La trampa en la que cayó la consulta es que calcula el promedio global de las reseñas de pedidos válidos de manera incorrecta. En lugar de calcular el promedio global de todas las reseñas de pedidos válidos, la consulta está calculando el promedio de los promedios por categoría. Esto significa que la consulta está comparando el promedio de las reseñas de cada categoría con el promedio de los promedios de las reseñas de cada categoría, en lugar de comparar el promedio de las reseñas de cada categoría con el promedio global de todas las reseñas de pedidos válidos.\n\nPara evitar esta trampa, es importante calcular el promedio global de todas las reseñas de pedidos válidos de manera correcta, utilizando una subconsulta o una vista que agrupe todas las reseñas de pedidos válidos y calcule su promedio. De esta manera, se puede comparar el promedio de las reseñas de cada categoría\n4. La trampa en la que cayó la consulta es que calcula el promedio global de las reseñas de pedidos válidos de manera incorrecta. En lugar de calcular el promedio global de todas las reseñas de pedidos válidos, la consulta calcula el promedio de los promedios por categoría. Esto significa que la consulta está comparando el promedio de las reseñas de cada categoría con el promedio de los promedios de las reseñas de cada categoría, en lugar de comparar el promedio de las reseñas de cada categoría con el promedio global de todas las reseñas de pedidos válidos.\n\nPara evitar esta trampa, es importante calcular el promedio global de todas las reseñas de pedidos válidos de manera correcta, utilizando una subconsulta o una vista que agrupe todas las reseñas de pedidos válidos y calcule su promedio. De esta manera, se puede comparar el promedio de las reseñas de cada categoría con\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria, AVG(rv.review_score) AS calificacion_promedio, AVG(e.entrega_con_retraso) AS pct_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN products pr ON oi.product_id = pr.product_id LEFT JOIN product_category_translation t ON t.product_category_name = pr.product_category_name JOIN order_reviews rv ON rv.order_id = p.order_id JOIN vw_entregas_retrasos e ON e.order_id = p.order_id WHERE rv.review_score IS NOT NULL AND t.product_category_name_english != 'sin_categoria' AND e.order_delivered_customer_date IS NOT NULL GROUP BY t.product_category_name_english HAVING AVG(rv.review_score) < (SELECT AVG(review_score) FROM order_reviews WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND AVG(e.entrega_con_retraso) < (SELECT AVG(entrega_con_retraso) FROM vw_entregas_retrasos WHERE order_id IN (SELECT order_id FROM vw_pedidos_validos)) AND COUNT(DISTINCT t.product_category_name_english) >= 100",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "calificacion_promedio",
+          "pct_entregas_tardias"
+        ],
+        "segundos": 7.7709373000002415
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "conjunto_igual",
+            "ok": false,
+            "motivo": "sin filas"
+          }
+        ]
+      },
+      "segundos_generacion": 15.03287709999995,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4394,
+        "eval_count": 247,
+        "estimados": 5055
+      },
+      "load_duration_s": 0.0064737
+    }
+  ],
+  "segundos_caso": 153.48
+}

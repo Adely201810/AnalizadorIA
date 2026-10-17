@@ -20,8 +20,8 @@ import pandas as pd
 import streamlit as st
 
 from llm.bitacora import BitacoraEsquema
-from llm.juez import JuezLLM, texto_revision
-from llm.ollama_client import OllamaClient
+from llm.juez import JuezLLM, resolver_con_juez, texto_revision
+from llm.ollama_client import ContextoInsuficienteError, OllamaClient, OllamaError
 from llm.text_to_sql import (
     MENSAJE_ERROR_CHAT_GENERICO,
     MENSAJES_ERROR_CHAT,
@@ -31,6 +31,7 @@ from llm.text_to_sql import (
 )
 
 GROUND_TRUTH_PATH = Path(__file__).resolve().parent / "eval" / "ground_truth_olist.json"
+CASOS_JUEZ_PATH = Path(__file__).resolve().parent / "eval" / "casos_juez.json"
 
 st.set_page_config(page_title="Olist — Asistente de datos", page_icon="📊", layout="centered")
 
@@ -64,6 +65,15 @@ def get_preguntas_ejemplo() -> list[str]:
         return []
 
 
+@st.cache_data
+def get_casos_juez() -> list[dict]:
+    """Casos del juez iterativo (eval/casos_juez.json). Solo para el modo evaluación."""
+    try:
+        return json.loads(CASOS_JUEZ_PATH.read_text(encoding="utf-8"))["casos"]
+    except (FileNotFoundError, KeyError, json.JSONDecodeError):
+        return []
+
+
 def _iniciar_conversacion():
     st.session_state.mensajes = []
     st.session_state.pregunta_pendiente = None
@@ -73,6 +83,8 @@ if "mensajes" not in st.session_state:
     _iniciar_conversacion()
 if "pregunta_pendiente" not in st.session_state:
     st.session_state.pregunta_pendiente = None
+if "caso_juez_pendiente" not in st.session_state:
+    st.session_state.caso_juez_pendiente = None
 
 
 client = get_client()
@@ -87,11 +99,31 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.markdown("### 💡 Preguntas de ejemplo")
-    for pregunta in get_preguntas_ejemplo():
-        if st.button(pregunta, key=f"ejemplo_{pregunta}", width='stretch'):
-            st.session_state.pregunta_pendiente = pregunta
-            st.rerun()
+    # Fase 6 del juez (D-38): desactivado por defecto; no cambia el chat normal.
+    modo_juez = st.toggle(
+        "🧪 Modo evaluación con juez", value=False,
+        help="Para las 6 preguntas del catálogo del juez: muestra cada intento (SQL, error o resultado y pista). "
+             "El juez conoce la respuesta correcta; es una demostración, no el chat normal.",
+    )
+    if modo_juez:
+        st.caption("El veredicto lo decide una comparación determinista con la referencia del dashboard. "
+                   "El modelo nunca ve la referencia: solo su SQL anterior y las pistas.")
+        max_iter_juez = st.slider("Intentos máximos", 1, 5, 5)
+        antirrepeticion = st.checkbox("Anti-repetición (reintentos a T=0.5)", value=True)
+        reparar = st.checkbox("Reparación con el esquema real", value=True)
+        st.markdown("### 🧪 Preguntas del juez")
+        for caso in get_casos_juez():
+            if st.button(f"{caso['necesidad']}", key=f"juez_{caso['id']}", help=caso["pregunta"], width='stretch'):
+                st.session_state.caso_juez_pendiente = {
+                    "id": caso["id"], "max_iter": max_iter_juez, "antirrepeticion": antirrepeticion, "reparar": reparar,
+                }
+                st.rerun()
+    else:
+        st.markdown("### 💡 Preguntas de ejemplo")
+        for pregunta in get_preguntas_ejemplo():
+            if st.button(pregunta, key=f"ejemplo_{pregunta}", width='stretch'):
+                st.session_state.pregunta_pendiente = pregunta
+                st.rerun()
 
 st.title("📊 Asistente de datos — Olist")
 st.caption("Pregunta en español sobre pedidos, clientes, ventas y entregas del marketplace Olist.")
@@ -148,10 +180,43 @@ def _render_descarga_json(mensaje: dict, indice: int):
     )
 
 
+def _render_intento_juez(intento: dict, expandido: bool = False):
+    """Un intento del modo evaluación con juez: SQL, error o resultado, y la pista que recibió el modelo."""
+    correcto = intento["veredicto"]["correcto"]
+    titulo = f"Intento {intento['intento']} — {'✅ correcto' if correcto else '❌ incorrecto'}"
+    if intento.get("remuestreos"):
+        titulo += f" · {intento['remuestreos']} remuestreo(s) por SQL repetido"
+    with st.expander(titulo, expanded=expandido):
+        if intento.get("sql"):
+            st.code(intento["sql"], language="sql")
+        ejecucion = intento["ejecucion"]
+        if not ejecucion["ok"]:
+            st.markdown(f"**Error ({ejecucion['etapa']}):**")
+            st.code(ejecucion["error"] or "", language="text")
+        elif intento.get("muestra_filas"):
+            st.dataframe(pd.DataFrame(intento["muestra_filas"], columns=ejecucion["columnas"]), width='stretch')
+            st.caption(f"{intento['filas_obtenidas']} fila(s) en total; se muestran hasta 5.")
+        else:
+            st.caption("La consulta no devolvió filas.")
+        retro = intento.get("retroalimentacion")
+        if retro:
+            st.markdown("**Pista para el siguiente intento** (filtrada: no revela cifras ni el SQL de referencia):")
+            st.info(retro["texto"])
+
+
+def _render_juez(mensaje: dict):
+    for intento in mensaje["registro"]["intentos"]:
+        _render_intento_juez(intento)
+    with st.expander("Respuesta de referencia (dashboard)"):
+        st.markdown(mensaje["referencia"])
+
+
 for indice, mensaje in enumerate(st.session_state.mensajes):
     with st.chat_message(mensaje["rol"]):
         st.markdown(mensaje["texto"])
-        if mensaje["rol"] == "assistant":
+        if mensaje.get("tipo") == "juez":
+            _render_juez(mensaje)
+        elif mensaje["rol"] == "assistant":
             _render_detalle(mensaje)
             _render_descarga_json(mensaje, indice)
     if mensaje["rol"] == "assistant":
@@ -216,7 +281,56 @@ def _procesar_pregunta(pregunta: str):
         st.session_state.mensajes.append(mensaje)
 
 
+def _procesar_caso_juez(pendiente: dict):
+    """Modo evaluación con juez (Fase 6, D-38): resuelve un caso del catálogo mostrando cada intento en vivo."""
+    caso = next(c for c in get_casos_juez() if c["id"] == pendiente["id"])
+    st.session_state.mensajes.append({"rol": "user", "texto": f"🧪 {caso['pregunta']}"})
+    with st.chat_message("user"):
+        st.markdown(f"🧪 {caso['pregunta']}")
+
+    with st.chat_message("assistant"):
+        if not client.is_available():
+            st.markdown("No logro conectarme al motor de IA local (Ollama). Verifica que esté corriendo.")
+            return
+        with st.status("Resolviendo con el juez…", expanded=True) as estado:
+            def al_intento(registro: dict):
+                estado.update(label=f"Intento {registro['intento']} de {pendiente['max_iter']}…")
+                _render_intento_juez(registro, expandido=True)
+
+            try:
+                registro = resolver_con_juez(
+                    caso, client, max_iter=pendiente["max_iter"], temperatura=0.0, feedback="plantilla",
+                    reintento_temp=0.5 if pendiente["antirrepeticion"] else None,
+                    reparar_esquema=pendiente["reparar"], pistas_v2=pendiente["reparar"], al_intento=al_intento,
+                )
+            except (OllamaError, ContextoInsuficienteError) as exc:
+                estado.update(label="Error del motor de IA", state="error")
+                st.code(str(exc), language="text")
+                return
+            acierto = registro["acierto_final"]
+            estado.update(label=f"{'Correcto' if acierto else 'Sin acierto'} tras {registro['intentos_usados']} intento(s)",
+                          state="complete" if acierto else "error", expanded=False)
+
+        if acierto:
+            texto = f"✅ Respuesta correcta en el intento {registro['intentos_usados']} de {pendiente['max_iter']}."
+            if registro.get("sintesis"):
+                texto += f"\n\n{registro['sintesis']['texto']}"
+        else:
+            texto = f"❌ El modelo no acertó en {registro['intentos_usados']} intento(s)."
+        st.markdown(texto)
+        mensaje = {"rol": "assistant", "tipo": "juez", "texto": texto, "registro": registro,
+                   "referencia": caso["respuesta_nl_referencia"]}
+        with st.expander("Respuesta de referencia (dashboard)"):
+            st.markdown(mensaje["referencia"])
+        st.session_state.mensajes.append(mensaje)
+
+
 pregunta_nueva = st.chat_input("Escribe tu pregunta sobre el negocio...")
+
+if st.session_state.caso_juez_pendiente:
+    pendiente_juez = st.session_state.caso_juez_pendiente
+    st.session_state.caso_juez_pendiente = None
+    _procesar_caso_juez(pendiente_juez)
 
 if st.session_state.pregunta_pendiente:
     pregunta_nueva = st.session_state.pregunta_pendiente

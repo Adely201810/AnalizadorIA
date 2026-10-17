@@ -76,6 +76,13 @@ USAR_CLASIFICADOR_POR_DEFECTO = os.environ.get("TEXT2SQL_CLASIFICADOR", "0") == 
 # Límite de tiempo de ejecución del SQL generado. La consulta de referencia más
 # lenta del oráculo tarda ~10 s; 60 s deja margen (docs/FASE_03.md).
 LIMITE_EJECUCION_S = float(os.environ.get("TEXT2SQL_LIMITE_EJECUCION_S", "60"))
+# Cierre del juez (D-40). ENCENDIDOS por defecto: cumplieron D-23 juntos en DESARROLLO
+# (base 15/13/14, media 14.00 -> 14/15/17, media 15.33; mínimo 14 >= 14.00). =0 los apaga.
+#   TEXT2SQL_REPARAR_ESQUEMA    el reintento recibe, además del error, las columnas REALES del objeto
+#                               implicado y la ruta por tablas base (llm.juez.reparar_con_esquema; sin oráculo).
+#   TEXT2SQL_TEXTO_UMBRALES     el chequeo de "texto confiable" acepta los números que ya vienen en la pregunta.
+USAR_REPARAR_ESQUEMA = os.environ.get("TEXT2SQL_REPARAR_ESQUEMA", "1") == "1"
+USAR_TEXTO_UMBRALES = os.environ.get("TEXT2SQL_TEXTO_UMBRALES", "1") == "1"
 MAX_FILAS_PARA_SINTESIS = 50  # filas mostradas al modelo al sintetizar una consulta simple
 MAX_FILAS_POR_SUBCONSULTA = 15  # filas por sub-tabla en la síntesis integradora (pregunta abierta)
 
@@ -244,12 +251,15 @@ def _numero_respaldado(numero: float, decimales: int, numeros_datos: list[float]
     return False
 
 
-def _respuesta_respaldada_por_datos(respuesta: str, filas: list[tuple]) -> bool:
+def _respuesta_respaldada_por_datos(respuesta: str, filas: list[tuple], numeros_extra: list[float] | None = None) -> bool:
     """Todo número con decimales, y todo entero >= 10, debe corresponder
     (redondeando a la misma precisión con la que se escribió) a un valor real
     en `filas`. Los enteros < 10 se ignoran -- casi siempre son estructurales
-    (rankings, "1-2 frases", etc.), no cifras de negocio."""
-    numeros_datos = _numeros_de_filas(filas)
+    (rankings, "1-2 frases", etc.), no cifras de negocio.
+
+    `numeros_extra` (juez, ronda 2, D-37; el chat no lo pasa): números que también
+    cuentan como respaldados, p. ej. los umbrales que ya vienen en la pregunta."""
+    numeros_datos = _numeros_de_filas(filas) + list(numeros_extra or [])
     for numero, decimales in _extraer_numeros_respuesta(respuesta):
         if decimales == 0 and abs(numero) < 10:
             continue
@@ -544,6 +554,23 @@ class _ResolucionSQL:
 Verificador = Callable[[str, list, list], "tuple[bool, str | None]"]
 
 
+def _pista_con_reparacion(error: str, exc: Exception, sql: str) -> str:
+    """TEXT2SQL_REPARAR_ESQUEMA (D-40): añade al error real las columnas reales y la ruta por tablas
+    base (llm.juez.reparar_con_esquema, que solo lee el esquema de la base; no usa el oráculo)."""
+    from llm.juez import reparar_con_esquema
+
+    reparacion = reparar_con_esquema({
+        "ok": False, "etapa": "validacion" if isinstance(exc, SQLQualityError) else "ejecucion",
+        "error": error, "detalles": getattr(exc, "detalles", []), "sql": sql,
+    })
+    return f"{error} {reparacion}" if reparacion else error
+
+
+def _numeros_extra_sintesis(pregunta: str) -> list[float] | None:
+    """TEXT2SQL_TEXTO_UMBRALES (D-40): los números de la pregunta (umbrales) cuentan como respaldados."""
+    return [n for n, _ in _extraer_numeros_respuesta(pregunta)] if USAR_TEXTO_UMBRALES else None
+
+
 def _generar_y_ejecutar_llm(
     client: OllamaClient,
     pregunta: str,
@@ -635,10 +662,11 @@ def _generar_y_ejecutar_llm(
             error = str(exc) if isinstance(exc, SQLQualityError) else f"Error de SQLite al ejecutar la consulta: {exc}"
             if bitacora is not None:
                 bitacora.registrar(detalles_de_error(exc, esquema_real, sql_validado), pregunta)
-            registrar(clasificar_excepcion(exc), sql_validado, error, pista_siguiente=None if ultimo else error)
+            pista_error = _pista_con_reparacion(error, exc, sql_validado) if USAR_REPARAR_ESQUEMA else error
+            registrar(clasificar_excepcion(exc), sql_validado, error, pista_siguiente=None if ultimo else pista_error)
             sql_generado = sql_validado
             if not ultimo:
-                pista = error
+                pista = pista_error
                 continue
             resultado.sql = sql_validado
             resultado.error_detalle = error
@@ -801,7 +829,7 @@ def _answer_open_question(
 
     respuesta = sintetizar_respuesta_integradora(client, pregunta, sub_consultas)
     todas_las_filas = [fila for sc in sub_consultas for fila in sc["filas"]]
-    if not _respuesta_respaldada_por_datos(respuesta, todas_las_filas):
+    if not _respuesta_respaldada_por_datos(respuesta, todas_las_filas, _numeros_extra_sintesis(pregunta)):
         _log_resumen_no_confiable(pregunta, respuesta, todas_las_filas)
         respuesta = MENSAJE_RESUMEN_NO_CONFIABLE
 
@@ -894,7 +922,7 @@ def answer_question(
         resultado.respuesta = r.mensaje_fijo
     else:
         respuesta = sintetizar_respuesta(client, pregunta, r.sql, r.columnas, r.filas, len(r.filas), r.limite_sintesis)
-        if _respuesta_respaldada_por_datos(respuesta, r.filas):
+        if _respuesta_respaldada_por_datos(respuesta, r.filas, _numeros_extra_sintesis(pregunta)):
             resultado.respuesta = respuesta
         else:
             _log_resumen_no_confiable(pregunta, respuesta, r.filas)

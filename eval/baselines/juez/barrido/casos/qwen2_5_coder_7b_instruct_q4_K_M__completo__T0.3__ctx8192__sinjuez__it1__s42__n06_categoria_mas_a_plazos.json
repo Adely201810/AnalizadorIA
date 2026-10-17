@@ -1,0 +1,69 @@
+{
+  "caso": "n06_categoria_mas_a_plazos",
+  "necesidad": "6 · Pagos",
+  "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.3,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.3,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(100.0 * SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN order_payments t2 ON t2.order_id = t3.order_id JOIN vw_pedidos_validos t3 ON t3.order_id = t2.order_id WHERE t2.payment_type != 'not_defined' AND t1.product_category_name IS NOT NULL GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(100.0 * SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT t3.order_id), 2) AS pct_pagos_a_plazos FROM product_category_translation t1 LEFT JOIN order_payments t2 ON t2.order_id = t3.order_id JOIN vw_pedidos_validos t3 ON t3.order_id = t2.order_id WHERE t2.payment_type != 'not_defined' AND t1.product_category_name IS NOT NULL GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t3.order_id) >= 100 ORDER BY pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "product_category_name_english",
+          "pct_pagos_a_plazos"
+        ],
+        "segundos": 32.752654700000676
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          "watches_gifts",
+          51.68
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "ninguna fila contiene juntas las cifras clave"
+          }
+        ]
+      },
+      "segundos_generacion": 15.074655000000348,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5485,
+        "eval_count": 164,
+        "estimados": 5639
+      },
+      "load_duration_s": 0.0063321
+    }
+  ],
+  "segundos_caso": 47.83
+}

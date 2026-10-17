@@ -1,0 +1,6 @@
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__llm__it5 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=5 fugas=0 235.3s
+
+=== Resumen ===
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__llm__it5: acierto@1 0/1 | acierto@N 0/1 | intentos hasta acertar None | latencia/intento media 33.46 s | fugas bloqueadas 0 | prompt_eval_count máx 4217
+Tiempo total: 235.3 s · salida: C:\Users\alexp\OneDrive\Documentos\GitHub\AnalizadorIA\eval\baselines\juez\ciclo_qwen2_5-coder_llm_n08
+exit 0

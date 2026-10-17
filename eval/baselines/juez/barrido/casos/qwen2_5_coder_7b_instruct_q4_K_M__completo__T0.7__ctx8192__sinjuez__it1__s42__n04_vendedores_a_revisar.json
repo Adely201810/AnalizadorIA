@@ -1,0 +1,55 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.7,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.7,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(vi.seller_id), SUM(vi.price) FROM vw_ingresos_por_vendedor vi JOIN ( SELECT seller_id, AVG(review_score) AS avg_review_score, SUM(CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END) * 100.0 / COUNT(order_id) AS pct_late FROM vw_entregas_retrasos GROUP BY seller_id ) vtr ON vi.seller_id = vtr.seller_id WHERE vi.pedidos >= 30 AND (vtr.avg_review_score < 3.5 OR vtr.pct_late > 15)\"\n}",
+      "sql": "SELECT COUNT(vi.seller_id), SUM(vi.price) FROM vw_ingresos_por_vendedor vi JOIN ( SELECT seller_id, AVG(review_score) AS avg_review_score, SUM(CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END) * 100.0 / COUNT(order_id) AS pct_late FROM vw_entregas_retrasos GROUP BY seller_id ) vtr ON vi.seller_id = vtr.seller_id WHERE vi.pedidos >= 30 AND (vtr.avg_review_score < 3.5 OR vtr.pct_late > 15)",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'vi.price': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_articulos_vendidos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 14.611733200000344,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5522,
+        "eval_count": 143,
+        "estimados": 5678
+      },
+      "load_duration_s": 0.0047574
+    }
+  ],
+  "segundos_caso": 14.61
+}

@@ -1,0 +1,84 @@
+{
+  "caso": "c01_total_pedidos",
+  "necesidad": "Control (caso sencillo)",
+  "pregunta": "¿Cuántos pedidos hay en total en la base, contando todos los estatus (incluidos los cancelados y los no disponibles)?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 5,
+  "ronda2": {
+    "reintento_temp": 0.5,
+    "reparar_esquema": true,
+    "modo_edicion": false,
+    "pistas_v2": false
+  },
+  "acierto_1": true,
+  "acierto_final": true,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": {
+    "texto": "Hay un total de 99,441 pedidos en la base, incluyendo todos los estatus como cancelados y no disponibles.",
+    "texto_confiable": true,
+    "texto_confiable_con_umbrales": true,
+    "cifras_clave": 1,
+    "cifras_clave_presentes": 1,
+    "segundos": 4.352779099997861
+  },
+  "intentos": [
+    {
+      "caso": "c01_total_pedidos",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: ¿Cuántos pedidos hay en total en la base, contando todos los estatus (incluidos los cancelados y los no disponibles)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(order_id) AS total_pedidos FROM orders\"\n}",
+      "sql": "SELECT COUNT(order_id) AS total_pedidos FROM orders",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "total_pedidos"
+        ],
+        "segundos": 0.0133094999982859
+      },
+      "filas_obtenidas": 1,
+      "muestra_filas": [
+        [
+          99441
+        ]
+      ],
+      "veredicto": {
+        "correcto": true,
+        "comprobaciones": [
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": true,
+            "motivo": "valor encontrado"
+          }
+        ]
+      },
+      "segundos_generacion": 4.0747850999978255,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3397,
+        "eval_count": 20,
+        "estimados": 3473
+      },
+      "load_duration_s": 0.0057891,
+      "temperatura_usada": 0.0,
+      "seed_usada": 42,
+      "remuestreos": 0,
+      "sql_repetido": false
+    }
+  ],
+  "segundos_caso": 48.48
+}
