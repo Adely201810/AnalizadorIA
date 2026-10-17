@@ -153,6 +153,115 @@ class TestPromptCandidatoSinReferencia(unittest.TestCase):
                         self.assertGreater(reg["fugas_bloqueadas"], 0)
 
 
+class _ClienteFalso:
+    num_ctx = 8192
+
+    def __init__(self, model, respuesta):
+        self.model, self.respuesta, self.llamadas = model, respuesta, []
+
+    def contar_tokens(self, texto, keep_alive=None):
+        return len(texto) // 4
+
+    def generate_detallado(self, prompt, system=None, **kw):
+        self.llamadas.append({"prompt": prompt, **kw})
+        return {"response": self.respuesta(prompt, kw), "prompt_eval_count": 10}
+
+
+class TestRonda2(unittest.TestCase):
+    def test_normalizar_ignora_espacios_mayusculas_y_alias(self):
+        a = "SELECT COUNT(*) AS n FROM orders o WHERE o.order_status = 'x';"
+        b = "select  count(*) as total from orders AS z where z.order_status='x'"
+        self.assertEqual(juez.normalizar_sql(a), juez.normalizar_sql(b))
+        self.assertNotEqual(juez.normalizar_sql(a), juez.normalizar_sql(a.replace("'x'", "'y'")))
+
+    def test_sin_flags_el_ciclo_es_el_de_la_ronda_1(self):
+        cand = _ClienteFalso("c", lambda p, kw: json.dumps({"sql": "SELECT COUNT(*) AS x FROM sellers"}))
+        reg = juez.resolver_con_juez(_caso("n06"), cand, max_iter=3, sintetizar=False)
+        self.assertEqual(len(cand.llamadas), 3)
+        self.assertTrue(all(ll["temperature"] == 0.0 and ll["seed"] == 42 for ll in cand.llamadas))
+        self.assertEqual([i["remuestreos"] for i in reg["intentos"]], [0, 0, 0])
+
+    def test_antirrepeticion_remuestrea_sin_gastar_intento(self):
+        # Repite siempre el mismo SQL: cada reintento remuestrea 3 veces y luego lo acepta.
+        cand = _ClienteFalso("c", lambda p, kw: json.dumps({"sql": "SELECT COUNT(*) AS x FROM sellers"}))
+        reg = juez.resolver_con_juez(_caso("n06"), cand, max_iter=3, sintetizar=False, reintento_temp=0.5)
+        self.assertEqual(reg["intentos_usados"], 3)
+        self.assertEqual([i["remuestreos"] for i in reg["intentos"]], [0, 3, 3])
+        self.assertEqual(len(cand.llamadas), 1 + 4 + 4)
+        reintentos = cand.llamadas[1:]
+        self.assertTrue(all(ll["temperature"] == 0.5 for ll in reintentos))
+        self.assertEqual(len({ll["seed"] for ll in reintentos}), len(reintentos))  # semillas distintas
+        self.assertEqual(cand.llamadas[0]["temperature"], 0.0)
+
+    def test_antirrepeticion_acepta_un_sql_nuevo_al_primer_remuestreo(self):
+        sqls = iter(["SELECT 1 AS a FROM sellers", "SELECT 1 AS b FROM sellers", "SELECT 2 AS c FROM sellers"])
+        cand = _ClienteFalso("c", lambda p, kw: json.dumps({"sql": next(sqls)}))
+        reg = juez.resolver_con_juez(_caso("n06"), cand, max_iter=2, sintetizar=False, reintento_temp=0.5)
+        self.assertEqual([i["remuestreos"] for i in reg["intentos"]], [0, 1])
+        self.assertFalse(reg["intentos"][1]["sql_repetido"])
+
+    def test_reparacion_usa_columnas_reales_y_ruta(self):
+        ejec = juez.ejecutar_sql_candidato("SELECT p.payment_installments FROM products p")
+        rep = juez.reparar_con_esquema(ejec)
+        self.assertIn("products → order_items (por product_id) → order_payments (por order_id)", rep)
+        self.assertIn("product_weight_g", rep)  # leída de la base, no escrita a mano
+
+    def test_reparacion_con_error_de_sqlite(self):
+        ejec = juez.ejecutar_sql_candidato("SELECT review_score FROM vw_retraso_por_rango")
+        self.assertEqual(ejec["etapa"], "ejecucion")
+        rep = juez.reparar_con_esquema(ejec)
+        self.assertIn("columnas reales de vw_retraso_por_rango", rep)
+        self.assertIn("order_reviews", rep)
+
+    def test_la_reparacion_nunca_revela_la_respuesta(self):
+        sqls = ["SELECT review_score FROM vw_retraso_por_rango",
+                "SELECT s.seller_id FROM vw_entregas_retrasos s",
+                "SELECT t.payment_installments FROM products t",
+                "SELECT product_category_name_english FROM vw_ventas_pedido",
+                "SELECT x FROM tabla_que_no_existe"]
+        for sql in sqls:
+            rep = juez.reparar_con_esquema(juez.ejecutar_sql_candidato(sql))
+            self.assertTrue(rep, sql)
+            for caso in CASOS.values():
+                self.assertEqual(juez.detectar_fuga(rep, caso), [], (sql, caso["id"]))
+
+    def test_modo_edicion_y_pistas_v2_sin_fugas(self):
+        cand = _ClienteFalso("c", lambda p, kw: json.dumps({"sql": "SELECT p.order_id FROM products p"}))
+        for caso in CASOS.values():
+            cand.llamadas.clear()
+            reg = juez.resolver_con_juez(caso, cand, max_iter=3, sintetizar=False, reintento_temp=0.5,
+                                         reparar_esquema=True, modo_edicion=True, pistas_v2=True)
+            self.assertIn("Corrígelo cambiando SOLO lo necesario", cand.llamadas[-1]["prompt"])
+            self.assertIn("Reparación con el esquema real", reg["intentos"][0]["retroalimentacion"]["texto"])
+            for ll in cand.llamadas:
+                sin_sql_propio = re.sub(r"```sql.*?```", "", ll["prompt"], flags=re.S)
+                self.assertEqual(juez.detectar_fuga(sin_sql_propio, caso), [])
+                self.assertNotIn(caso["sql_referencia"], ll["prompt"])
+
+    def test_pistas_v2_empiezan_en_concepto(self):
+        caso = _caso("n06")
+        ejec = juez.ejecutar_sql_candidato("SELECT COUNT(*) AS x FROM order_items")
+        diag = juez.diagnosticar_intento(caso, ejec)
+        self.assertEqual(juez.retroalimentar("plantilla", caso, ejec, diag, 1, None, 1, None)["nivel"], 1)
+        r = juez.retroalimentar("plantilla", caso, ejec, diag, 1, None, 1, None, pistas_v2=True)
+        self.assertEqual(r["nivel"], 2)
+        self.assertIn("Posible causa", r["texto"])
+
+    def test_texto_confiable_acepta_umbrales_de_la_pregunta_solo_si_se_pide(self):
+        from llm.text_to_sql import _respuesta_respaldada_por_datos
+
+        texto = "Con ingresos de al menos R$ 5,000, la primera es christmas_supplies con 36.66%."
+        filas = [("christmas_supplies", 36.66)]
+        self.assertFalse(_respuesta_respaldada_por_datos(texto, filas))  # comportamiento del chat, igual
+        self.assertTrue(_respuesta_respaldada_por_datos(texto, filas, numeros_extra=[5000.0]))
+
+    def test_patron_validos_no_se_activa_con_vistas_que_ya_filtran(self):
+        caso = _caso("n04")
+        patron = next(p for p in caso["patrones_error"] if p["diagnostico"].startswith("No filtra pedidos válidos"))
+        self.assertIsNone(re.search(patron["regex"], "SELECT seller_id, ingresos FROM vw_ingresos_por_vendedor", re.I))
+        self.assertIsNotNone(re.search(patron["regex"], "SELECT seller_id, SUM(price) FROM order_items GROUP BY 1", re.I))
+
+
 class TestGuardaContexto(unittest.TestCase):
     def test_corta_si_no_deja_margen(self):
         verificar_margen_contexto(6000, 600, 8192)  # 6600 <= 7372.8

@@ -50,8 +50,12 @@ P_DIVISION_ENTERA = {
     "regex": r"\A(?![\s\S]*(100\.0|1\.0\s*\*|\*\s*1\.0|AS\s+REAL|AS\s+FLOAT|AVG\s*\())",
     "diagnostico": "El porcentaje se calcula sin forzar decimales: en SQLite entero/entero trunca (usa 100.0 * a / b).",
 }
+# Vistas de db/olist_views.sql que YA excluyen canceled/unavailable (ronda 2, lección 7, D-37): usarlas
+# no es "olvidar el filtro". vw_ventas_pedido y vw_entregas_retrasos traen todos los estatus.
+VISTAS_YA_VALIDAS = (r"vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor"
+                     r"|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos")
 P_SIN_VALIDOS = {
-    "regex": r"\A(?![\s\S]*(order_status|vw_pedidos_validos))",
+    "regex": rf"\A(?![\s\S]*(order_status|{VISTAS_YA_VALIDAS}))",
     "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'.",
 }
 P_FECHA_TRANSPORTISTA = {
@@ -87,7 +91,7 @@ CASOS = [
             "Contar filas de order_items u order_payments en lugar de orders cuenta artículos o pagos, no pedidos.",
         ],
         "patrones_error": [
-            {"regex": r"order_status|vw_pedidos_validos", "diagnostico": "La pregunta pide todos los estatus; no hay que filtrar por order_status."},
+            {"regex": rf"order_status|{VISTAS_YA_VALIDAS}", "diagnostico": "La pregunta pide todos los estatus; no hay que filtrar por order_status ni usar vistas que excluyen cancelados."},
             {"regex": r"\bFROM\s+(order_items|order_payments|order_reviews)\b", "diagnostico": "Cuenta filas de una tabla de detalle (artículos, pagos o reseñas), no pedidos."},
         ],
         "verificacion_dashboard": None,

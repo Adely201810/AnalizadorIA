@@ -24,6 +24,7 @@ import argparse
 import json
 import statistics
 import time
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
@@ -105,7 +106,18 @@ def resumir(registros: list[dict]) -> dict:
         "tokens_estimados_max": max((i["tokens"]["estimados"] or 0) for i in intentos) if intentos else None,
         "load_duration_total_s": round(sum(i["load_duration_s"] + i.get("retroalimentacion", {}).get("load_duration_s", 0.0)
                                            for i in intentos), 2),
+        "reintentos": sum(1 for i in intentos if i["intento"] > 1),
+        # SQL normalizado igual a uno ya probado en el mismo caso (misma métrica para ronda 1 y 2).
+        "reintentos_sql_repetido": sum(
+            1 for r in registros for k, i in enumerate(r["intentos"])
+            if k > 0 and juez.normalizar_sql(i.get("sql") or "") in
+            {juez.normalizar_sql(p.get("sql") or "") for p in r["intentos"][:k]}),
+        "remuestreos": sum(i.get("remuestreos", 0) for i in intentos),
+        "etapas": dict(sorted(Counter(
+            "correcto" if i["veredicto"]["correcto"] else (i["ejecucion"]["etapa"] or "resultado_incorrecto")
+            for i in intentos).items())),
         "sintesis_texto_confiable": sum(s["texto_confiable"] for s in sint) if sint else None,
+        "sintesis_texto_confiable_con_umbrales": sum(s.get("texto_confiable_con_umbrales", False) for s in sint) if sint else None,
         "sintesis_cifras_clave": f"{sum(s['cifras_clave_presentes'] for s in sint)}/{sum(s['cifras_clave'] for s in sint)}" if sint else None,
         "por_caso": {cid: [r["acierto_final"] for r in registros if r["caso"] == cid]
                      for cid in dict.fromkeys(r["caso"] for r in registros)},
@@ -129,6 +141,12 @@ def main() -> int:
     ap.add_argument("--etiqueta", default=None)
     ap.add_argument("--salida", default=None)
     ap.add_argument("--medir", action="store_true", help="solo mide tokens por esquema y VRAM por num_ctx")
+    # Ronda 2 (D-37): todo apagado por defecto.
+    ap.add_argument("--reintento-temp", type=float, nargs="?", const=0.5, default=None,
+                    help="anti-repetición: temperatura de los reintentos (sin valor: 0.5) y remuestreo si el SQL se repite")
+    ap.add_argument("--reparar-esquema", action="store_true", help="pista con columnas reales y ruta por tablas base")
+    ap.add_argument("--modo-edicion", action="store_true", help="el reintento pide corregir el SQL anterior")
+    ap.add_argument("--pistas-v2", action="store_true", help="diagnóstico determinista primero, sin el nivel 1")
     a = ap.parse_args()
 
     etiqueta = a.etiqueta or datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -155,8 +173,11 @@ def main() -> int:
         for esquema in a.esquema:
             for temp in a.temperatura:
                 semillas = [a.seed] if temp == 0 else [a.seed + i for i in range(a.repeticiones)]
+                ronda2 = "".join([f"-rt{a.reintento_temp:g}" if a.reintento_temp is not None else "",
+                                  "-rep" if a.reparar_esquema else "", "-edi" if a.modo_edicion else "",
+                                  "-pv2" if a.pistas_v2 else ""])
                 config = (f"{_slug(a.modelo)}__{esquema}__T{temp:g}__ctx{num_ctx}"
-                          f"__{a.feedback if a.max_iter > 1 else 'sinjuez'}__it{a.max_iter}")
+                          f"__{a.feedback if a.max_iter > 1 else 'sinjuez'}{ronda2}__it{a.max_iter}")
                 registros = []
                 for seed in semillas:
                     for caso in casos:
@@ -164,7 +185,8 @@ def main() -> int:
                         reg = juez.resolver_con_juez(
                             caso, candidato, esquema=esquema, max_iter=a.max_iter, temperatura=temp, seed=seed,
                             feedback=a.feedback, juez_client=juez_client, keep_alive=a.keep_alive,
-                            sintetizar=not a.sin_sintesis,
+                            sintetizar=not a.sin_sintesis, reintento_temp=a.reintento_temp,
+                            reparar_esquema=a.reparar_esquema, modo_edicion=a.modo_edicion, pistas_v2=a.pistas_v2,
                             al_intento=lambda r: (jsonl.write(json.dumps(r, ensure_ascii=False, default=str) + "\n"),
                                                   jsonl.flush()),
                         )

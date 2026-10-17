@@ -244,12 +244,15 @@ def _numero_respaldado(numero: float, decimales: int, numeros_datos: list[float]
     return False
 
 
-def _respuesta_respaldada_por_datos(respuesta: str, filas: list[tuple]) -> bool:
+def _respuesta_respaldada_por_datos(respuesta: str, filas: list[tuple], numeros_extra: list[float] | None = None) -> bool:
     """Todo número con decimales, y todo entero >= 10, debe corresponder
     (redondeando a la misma precisión con la que se escribió) a un valor real
     en `filas`. Los enteros < 10 se ignoran -- casi siempre son estructurales
-    (rankings, "1-2 frases", etc.), no cifras de negocio."""
-    numeros_datos = _numeros_de_filas(filas)
+    (rankings, "1-2 frases", etc.), no cifras de negocio.
+
+    `numeros_extra` (juez, ronda 2, D-37; el chat no lo pasa): números que también
+    cuentan como respaldados, p. ej. los umbrales que ya vienen en la pregunta."""
+    numeros_datos = _numeros_de_filas(filas) + list(numeros_extra or [])
     for numero, decimales in _extraer_numeros_respuesta(respuesta):
         if decimales == 0 and abs(numero) < 10:
             continue

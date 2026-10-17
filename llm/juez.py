@@ -185,7 +185,8 @@ def ejecutar_sql_candidato(sql: str) -> dict:
     )
     from llm.text_to_sql import execute_readonly
 
-    base = {"sql": sql, "ok": False, "etapa": None, "error": None, "columnas": [], "filas": [], "segundos": 0.0}
+    base = {"sql": sql, "ok": False, "etapa": None, "error": None, "columnas": [], "filas": [], "segundos": 0.0,
+            "detalles": []}
     if not sql or not sql.strip():
         return {**base, "etapa": "generacion", "error": "el modelo no devolvió ninguna consulta"}
     try:
@@ -195,7 +196,7 @@ def ejecutar_sql_candidato(sql: str) -> dict:
         check_columnas_existentes(limpio, get_esquema_real())
         check_dominios_join(limpio)
     except (SQLValidationError, SQLQualityError) as exc:
-        return {**base, "etapa": "validacion", "error": str(exc)}
+        return {**base, "etapa": "validacion", "error": str(exc), "detalles": getattr(exc, "detalles", [])}
     t0 = time.perf_counter()
     try:
         columnas, filas = execute_readonly(limpio)
@@ -468,15 +469,28 @@ def retro_llm(juez_client: OllamaClient, caso: dict, ejec: dict, diag: dict, niv
 
 
 def retroalimentar(modo: str, caso: dict, ejec: dict, diag: dict, intento: int, juez_client: OllamaClient | None,
-                   seed: int, keep_alive: str | None) -> dict:
-    nivel = nivel_pista(intento)
+                   seed: int, keep_alive: str | None, pistas_v2: bool = False, reparacion: str | None = None) -> dict:
+    """`pistas_v2` (ronda 2, D-37): se empieza en el nivel de concepto (sin el nivel 1 vago) y,
+    con pistas LLM, el diagnóstico determinista (mensaje real del validador) va siempre primero.
+    `reparacion`: texto de reparar_con_esquema(), que se añade y pasa por el mismo filtro."""
+    nivel = min(intento + 1, 3) if pistas_v2 else nivel_pista(intento)
     if modo == "llm":
         r = retro_llm(juez_client, caso, ejec, diag, nivel, seed, keep_alive)
+        if pistas_v2:
+            r["texto"] = f"{retro_plantilla(diag, nivel)} Revisor: {r['texto']}"
     elif modo == "plantilla":
         r = {"modo": "plantilla", "nivel": nivel, "fugas_bloqueadas": 0, "motivos_fuga": [], "fallback_plantilla": False,
              "segundos": 0.0, "load_duration_s": 0.0, "texto": retro_plantilla(diag, nivel)}
     else:
         raise ValueError(f"modo de retroalimentación desconocido: {modo!r}")
+    r["reparacion"] = None
+    if reparacion:
+        if detectar_fuga(reparacion, caso):
+            r["fugas_bloqueadas"] += 1
+            r["motivos_fuga"].append(detectar_fuga(reparacion, caso))
+        else:
+            r["texto"] = f"{r['texto']} {reparacion}"
+            r["reparacion"] = reparacion
     # Última barrera: NADA que revele la respuesta llega al candidato, venga de donde venga.
     motivos = detectar_fuga(r["texto"], caso)
     if motivos:
@@ -486,13 +500,131 @@ def retroalimentar(modo: str, caso: dict, ejec: dict, diag: dict, intento: int, 
     return r
 
 
+# --- Ronda 2 (D-37): anti-repetición y reparación con el esquema REAL (sin oráculo) ---
+
+_NO_ALIAS = {"where", "join", "left", "right", "inner", "outer", "cross", "full", "natural", "on", "using", "group",
+             "order", "limit", "having", "union", "except", "intersect", "window"}
+_RE_IDENT = re.compile(r"[a-z_][a-z0-9_]*$")
+
+
+def normalizar_sql(sql: str) -> str:
+    """Forma canónica para detectar SQL repetido: minúsculas, sin espacios ni ';' final, alias de
+    tabla sustituidos por el nombre de la tabla y alias de columna (AS x) anonimizados."""
+    toks = _tokens_sql((sql or "").strip().rstrip(";"))
+    alias, quitar = {}, set()
+    for i, t in enumerate(toks[:-1]):
+        if t in ("from", "join") and _RE_IDENT.match(toks[i + 1]):
+            j = i + 2
+            con_as = j < len(toks) and toks[j] == "as"
+            j += con_as
+            if j < len(toks) and _RE_IDENT.match(toks[j]) and toks[j] not in _NO_ALIAS:
+                alias[toks[j]] = toks[i + 1]
+                quitar |= {j, j - 1} if con_as else {j}
+    salida = []
+    for k, t in enumerate(toks):
+        if k in quitar:
+            continue
+        if k > 0 and toks[k - 1] == "as" and k - 1 not in quitar and _RE_IDENT.match(t) and t not in alias:
+            salida.append("_alias")
+        else:
+            salida.append(alias.get(t, t))
+    return " ".join(salida)
+
+
+def _objetos_del_sql(sql: str, esquema: dict[str, set[str]]) -> list[str]:
+    return list(dict.fromkeys(t.lower() for t in re.findall(r"\b(?:FROM|JOIN)\s+([A-Za-z_]\w*)", sql or "", re.I)
+                              if t.lower() in esquema))
+
+
+def _ruta_por_tablas_base(origen: str, columna: str, esquema: dict[str, set[str]]) -> str | None:
+    """Camino más corto (BFS por columnas de unión) desde `origen` hasta una TABLA BASE que tiene
+    `columna`. Las tablas intermedias son siempre tablas base."""
+    from llm.schema_context import COLUMNAS_UNION
+
+    def vecinos(t):
+        for otro, cols in esquema.items():
+            if otro == t or otro.startswith("vw_"):
+                continue
+            comunes = [c for c in COLUMNAS_UNION if c in esquema[t] and c in cols]
+            if comunes:
+                yield otro, comunes[0]
+
+    if origen not in esquema:
+        return None
+    visitados, cola = {origen}, [(origen, [])]
+    while cola:
+        nodo, camino = cola.pop(0)
+        if camino and columna in esquema[nodo]:
+            pasos = [origen] + [f"{t} (por {k})" for t, k in camino]
+            return " → ".join(pasos)
+        for otro, llave in vecinos(nodo):
+            if otro not in visitados:
+                visitados.add(otro)
+                cola.append((otro, camino + [(otro, llave)]))
+    return None
+
+
+def reparar_con_esquema(ejec: dict) -> str | None:
+    """Si el validador o SQLite rechazaron una columna o tabla: mensaje real, columnas REALES
+    (PRAGMA de la base) del objeto implicado y ruta por tablas base. No usa el oráculo."""
+    from llm.schema_context import get_esquema_real
+
+    if ejec.get("ok") or ejec.get("etapa") not in ("validacion", "ejecucion"):
+        return None
+    esquema = get_esquema_real()
+    error = ejec.get("error") or ""
+    faltantes: list[tuple[str | None, str]] = []
+    for d in ejec.get("detalles") or []:
+        if d.get("tipo") == "columna":
+            faltantes.append((d["tabla"], d["columna"]))
+    m = re.search(r"no such column: ([\w.]+)", error)
+    if m:
+        faltantes.append((None, m.group(1).split(".")[-1].lower()))
+    tablas_malas = [d["nombre"] for d in ejec.get("detalles") or [] if d.get("tipo") == "tabla"]
+    m = re.search(r"no such table: (\w+)", error)
+    if m:
+        tablas_malas.append(m.group(1).lower())
+    if not faltantes and not tablas_malas:
+        return None
+
+    partes = ["Reparación con el esquema real:"]
+    objetos = _objetos_del_sql(ejec.get("sql"), esquema)
+    listados = set()
+    for objeto, col in dict.fromkeys(faltantes):
+        implicados = [objeto] if objeto else objetos
+        for o in implicados:
+            if o not in listados:
+                listados.add(o)
+                partes.append(f"columnas reales de {o}: {', '.join(sorted(esquema[o]))}.")
+        bases = sorted(t for t, cols in esquema.items() if col in cols and not t.startswith("vw_"))
+        vistas = sorted(t for t, cols in esquema.items() if col in cols and t.startswith("vw_"))
+        if bases or vistas:
+            partes.append(f"La columna {col} existe en las tablas {', '.join(bases) or '(ninguna)'}"
+                          f"{' y en las vistas ' + ', '.join(vistas) if vistas else ''}.")
+            for o in implicados:
+                ruta = _ruta_por_tablas_base(o, col, esquema)
+                if ruta:
+                    partes.append(f"Ruta por tablas base para llegar a {col} desde {o}: {ruta}.")
+        else:
+            partes.append(f"La columna {col} no existe en ninguna tabla ni vista; búscala con otro nombre.")
+    for t in dict.fromkeys(tablas_malas):
+        partes.append(f"{t} no existe. Tablas y vistas reales: {', '.join(sorted(esquema))}.")
+    return " ".join(partes)
+
+
 # --- 5. Prompt del candidato y ciclo completo ---
 
-def prompt_candidato(pregunta: str, anterior: dict | None, pistas: list[str]) -> str:
+def prompt_candidato(pregunta: str, anterior: dict | None, pistas: list[str], modo_edicion: bool = False) -> str:
     """Lo ÚNICO que ve el candidato además del esquema: pregunta, su SQL anterior, el resumen de
-    su propio resultado y las pistas acumuladas (ya filtradas)."""
+    su propio resultado y las pistas acumuladas (ya filtradas). `modo_edicion` (ronda 2, D-37) pide
+    corregir el SQL anterior cambiando solo lo necesario en vez de generar uno nuevo."""
     partes = [f"Pregunta: {pregunta}"]
-    if anterior is not None:
+    if anterior is not None and modo_edicion:
+        partes.append(f"Este SQL tiene un problema. Corrígelo cambiando SOLO lo necesario:\n```sql\n{anterior.get('sql') or ''}\n```")
+        partes.append(f"Qué pasó al ejecutarlo: {_resumen_resultado(anterior)}")
+        partes.append("Indicaciones del revisor:\n" + "\n".join(f"{i}. {p}" for i, p in enumerate(pistas, 1)))
+        partes.append("Devuelve el SQL corregido completo.")
+    elif anterior is not None:
         partes.append(f"Tu consulta anterior:\n```sql\n{anterior.get('sql') or ''}\n```")
         partes.append(f"Resumen de su resultado: {_resumen_resultado(anterior)}")
         partes.append("Retroalimentación de un revisor:\n" + "\n".join(f"{i}. {p}" for i, p in enumerate(pistas, 1)))
@@ -537,6 +669,9 @@ def evaluar_sintesis(client: OllamaClient, caso: dict, ejec: dict) -> dict:
     presentes = [c for c in caso.get("cifras_clave_nl", [])
                  if any(_numero_respaldado(n, d, [float(c["valor"])]) for n, d in escritos)]
     return {"texto": texto, "texto_confiable": _respuesta_respaldada_por_datos(texto, filas),
+            # Ronda 2 (lección 5): los umbrales que ya vienen en la pregunta no son cifras inventadas.
+            "texto_confiable_con_umbrales": _respuesta_respaldada_por_datos(
+                texto, filas, numeros_extra=_numeros_en(caso["pregunta"])),
             "cifras_clave": len(caso.get("cifras_clave_nl", [])), "cifras_clave_presentes": len(presentes),
             "segundos": time.perf_counter() - t0}
 
@@ -554,23 +689,45 @@ def resolver_con_juez(
     keep_alive: str | None = "30m",
     sintetizar: bool = True,
     al_intento: Callable[[dict], None] | None = None,
+    reintento_temp: float | None = None,
+    max_remuestreos: int = 3,
+    reparar_esquema: bool = False,
+    modo_edicion: bool = False,
+    pistas_v2: bool = False,
 ) -> dict:
     """Ciclo generar -> ejecutar -> veredicto determinista -> diagnóstico -> pista, hasta acertar o
-    agotar max_iter. Devuelve el registro completo del caso (un dict por intento)."""
+    agotar max_iter. Devuelve el registro completo del caso (un dict por intento).
+
+    Ronda 2 (D-37), todo apagado por defecto (con los valores por defecto el ciclo es el de la ronda 1):
+      - reintento_temp: los intentos 2+ usan esa temperatura y la semilla seed + intento - 1; si el SQL
+        normalizado ya se probó en este caso, se vuelve a muestrear (hasta max_remuestreos) sin gastar intento.
+      - reparar_esquema: añade a la pista las columnas reales y la ruta por tablas base (reparar_con_esquema).
+      - modo_edicion: el reintento pide corregir el SQL anterior en vez de generar uno nuevo.
+      - pistas_v2: empieza en el nivel de concepto, con el diagnóstico determinista primero."""
     from llm.schema_context import get_schema_context
     from llm.text_to_sql import SQL_SYSTEM_PROMPT_TEMPLATE
 
     system = SQL_SYSTEM_PROMPT_TEMPLATE.format(schema=get_schema_context(esquema))
     tok_system = tokens_system(candidato, system, keep_alive)
     juez_client = juez_client or candidato
-    intentos, pistas, anterior = [], [], None
+    intentos, pistas, anterior, probados = [], [], None, set()
     for n in range(1, max_iter + 1):
-        prompt = prompt_candidato(caso["pregunta"], anterior, pistas)
+        prompt = prompt_candidato(caso["pregunta"], anterior, pistas, modo_edicion=modo_edicion)
+        antirrepeticion = reintento_temp is not None and n > 1
+        temp_n = reintento_temp if antirrepeticion else temperatura
+        seed_n = seed + n - 1 if antirrepeticion else seed
         t0 = time.perf_counter()
         try:
-            r = candidato.generate_detallado(prompt, system=system, num_predict=NUM_PREDICT_CANDIDATO,
-                                             temperature=temperatura, seed=seed, formato=FORMATO_SQL_JSON,
-                                             keep_alive=keep_alive, tokens_system=tok_system)
+            remuestreos = 0
+            while True:
+                r = candidato.generate_detallado(prompt, system=system, num_predict=NUM_PREDICT_CANDIDATO,
+                                                 temperature=temp_n, seed=seed_n + 1000 * remuestreos,
+                                                 formato=FORMATO_SQL_JSON, keep_alive=keep_alive,
+                                                 tokens_system=tok_system)
+                normal = normalizar_sql(extraer_sql_json(r["response"]))
+                if not antirrepeticion or normal not in probados or remuestreos >= max_remuestreos:
+                    break
+                remuestreos += 1
         except ContextoInsuficienteError as exc:
             # No se sigue con un prompt que Ollama recortaría: el caso termina aquí como fallo.
             registro = {"caso": caso["id"], "intento": n, "modelo": candidato.model, "esquema": esquema,
@@ -597,10 +754,15 @@ def resolver_con_juez(
             "tokens": {"system": tok_system, "prompt_eval_count": r.get("prompt_eval_count"),
                        "eval_count": r.get("eval_count"), "estimados": r.get("tokens_prompt_estimados")},
             "load_duration_s": (r.get("load_duration") or 0) / 1e9,
+            "temperatura_usada": temp_n, "seed_usada": seed_n, "remuestreos": remuestreos,
+            "sql_repetido": n > 1 and normal in probados,
         }
+        probados.add(normal)
         if not ver["correcto"] and n < max_iter:
             diag = diagnosticar_intento(caso, ejec)
-            retro = retroalimentar(feedback, caso, ejec, diag, n, juez_client, seed, keep_alive)
+            reparacion = reparar_con_esquema(ejec) if reparar_esquema else None
+            retro = retroalimentar(feedback, caso, ejec, diag, n, juez_client, seed, keep_alive,
+                                   pistas_v2=pistas_v2, reparacion=reparacion)
             registro["diagnostico"] = diag
             registro["retroalimentacion"] = retro
             pistas.append(retro["texto"])
@@ -619,6 +781,8 @@ def resolver_con_juez(
         "modelo": candidato.model, "juez_modelo": juez_client.model if feedback == "llm" else None,
         "esquema": esquema, "temperatura": temperatura, "seed": seed, "num_ctx": candidato.num_ctx,
         "feedback": feedback, "max_iter": max_iter,
+        "ronda2": {"reintento_temp": reintento_temp, "reparar_esquema": reparar_esquema,
+                   "modo_edicion": modo_edicion, "pistas_v2": pistas_v2},
         "acierto_1": intentos[0]["veredicto"]["correcto"], "acierto_final": ultimo["veredicto"]["correcto"],
         "intentos_usados": len(intentos),
         "fugas_bloqueadas": sum(i.get("retroalimentacion", {}).get("fugas_bloqueadas", 0) for i in intentos),

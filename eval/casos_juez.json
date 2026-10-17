@@ -33,8 +33,8 @@
       ],
       "patrones_error": [
         {
-          "regex": "order_status|vw_pedidos_validos",
-          "diagnostico": "La pregunta pide todos los estatus; no hay que filtrar por order_status."
+          "regex": "order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos",
+          "diagnostico": "La pregunta pide todos los estatus; no hay que filtrar por order_status ni usar vistas que excluyen cancelados."
         },
         {
           "regex": "\\bFROM\\s+(order_items|order_payments|order_reviews)\\b",
@@ -230,7 +230,7 @@
           "diagnostico": "Usa la fecha de entrega al transportista; la entrega al cliente es order_delivered_customer_date."
         },
         {
-          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos))",
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
           "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
         }
       ],
@@ -365,7 +365,7 @@
           "diagnostico": "No usa el nombre de categoría en inglés (product_category_translation.product_category_name_english)."
         },
         {
-          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos))",
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
           "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
         }
       ],
@@ -467,7 +467,7 @@
           "diagnostico": "No usa el nombre de categoría en inglés (product_category_translation.product_category_name_english)."
         },
         {
-          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos))",
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
           "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
         },
         {
@@ -561,7 +561,7 @@
           "diagnostico": "No usa el nombre de categoría en inglés (product_category_translation.product_category_name_english)."
         },
         {
-          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos))",
+          "regex": "\\A(?![\\s\\S]*(order_status|vw_pedidos_validos|vw_clientes_recurrentes|vw_ingresos_por_categoria|vw_ingresos_por_vendedor|vw_retraso_por_rango|vw_pedidos_entregados|vw_totales_pedido|vw_articulos_vendidos))",
           "diagnostico": "No filtra pedidos válidos: hay que excluir los estatus 'canceled' y 'unavailable'."
         }
       ],
