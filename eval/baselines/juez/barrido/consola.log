@@ -1,0 +1,94 @@
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 87.5s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 15.7s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 17.6s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1 s42 n05_categorias_peso_flete            @1=✔ @N=✔ intentos=1 fugas=0 16.3s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 13.5s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 20.9s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 14.8s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 13.5s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s42 n05_categorias_peso_flete            @1=✔ @N=✔ intentos=1 fugas=0 13.1s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 17.8s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 17.2s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s43 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s43 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 15.7s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s43 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 18.9s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s43 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 11.6s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s43 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 13.8s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s43 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 40.4s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s44 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 3.9s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s44 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 16.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s44 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 19.1s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s44 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 12.5s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s44 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 14.6s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1 s44 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 27.1s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 10.3s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 19.7s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s42 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 10.3s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 16.2s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 17.9s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s43 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s43 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 16.2s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s43 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 19.7s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s43 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 10.8s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s43 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 13.6s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s43 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 18.3s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s44 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s44 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 24.6s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s44 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 14.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s44 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 7.9s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s44 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 13.0s
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1 s44 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 21.0s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 118.0s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 16.5s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 13.4s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1 s42 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 10.9s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 14.0s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 20.6s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.1s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 10.0s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 24.6s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s42 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 11.4s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 47.8s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 28.1s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s43 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.3s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s43 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 17.1s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s43 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 18.5s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s43 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 10.9s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s43 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 14.6s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s43 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 18.2s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s44 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.3s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s44 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 16.4s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s44 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 14.8s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s44 n05_categorias_peso_flete            @1=✔ @N=✔ intentos=1 fugas=0 13.9s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s44 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 15.0s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1 s44 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 45.5s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s42 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.3s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s42 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 11.2s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s42 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 14.6s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s42 n05_categorias_peso_flete            @1=✔ @N=✔ intentos=1 fugas=0 14.0s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s42 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 16.8s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s42 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 21.4s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s43 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.3s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s43 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 13.9s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s43 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 20.2s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s43 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 11.5s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s43 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 17.2s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s43 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 23.6s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s44 c01_total_pedidos                    @1=✔ @N=✔ intentos=1 fugas=0 4.2s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s44 n02_quiebre_retraso_calificacion     @1=✘ @N=✘ intentos=1 fugas=0 17.9s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s44 n04_vendedores_a_revisar             @1=✘ @N=✘ intentos=1 fugas=0 20.5s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s44 n05_categorias_peso_flete            @1=✘ @N=✘ intentos=1 fugas=0 16.8s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s44 n06_categoria_mas_a_plazos           @1=✘ @N=✘ intentos=1 fugas=0 15.6s
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1 s44 n08_categorias_problema_producto     @1=✘ @N=✘ intentos=1 fugas=0 20.2s
+
+=== Resumen ===
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1: acierto@1 2/6 | acierto@N 2/6 | intentos hasta acertar 1 | latencia/intento media 18.25 s | fugas bloqueadas 0 | prompt_eval_count máx 3603
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1: acierto@1 4/18 | acierto@N 4/18 | intentos hasta acertar 1 | latencia/intento media 15.44 s | fugas bloqueadas 0 | prompt_eval_count máx 3603
+qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1: acierto@1 3/18 | acierto@N 3/18 | intentos hasta acertar 1 | latencia/intento media 13.64 s | fugas bloqueadas 0 | prompt_eval_count máx 3603
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1: acierto@1 1/6 | acierto@N 1/6 | intentos hasta acertar 1 | latencia/intento media 21.0 s | fugas bloqueadas 0 | prompt_eval_count máx 5564
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1: acierto@1 4/18 | acierto@N 4/18 | intentos hasta acertar 1 | latencia/intento media 17.75 s | fugas bloqueadas 0 | prompt_eval_count máx 5564
+qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1: acierto@1 4/18 | acierto@N 4/18 | intentos hasta acertar 1 | latencia/intento media 14.9 s | fugas bloqueadas 0 | prompt_eval_count máx 5564
+Tiempo total: 1476.1 s · salida: C:\Users\alexp\OneDrive\Documentos\GitHub\AnalizadorIA\eval\baselines\juez\barrido
+exit 0

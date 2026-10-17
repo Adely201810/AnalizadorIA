@@ -1,0 +1,353 @@
+{
+  "etiqueta": "barrido",
+  "inicio": "2026-10-17T04:22:10",
+  "argumentos": {
+    "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+    "juez_modelo": null,
+    "max_iter": 1,
+    "temperatura": [
+      0.0,
+      0.3,
+      0.7
+    ],
+    "num_ctx": [
+      8192
+    ],
+    "esquema": [
+      "compacto",
+      "completo"
+    ],
+    "feedback": "plantilla",
+    "repeticiones": 3,
+    "seed": 42,
+    "casos": null,
+    "sin_sintesis": true,
+    "keep_alive": "30m",
+    "etiqueta": "barrido",
+    "salida": null,
+    "medir": false
+  },
+  "configuraciones": {
+    "qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__sinjuez__it1": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "semillas": [
+        42
+      ],
+      "corridas_caso": 6,
+      "acierto_1": 2,
+      "acierto_N": 2,
+      "pct_acierto_1": 33.3,
+      "pct_acierto_N": 33.3,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 6,
+      "latencia_media_por_intento_s": 18.25,
+      "latencia_mediana_por_intento_s": 16.94,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 3603,
+      "tokens_estimados_max": 3778,
+      "load_duration_total_s": 0.03,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "c01_total_pedidos": [
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          true
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false
+        ]
+      }
+    },
+    "qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.3__ctx8192__sinjuez__it1": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.3,
+      "semillas": [
+        42,
+        43,
+        44
+      ],
+      "corridas_caso": 18,
+      "acierto_1": 4,
+      "acierto_N": 4,
+      "pct_acierto_1": 22.2,
+      "pct_acierto_N": 22.2,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 18,
+      "latencia_media_por_intento_s": 15.44,
+      "latencia_mediana_por_intento_s": 14.68,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 3603,
+      "tokens_estimados_max": 3778,
+      "load_duration_total_s": 0.1,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "c01_total_pedidos": [
+          true,
+          true,
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false,
+          false,
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false,
+          false,
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          true,
+          false,
+          false
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false,
+          false,
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false,
+          false,
+          false
+        ]
+      }
+    },
+    "qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0.7__ctx8192__sinjuez__it1": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.7,
+      "semillas": [
+        42,
+        43,
+        44
+      ],
+      "corridas_caso": 18,
+      "acierto_1": 3,
+      "acierto_N": 3,
+      "pct_acierto_1": 16.7,
+      "pct_acierto_N": 16.7,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 18,
+      "latencia_media_por_intento_s": 13.64,
+      "latencia_mediana_por_intento_s": 13.8,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 3603,
+      "tokens_estimados_max": 3778,
+      "load_duration_total_s": 0.1,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "c01_total_pedidos": [
+          true,
+          true,
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false,
+          false,
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false,
+          false,
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          false,
+          false,
+          false
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false,
+          false,
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false,
+          false,
+          false
+        ]
+      }
+    },
+    "qwen2_5_coder_7b_instruct_q4_K_M__completo__T0__ctx8192__sinjuez__it1": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.0,
+      "semillas": [
+        42
+      ],
+      "corridas_caso": 6,
+      "acierto_1": 1,
+      "acierto_N": 1,
+      "pct_acierto_1": 16.7,
+      "pct_acierto_N": 16.7,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 6,
+      "latencia_media_por_intento_s": 21.0,
+      "latencia_mediana_por_intento_s": 15.21,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 5564,
+      "tokens_estimados_max": 5739,
+      "load_duration_total_s": 0.03,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "c01_total_pedidos": [
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          false
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false
+        ]
+      }
+    },
+    "qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.3__ctx8192__sinjuez__it1": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.3,
+      "semillas": [
+        42,
+        43,
+        44
+      ],
+      "corridas_caso": 18,
+      "acierto_1": 4,
+      "acierto_N": 4,
+      "pct_acierto_1": 22.2,
+      "pct_acierto_N": 22.2,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 18,
+      "latencia_media_por_intento_s": 17.75,
+      "latencia_mediana_por_intento_s": 14.9,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 5564,
+      "tokens_estimados_max": 5739,
+      "load_duration_total_s": 0.11,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "c01_total_pedidos": [
+          true,
+          true,
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false,
+          false,
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false,
+          false,
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          false,
+          false,
+          true
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false,
+          false,
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false,
+          false,
+          false
+        ]
+      }
+    },
+    "qwen2_5_coder_7b_instruct_q4_K_M__completo__T0.7__ctx8192__sinjuez__it1": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.7,
+      "semillas": [
+        42,
+        43,
+        44
+      ],
+      "corridas_caso": 18,
+      "acierto_1": 4,
+      "acierto_N": 4,
+      "pct_acierto_1": 22.2,
+      "pct_acierto_N": 22.2,
+      "intentos_promedio_hasta_acertar": 1,
+      "intentos_totales": 18,
+      "latencia_media_por_intento_s": 14.9,
+      "latencia_mediana_por_intento_s": 16.2,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 5564,
+      "tokens_estimados_max": 5739,
+      "load_duration_total_s": 0.1,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "c01_total_pedidos": [
+          true,
+          true,
+          true
+        ],
+        "n02_quiebre_retraso_calificacion": [
+          false,
+          false,
+          false
+        ],
+        "n04_vendedores_a_revisar": [
+          false,
+          false,
+          false
+        ],
+        "n05_categorias_peso_flete": [
+          true,
+          false,
+          false
+        ],
+        "n06_categoria_mas_a_plazos": [
+          false,
+          false,
+          false
+        ],
+        "n08_categorias_problema_producto": [
+          false,
+          false,
+          false
+        ]
+      }
+    }
+  },
+  "segundos_totales": 1476.1
+}

@@ -1,0 +1,55 @@
+{
+  "caso": "n06_categoria_mas_a_plazos",
+  "necesidad": "6 · Pagos",
+  "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.3,
+  "seed": 43,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.3,
+      "seed": 43,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(t1.product_id), 2) AS pct_pagos_plazos FROM product_category_translation t1 JOIN products t2 ON t1.product_category_name = t2.product_category_name JOIN order_items t3 ON t2.product_id = t3.product_id JOIN order_payments t4 ON t3.order_id = t4.order_id WHERE t4.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(t1.product_id) >= 100 ORDER BY pct_pagos_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(t1.product_id), 2) AS pct_pagos_plazos FROM product_category_translation t1 JOIN products t2 ON t1.product_category_name = t2.product_category_name JOIN order_items t3 ON t2.product_id = t3.product_id JOIN order_payments t4 ON t3.order_id = t4.order_id WHERE t4.payment_type != 'not_defined' GROUP BY t1.product_category_name_english HAVING COUNT(t1.product_id) >= 100 ORDER BY pct_pagos_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 't2.payment_installments': la tabla/vista 'products' no tiene la columna 'payment_installments'. Esa columna sí existe en: order_payments. 't1.product_id': la tabla/vista 'product_category_translation' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 13.832288800000242,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3524,
+        "eval_count": 160,
+        "estimados": 3678
+      },
+      "load_duration_s": 0.004743
+    }
+  ],
+  "segundos_caso": 13.83
+}

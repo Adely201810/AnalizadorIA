@@ -1,0 +1,55 @@
+{
+  "caso": "n06_categoria_mas_a_plazos",
+  "necesidad": "6 · Pagos",
+  "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.7,
+  "seed": 43,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.7,
+      "seed": 43,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english, ROUND(100.0 * SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT t2.order_id), 2) AS pct_pagos_plazos FROM product_category_translation AS t1 INNER JOIN ( SELECT order_id, product_category_name, payment_installments FROM products AS t3 INNER JOIN order_items AS t4 ON t3.product_id = t4.product_id INNER JOIN order_payments AS t5 ON t4.order_id = t5.order_id WHERE t5.payment_type != 'not_defined' ) AS t2 ON t1.product_category_name = t2.product_category_name WHERE t2.payment_installments > 1 GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t2.order_id) >= 100 ORDER BY pct_pagos_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t1.product_category_name_english, ROUND(100.0 * SUM(CASE WHEN t2.payment_installments > 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT t2.order_id), 2) AS pct_pagos_plazos FROM product_category_translation AS t1 INNER JOIN ( SELECT order_id, product_category_name, payment_installments FROM products AS t3 INNER JOIN order_items AS t4 ON t3.product_id = t4.product_id INNER JOIN order_payments AS t5 ON t4.order_id = t5.order_id WHERE t5.payment_type != 'not_defined' ) AS t2 ON t1.product_category_name = t2.product_category_name WHERE t2.payment_installments > 1 GROUP BY t1.product_category_name_english HAVING COUNT(DISTINCT t2.order_id) >= 100 ORDER BY pct_pagos_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: order_id",
+        "columnas": [],
+        "segundos": 0.0012717999998130836
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 17.226189599999998,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5485,
+        "eval_count": 198,
+        "estimados": 5639
+      },
+      "load_duration_s": 0.0057086
+    }
+  ],
+  "segundos_caso": 17.23
+}

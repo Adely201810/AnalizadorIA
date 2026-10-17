@@ -214,3 +214,29 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Robustez medida** (alternativas razonables que NO cambian la respuesta): en n04, CUME_DIST vs PERCENT_RANK, ≥ 30 pedidos válidos vs de cualquier estatus y sin redondeo dan 13 y R$ 574,541.26; en n08, el conjunto no cambia sin redondeo; en n02, el filtro de válidos no cambia nada. Trampas que **sí** la cambian (se registran en `dificultades` y en `patrones_error`): reseñas sin promediar por pedido (n02, n04), días enteros (n02), AVG de razones o sin umbral (n05), conteo por artículo o MIN de cuotas (n06).
 - **Comparadores:** `criterio_aceptacion.comprobaciones` es una lista y deben cumplirse todas. Se reutilizan las tolerancias de `eval/comparador.py` (conteo exacto, dinero ±0.01 o 0.1 %, porcentaje ±0.006). La etiqueta de rango de n02 no se compara.
 - **Patrones de error:** ninguno se activa sobre su propia referencia (verificado en el generador). Son heurísticos: un patrón activado es un indicio para el diagnóstico, no un veredicto.
+
+## D-33 (C) Esquema `completo` y guarda contra truncamiento (Fase 2)
+- **Variante seleccionable:** `get_schema_context("completo")` o `TEXT2SQL_ESQUEMA=completo`. Por defecto sigue la compacta, así que el chat y la configuración congelada no cambian (system prompt compacto idéntico: 12,984 caracteres).
+- **Contenido:** por tabla, para qué sirve; por columna, descripción, tipo, PK/FK/NULL, formato real leído de la base y la lista completa de valores si la columna tiene ≤ 12 valores distintos (order_status, payment_type, review_score). Luego vistas, columnas de unión, las notas de siempre, la nota nueva de división entera (`100.0 * a / b`) y los mismos 10 ejemplos.
+- **Hallazgo:** las fechas reales son `'YYYY-MM-DD HH:MM:SS.ffffff'`, con microsegundos, no `'YYYY-MM-DD HH:MM:SS'` como decía la tarea. El esquema completo dice el formato real.
+- **Tamaño medido** (`prompt_eval_count`, con un prefijo único para neutralizar la caché): system compacto 3,333 tokens (qwen) / 3,329 (llama3.1); completo 18,671 caracteres, 5,294 / 5,151 tokens.
+- **Guarda:** `OllamaClient.generate_detallado` estima ANTES de llamar (tokens del system medidos + prompt de usuario a 2.5 caracteres/token, por exceso, + 64 de plantilla) y DESPUÉS usa el máximo de esa cifra y `prompt_eval_count`. Si prompt + num_predict deja menos del 10 % libre de num_ctx, lanza `ContextoInsuficienteError`. No se compara solo contra `prompt_eval_count` porque la caché de prefijos de Ollama lo reduce.
+- **`generate()` no cambió:** lo nuevo (`format`, `seed`, `keep_alive`, conteo de tokens, `/api/ps`) son métodos aparte.
+
+## D-34 (C) Juez iterativo (Fase 3)
+- **Dónde:** `llm/juez.py` ya existía y lo usa el chat (opinar, diagnosticar, evaluar_sensatez). Se añadió una sección nueva con las funciones del juez iterativo; las clases existentes no se tocaron.
+- **Veredicto:** 100 % determinista (`veredicto_caso`), con las tolerancias de `eval/comparador.py`. El LLM solo redacta pistas.
+- **Diagnóstico sin valores:** la forma se describe de manera cualitativa ("la pregunta pide una sola fila", "más filas de las esperadas") y nunca se da el número de filas esperado, porque en n08 ese número es la respuesta (11).
+- **Escalado de pistas:** intento 1 = tipo de error; 2 = concepto implicado (en la plantilla, los patrones activados); 3+ = la trampa concreta (en la plantilla, además, la lista de conceptos de revisión).
+- **Filtro anti-fuga** (`detectar_fuga`), aplicado a TODA pista (LLM o plantilla) antes de que llegue al candidato:
+  - Números del resultado esperado y de las cifras clave, también redondeados (19.1 por 19.08). Se permiten los que ya aparecen en la pregunta (umbrales) y los enteros < 10.
+  - Valores de texto esperados (categorías), comparados por palabra completa: "art" no bloquea "artículos".
+  - 6 o más tokens seguidos del SQL de referencia.
+  - Si la pista LLM revela algo, se regenera una vez; si vuelve a revelar, se usa la plantilla. Si aun así algo se cuela, se reemplaza por un texto genérico.
+- **Prompt del candidato:** solo la pregunta, su SQL anterior, el resumen de su propio resultado (≤ 5 filas) y las pistas acumuladas. El system prompt es el mismo esquema (se aprovecha la caché). Salida con `format` = JSON schema `{"sql": ...}`, `seed` fija y `keep_alive` de 30 min.
+- **Prueba de no fuga:** `tests/test_juez_iterativo.py` corre el ciclo con un candidato falso y un juez que intenta filtrar la respuesta y el SQL de referencia. Comprueba que ningún prompt del candidato contiene el SQL de referencia, la respuesta de referencia ni cifras o valores esperados. Excepción documentada: el SQL anterior del propio candidato puede compartir n-gramas genéricos con la referencia (p. ej. `SELECT COUNT(*) AS`), así que el chequeo de n-gramas excluye ese bloque.
+
+## D-35 (C) Experimentos del juez (Fase 4): modelo juez y num_ctx
+- **Juez = mismo modelo que el candidato.** Cargar un modelo cuesta unos 20-23 s (`load_duration` medido: qwen 21-23 s, llama3.1 20-21 s). qwen (5.15 GB) y llama3.1 (5.82 GB) no caben juntos en los 8 GB de la RX 6600, así que alternar candidato y juez recargaría un modelo en cada pista.
+- **VRAM por num_ctx** (`/api/ps`): qwen 8192 = 5.15 GB, 12288 = 5.23 GB, 16384 = 5.47 GB, todo en VRAM. llama3.1 8192 = 5.82 GB, 12288 = 6.36 GB, todo en VRAM; 16384 = 7.26 GB con solo 6.50 GB en VRAM (**descarga a CPU**). 16384 queda descartado para llama3.1.
+- **num_ctx del barrido (solo intento 1): 8192.** Es el menor que cabe con margen en ambos esquemas: completo 5,294 + ~300 de pregunta + 600 de num_predict ≈ 6,200 < 7,373 (90 %).

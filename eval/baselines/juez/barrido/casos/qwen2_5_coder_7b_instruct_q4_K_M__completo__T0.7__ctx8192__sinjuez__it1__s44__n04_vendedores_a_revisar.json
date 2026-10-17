@@ -1,0 +1,55 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.7,
+  "seed": 44,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.7,
+      "seed": 44,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(*) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(calificacion) AS calificacion, SUM(CASE WHEN entrega_tardia = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias FROM ( SELECT o.seller_id, o.order_id, SUM(oi.price) AS price, AVG(rv.review_score) AS calificacion, CASE WHEN oj.dias_retraso > 0 THEN 1 ELSE 0 END AS entrega_tardia FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN vw_entregas_retrasos oj ON oj.order_id = o.order_id LEFT JOIN order_reviews rv ON oj.order_id = rv.order_id GROUP BY o.seller_id, o.order_id ) AS subquery GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) WHERE (calificacion < 3.5 OR pct_entregas_tardias >= 15)\"\n}",
+      "sql": "SELECT COUNT(*) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(calificacion) AS calificacion, SUM(CASE WHEN entrega_tardia = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_entregas_tardias FROM ( SELECT o.seller_id, o.order_id, SUM(oi.price) AS price, AVG(rv.review_score) AS calificacion, CASE WHEN oj.dias_retraso > 0 THEN 1 ELSE 0 END AS entrega_tardia FROM orders o JOIN order_items oi ON o.order_id = oi.order_id JOIN vw_entregas_retrasos oj ON oj.order_id = o.order_id LEFT JOIN order_reviews rv ON oj.order_id = rv.order_id GROUP BY o.seller_id, o.order_id ) AS subquery GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) WHERE (calificacion < 3.5 OR pct_entregas_tardias >= 15)",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'o.seller_id': la tabla/vista 'orders' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 20.530031100000087,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5522,
+        "eval_count": 241,
+        "estimados": 5678
+      },
+      "load_duration_s": 0.0057374
+    }
+  ],
+  "segundos_caso": 20.53
+}

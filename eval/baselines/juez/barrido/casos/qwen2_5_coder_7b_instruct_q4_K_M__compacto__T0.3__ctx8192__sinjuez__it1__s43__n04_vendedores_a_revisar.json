@@ -1,0 +1,55 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.3,
+  "seed": 43,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.3,
+      "seed": 43,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score_promedio) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(order_id) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.seller_id = vw_entregas_retrasos.seller_id INNER JOIN order_reviews ON vw_entregas_retrasos.order_id = order_reviews.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos IN ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 23 )\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score_promedio) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(order_id) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.seller_id = vw_entregas_retrasos.seller_id INNER JOIN order_reviews ON vw_entregas_retrasos.order_id = order_reviews.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos IN ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 23 )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 18.918743500000346,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3561,
+        "eval_count": 236,
+        "estimados": 3717
+      },
+      "load_duration_s": 0.0052375
+    }
+  ],
+  "segundos_caso": 18.92
+}

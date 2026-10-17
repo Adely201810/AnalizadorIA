@@ -1,0 +1,55 @@
+{
+  "caso": "n05_categorias_peso_flete",
+  "necesidad": "5 · Flete",
+  "pregunta": "Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.3,
+  "seed": 44,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.3,
+      "seed": 44,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t.categoria_ingles, ROUND((t.flete_total / t.ingresos) * 100, 2) AS porcentaje_flete FROM ( SELECT COALESCE(t2.product_category_name_english, 'sin_categoria') AS categoria_ingles, SUM(oi.price) AS ingresos, SUM(oi.freight_value) AS flete_total FROM vw_ingresos_por_categoria t1 LEFT JOIN product_category_translation t2 ON t2.product_category_name = t1.categoria_ingles WHERE t1.ingresos >= 5000 GROUP BY categoria_ingles ) t ORDER BY porcentaje_flete DESC LIMIT 3\"\n}",
+      "sql": "SELECT t.categoria_ingles, ROUND((t.flete_total / t.ingresos) * 100, 2) AS porcentaje_flete FROM ( SELECT COALESCE(t2.product_category_name_english, 'sin_categoria') AS categoria_ingles, SUM(oi.price) AS ingresos, SUM(oi.freight_value) AS flete_total FROM vw_ingresos_por_categoria t1 LEFT JOIN product_category_translation t2 ON t2.product_category_name = t1.categoria_ingles WHERE t1.ingresos >= 5000 GROUP BY categoria_ingles ) t ORDER BY porcentaje_flete DESC LIMIT 3",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: oi.price",
+        "columnas": [],
+        "segundos": 0.0014130000004115573
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 12.456171199999972,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3478,
+        "eval_count": 145,
+        "estimados": 3597
+      },
+      "load_duration_s": 0.0049661
+    }
+  ],
+  "segundos_caso": 12.46
+}

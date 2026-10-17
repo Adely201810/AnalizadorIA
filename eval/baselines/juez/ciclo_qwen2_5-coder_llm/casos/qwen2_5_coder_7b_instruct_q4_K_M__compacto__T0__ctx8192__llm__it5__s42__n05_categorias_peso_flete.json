@@ -1,0 +1,98 @@
+{
+  "caso": "n05_categorias_peso_flete",
+  "necesidad": "5 · Flete",
+  "pregunta": "Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": true,
+  "acierto_final": true,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": {
+    "texto": "Las 3 categorías de productos con ingresos de al menos R$ 5,000 y donde el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), son:\n\n1. **Christmas Supplies** con un porcentaje de flete del **36.66%**.\n2. **Signaling and Security** con un porcentaje de flete del **30.26%**.\n3. **Food & Drink** con un porcentaje de flete del **29.69%**.",
+    "texto_confiable": false,
+    "cifras_clave": 3,
+    "cifras_clave_presentes": 3,
+    "segundos": 10.876169799999843
+  },
+  "intentos": [
+    {
+      "caso": "n05_categorias_peso_flete",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete FROM order_items oi LEFT JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE oi.order_id IN (SELECT order_id FROM vw_pedidos_validos) GROUP BY categoria HAVING SUM(oi.price) >= 5000 ORDER BY porcentaje_flete DESC LIMIT 3\"\n}",
+      "sql": "SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete FROM order_items oi LEFT JOIN products p ON oi.product_id = p.product_id LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE oi.order_id IN (SELECT order_id FROM vw_pedidos_validos) GROUP BY categoria HAVING SUM(oi.price) >= 5000 ORDER BY porcentaje_flete DESC LIMIT 3",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "porcentaje_flete"
+        ],
+        "segundos": 1.6534308000000237
+      },
+      "filas_obtenidas": 3,
+      "muestra_filas": [
+        [
+          "christmas_supplies",
+          36.66
+        ],
+        [
+          "signaling_and_security",
+          30.26
+        ],
+        [
+          "food_drink",
+          29.69
+        ]
+      ],
+      "veredicto": {
+        "correcto": true,
+        "comprobaciones": [
+          {
+            "comparador": "top_k_igual",
+            "ok": true,
+            "motivo": "top coincide"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": true,
+            "motivo": "fila encontrada"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": true,
+            "motivo": "fila encontrada"
+          },
+          {
+            "comparador": "fila_contiene",
+            "ok": true,
+            "motivo": "fila encontrada"
+          }
+        ]
+      },
+      "segundos_generacion": 11.599337599999672,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3478,
+        "eval_count": 131,
+        "estimados": 3597
+      },
+      "load_duration_s": 0.0047765
+    }
+  ],
+  "segundos_caso": 24.13
+}

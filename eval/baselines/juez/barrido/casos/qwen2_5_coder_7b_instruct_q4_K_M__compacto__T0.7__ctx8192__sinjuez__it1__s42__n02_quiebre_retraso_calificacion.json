@@ -1,0 +1,55 @@
+{
+  "caso": "n02_quiebre_retraso_calificacion",
+  "necesidad": "2 · Retraso vs reseñas",
+  "pregunta": "Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.7,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.7,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, orden, pedidos, calificacion_promedio, pct_1_2_estrellas, pct_1_2_estrellas_a_tiempo FROM vw_retraso_por_rango WHERE pct_1_2_estrellas_a_tiempo * 2 <= pct_1_2_estrellas ORDER BY pct_1_2_estrellas DESC LIMIT 1\"\n}",
+      "sql": "SELECT rango_retraso, orden, pedidos, calificacion_promedio, pct_1_2_estrellas, pct_1_2_estrellas_a_tiempo FROM vw_retraso_por_rango WHERE pct_1_2_estrellas_a_tiempo * 2 <= pct_1_2_estrellas ORDER BY pct_1_2_estrellas DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "no such column: pct_1_2_estrellas_a_tiempo",
+        "columnas": [],
+        "segundos": 0.001403400000071997
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 10.319101900000078,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3603,
+        "eval_count": 87,
+        "estimados": 3757
+      },
+      "load_duration_s": 0.0052285
+    }
+  ],
+  "segundos_caso": 10.32
+}

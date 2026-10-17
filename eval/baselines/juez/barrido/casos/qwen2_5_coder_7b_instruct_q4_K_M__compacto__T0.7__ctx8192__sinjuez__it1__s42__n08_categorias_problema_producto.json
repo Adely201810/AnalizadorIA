@@ -1,0 +1,55 @@
+{
+  "caso": "n08_categorias_problema_producto",
+  "necesidad": "8 · Insatisfacción",
+  "pregunta": "Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.7,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.7,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t.categoria_ingles, mala_calificacion, porcentaje_retrasos FROM ( SELECT c.product_category_name_english AS categoria_ingles, AVG(rv.review_score) AS mala_calificacion, AVG(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END) AS porcentaje_retrasos FROM vw_ventas_pedido o JOIN order_reviews rv ON o.order_id = rv.order_id LEFT JOIN product_category_translation c ON c.product_category_name = o.product_category_name WHERE o.order_status IN ('delivered') GROUP BY c.product_category_name_english ) t WHERE t.mala_calificacion < ( SELECT AVG(review_score) FROM order_reviews WHERE order_id IN ( SELECT order_id FROM vw_pedidos_validos ) ) AND t.porcentaje_retrasos < ( SELECT AVG(CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END) FROM vw_pedidos_validos WHERE order_status = 'delivered' )\"\n}",
+      "sql": "SELECT t.categoria_ingles, mala_calificacion, porcentaje_retrasos FROM ( SELECT c.product_category_name_english AS categoria_ingles, AVG(rv.review_score) AS mala_calificacion, AVG(CASE WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 ELSE 0 END) AS porcentaje_retrasos FROM vw_ventas_pedido o JOIN order_reviews rv ON o.order_id = rv.order_id LEFT JOIN product_category_translation c ON c.product_category_name = o.product_category_name WHERE o.order_status IN ('delivered') GROUP BY c.product_category_name_english ) t WHERE t.mala_calificacion < ( SELECT AVG(review_score) FROM order_reviews WHERE order_id IN ( SELECT order_id FROM vw_pedidos_validos ) ) AND t.porcentaje_retrasos < ( SELECT AVG(CASE WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1 ELSE 0 END) FROM vw_pedidos_validos WHERE order_status = 'delivered' )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'o.order_delivered_customer_date': la tabla/vista 'vw_ventas_pedido' no tiene la columna 'order_delivered_customer_date'. Esa columna sí existe en: orders, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos. 'o.order_estimated_delivery_date': la tabla/vista 'vw_ventas_pedido' no tiene la columna 'order_estimated_delivery_date'. Esa columna sí existe en: orders, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos. 'o.product_category_name': la tabla/vista 'vw_ventas_pedido' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 17.844551800000318,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3583,
+        "eval_count": 216,
+        "estimados": 3778
+      },
+      "load_duration_s": 0.0049878
+    }
+  ],
+  "segundos_caso": 17.85
+}

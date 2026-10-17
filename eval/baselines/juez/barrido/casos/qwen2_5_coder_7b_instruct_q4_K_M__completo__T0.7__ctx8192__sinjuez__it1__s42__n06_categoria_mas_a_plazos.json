@@ -1,0 +1,55 @@
+{
+  "caso": "n06_categoria_mas_a_plazos",
+  "necesidad": "6 · Pagos",
+  "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.7,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.7,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t.categoria_ingles, t.pct_pagos_a_plazos FROM ( SELECT COALESCE(pt.product_category_name_english, 'sin_categoria') AS categoria_ingles, SUM(CASE WHEN p.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT o.order_id) AS pct_pagos_a_plazos FROM order_payments p JOIN orders o ON p.order_id = o.order_id JOIN order_items oi ON o.order_id = oi.order_id LEFT JOIN product_category_translation pt ON oi.product_id = pt.product_id WHERE o.order_status NOT IN ('canceled', 'unavailable') AND p.payment_type != 'not_defined' GROUP BY categoria_ingles HAVING COUNT(DISTINCT o.order_id) >= 100 ) t ORDER BY t.pct_pagos_a_plazos DESC LIMIT 1\"\n}",
+      "sql": "SELECT t.categoria_ingles, t.pct_pagos_a_plazos FROM ( SELECT COALESCE(pt.product_category_name_english, 'sin_categoria') AS categoria_ingles, SUM(CASE WHEN p.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT o.order_id) AS pct_pagos_a_plazos FROM order_payments p JOIN orders o ON p.order_id = o.order_id JOIN order_items oi ON o.order_id = oi.order_id LEFT JOIN product_category_translation pt ON oi.product_id = pt.product_id WHERE o.order_status NOT IN ('canceled', 'unavailable') AND p.payment_type != 'not_defined' GROUP BY categoria_ingles HAVING COUNT(DISTINCT o.order_id) >= 100 ) t ORDER BY t.pct_pagos_a_plazos DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'pt.product_id': la tabla/vista 'product_category_translation' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 16.76083170000038,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5485,
+        "eval_count": 191,
+        "estimados": 5639
+      },
+      "load_duration_s": 0.005774
+    }
+  ],
+  "segundos_caso": 16.76
+}

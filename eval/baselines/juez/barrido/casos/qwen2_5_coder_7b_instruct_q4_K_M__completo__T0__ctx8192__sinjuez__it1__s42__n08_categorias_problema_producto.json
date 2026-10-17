@@ -1,0 +1,65 @@
+{
+  "caso": "n08_categorias_problema_producto",
+  "necesidad": "8 · Insatisfacción",
+  "pregunta": "Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "completo",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 1,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 1,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n08_categorias_problema_producto",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "completo",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": null,
+      "prompt_candidato": "Pregunta: Usa solo pedidos válidos (sin contar cancelados ni no disponibles). Las reseñas de una categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') son las reseñas de los pedidos que tienen algún artículo de esa categoría (cada reseña cuenta una vez por categoría, aunque el pedido tenga varios artículos de ella). Considera solo categorías con al menos 100 reseñas. Una categoría tiene mala calificación si el promedio de sus reseñas es menor que el promedio de todas las reseñas de pedidos válidos. Su % de entregas tardías es el porcentaje de sus pedidos entregados al cliente en los que la entrega real fue posterior a la estimada, y el % global se calcula igual sobre todos los pedidos válidos entregados. ¿Qué categorías tienen mala calificación y, a la vez, un % de entregas tardías menor que el global (es decir, la insatisfacción no se explica por retrasos)?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT t1.product_category_name_english AS categoria, AVG(t2.review_score) AS calificacion_promedio, AVG(CASE WHEN t3.dias_retraso > 0 THEN 1 ELSE 0 END) AS pct_retrasos FROM product_category_translation t1 LEFT JOIN order_reviews t2 ON t2.order_id IN (SELECT order_id FROM order_items WHERE product_id IN (SELECT product_id FROM products WHERE product_category_name = t1.product_category_name)) LEFT JOIN vw_entregas_retrasos t3 ON t3.order_id = t2.order_id GROUP BY t1.product_category_name_english HAVING calificacion_promedio < (SELECT AVG(review_score) FROM vw_entregas_retrasos) AND pct_retrasos < (SELECT AVG(CASE WHEN dias_retraso > 0 THEN 1 ELSE 0 END) FROM vw_entregas_retrasos)\"\n}",
+      "sql": "SELECT t1.product_category_name_english AS categoria, AVG(t2.review_score) AS calificacion_promedio, AVG(CASE WHEN t3.dias_retraso > 0 THEN 1 ELSE 0 END) AS pct_retrasos FROM product_category_translation t1 LEFT JOIN order_reviews t2 ON t2.order_id IN (SELECT order_id FROM order_items WHERE product_id IN (SELECT product_id FROM products WHERE product_category_name = t1.product_category_name)) LEFT JOIN vw_entregas_retrasos t3 ON t3.order_id = t2.order_id GROUP BY t1.product_category_name_english HAVING calificacion_promedio < (SELECT AVG(review_score) FROM vw_entregas_retrasos) AND pct_retrasos < (SELECT AVG(CASE WHEN dias_retraso > 0 THEN 1 ELSE 0 END) FROM vw_entregas_retrasos)",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "categoria",
+          "calificacion_promedio",
+          "pct_retrasos"
+        ],
+        "segundos": 4.3718372000003
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "conjunto_igual",
+            "ok": false,
+            "motivo": "sin filas"
+          }
+        ]
+      },
+      "segundos_generacion": 16.22665710000001,
+      "tokens": {
+        "system": 5294,
+        "prompt_eval_count": 5544,
+        "eval_count": 192,
+        "estimados": 5739
+      },
+      "load_duration_s": 0.0047218
+    }
+  ],
+  "segundos_caso": 20.6
+}
