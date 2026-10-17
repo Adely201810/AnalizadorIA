@@ -1,0 +1,293 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 5,
+  "ronda2": {
+    "reintento_temp": 0.5,
+    "reparar_esquema": true,
+    "modo_edicion": true,
+    "pistas_v2": true
+  },
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.seller_id = vw_entregas_retrasos.seller_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.seller_id = vw_entregas_retrasos.seller_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 15.904786799997964,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 3561,
+        "eval_count": 213,
+        "estimados": 3717
+      },
+      "load_duration_s": 0.0059716,
+      "temperatura_usada": 0.0,
+      "seed_usada": 42,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id).",
+        "reparacion": "Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id)."
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 2,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nEste SQL tiene un problema. Corrígelo cambiando SOLO lo necesario:\n```sql\nSELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.seller_id = vw_entregas_retrasos.seller_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\n```\n\nQué pasó al ejecutarlo: no se pudo ejecutar (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.)\n\nIndicaciones del revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id).\n\nDevuelve el SQL corregido completo.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 20.770447499999136,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4214,
+        "eval_count": 211,
+        "estimados": 4643
+      },
+      "load_duration_s": 0.0057456,
+      "temperatura_usada": 0.5,
+      "seed_usada": 43,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de vw_ingresos_por_vendedor: flete_total, ingresos, pedidos, ratio_flete_ingresos, seller_id, seller_state. La columna order_id existe en las tablas order_items, order_payments, order_reviews, orders y en las vistas vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Ruta por tablas base para llegar a order_id desde vw_ingresos_por_vendedor: vw_ingresos_por_vendedor → order_items (por seller_id).",
+        "reparacion": "Reparación con el esquema real: columnas reales de vw_ingresos_por_vendedor: flete_total, ingresos, pedidos, ratio_flete_ingresos, seller_id, seller_state. La columna order_id existe en las tablas order_items, order_payments, order_reviews, orders y en las vistas vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Ruta por tablas base para llegar a order_id desde vw_ingresos_por_vendedor: vw_ingresos_por_vendedor → order_items (por seller_id)."
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 3,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nEste SQL tiene un problema. Corrígelo cambiando SOLO lo necesario:\n```sql\nSELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_entregas_retrasos ON vw_ingresos_por_vendedor.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\n```\n\nQué pasó al ejecutarlo: no se pudo ejecutar (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.)\n\nIndicaciones del revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id).\n2. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de vw_ingresos_por_vendedor: flete_total, ingresos, pedidos, ratio_flete_ingresos, seller_id, seller_state. La columna order_id existe en las tablas order_items, order_payments, order_reviews, orders y en las vistas vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Ruta por tablas base para llegar a order_id desde vw_ingresos_por_vendedor: vw_ingresos_por_vendedor → order_items (por seller_id).\n\nDevuelve el SQL corregido completo.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN order_items ON vw_ingresos_por_vendedor.seller_id = order_items.seller_id INNER JOIN vw_entregas_retrasos ON order_items.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN order_items ON vw_ingresos_por_vendedor.seller_id = order_items.seller_id INNER JOIN vw_entregas_retrasos ON order_items.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: seller_id",
+        "columnas": [],
+        "segundos": 0.0014952000019547995
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 25.392291200001637,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4628,
+        "eval_count": 227,
+        "estimados": 5258
+      },
+      "load_duration_s": 0.0060523,
+      "temperatura_usada": 0.5,
+      "seed_usada": 44,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "ejecucion: ambiguous column name: seller_id",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: ambiguous column name: seller_id). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.",
+        "reparacion": null
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 4,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nEste SQL tiene un problema. Corrígelo cambiando SOLO lo necesario:\n```sql\nSELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN order_items ON vw_ingresos_por_vendedor.seller_id = order_items.seller_id INNER JOIN vw_entregas_retrasos ON order_items.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\n```\n\nQué pasó al ejecutarlo: no se pudo ejecutar (ejecucion: ambiguous column name: seller_id)\n\nIndicaciones del revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id).\n2. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de vw_ingresos_por_vendedor: flete_total, ingresos, pedidos, ratio_flete_ingresos, seller_id, seller_state. La columna order_id existe en las tablas order_items, order_payments, order_reviews, orders y en las vistas vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Ruta por tablas base para llegar a order_id desde vw_ingresos_por_vendedor: vw_ingresos_por_vendedor → order_items (por seller_id).\n3. La consulta anterior falló (ejecucion: ambiguous column name: seller_id). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nDevuelve el SQL corregido completo.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_ventas_pedido ON vw_ingresos_por_vendedor.seller_id = vw_ventas_pedido.seller_id INNER JOIN vw_entregas_retrasos ON vw_ventas_pedido.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_ventas_pedido ON vw_ingresos_por_vendedor.seller_id = vw_ventas_pedido.seller_id INNER JOIN vw_entregas_retrasos ON vw_ventas_pedido.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: seller_id",
+        "columnas": [],
+        "segundos": 0.0015248999989125878
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 26.074316700000054,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4651,
+        "eval_count": 233,
+        "estimados": 5310
+      },
+      "load_duration_s": 0.0068104,
+      "temperatura_usada": 0.5,
+      "seed_usada": 45,
+      "remuestreos": 0,
+      "sql_repetido": false,
+      "diagnostico": {
+        "error": "ejecucion: ambiguous column name: seller_id",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: ambiguous column name: seller_id). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.",
+        "reparacion": null
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 5,
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nEste SQL tiene un problema. Corrígelo cambiando SOLO lo necesario:\n```sql\nSELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_ventas_pedido ON vw_ingresos_por_vendedor.seller_id = vw_ventas_pedido.seller_id INNER JOIN vw_entregas_retrasos ON vw_ventas_pedido.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\n```\n\nQué pasó al ejecutarlo: no se pudo ejecutar (ejecucion: ambiguous column name: seller_id)\n\nIndicaciones del revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id).\n2. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'vw_ingresos_por_vendedor.order_id': la tabla/vista 'vw_ingresos_por_vendedor' no tiene la columna 'order_id'. Esa columna sí existe en: order_items, order_payments, order_reviews, orders, vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite. Reparación con el esquema real: columnas reales de vw_ingresos_por_vendedor: flete_total, ingresos, pedidos, ratio_flete_ingresos, seller_id, seller_state. La columna order_id existe en las tablas order_items, order_payments, order_reviews, orders y en las vistas vw_articulos_vendidos, vw_entregas_retrasos, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Ruta por tablas base para llegar a order_id desde vw_ingresos_por_vendedor: vw_ingresos_por_vendedor → order_items (por seller_id).\n3. La consulta anterior falló (ejecucion: ambiguous column name: seller_id). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n4. La consulta anterior falló (ejecucion: ambiguous column name: seller_id). Corrige ese error. Posible causa: No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nDevuelve el SQL corregido completo.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_ventas_pedido ON vw_ingresos_por_vendedor.seller_id = vw_ventas_pedido.seller_id INNER JOIN vw_entregas_retrasos ON vw_ventas_pedido.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )\"\n}",
+      "sql": "SELECT COUNT(DISTINCT seller_id) AS num_vendedores, SUM(ingresos) AS ingresos_totales FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos FROM vw_ingresos_por_vendedor INNER JOIN vw_ventas_pedido ON vw_ingresos_por_vendedor.seller_id = vw_ventas_pedido.seller_id INNER JOIN vw_entregas_retrasos ON vw_ventas_pedido.order_id = vw_entregas_retrasos.order_id WHERE pedidos >= 30 GROUP BY seller_id ) WHERE (calificacion < 3.5 OR pct_retrasos > 15) AND ingresos >= ( SELECT ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos FROM vw_ingresos_por_vendedor WHERE pedidos >= 30 GROUP BY seller_id ) ORDER BY ingresos DESC LIMIT 1 OFFSET 24 )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: seller_id",
+        "columnas": [],
+        "segundos": 0.0015640999990864657
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 72.22797250000076,
+      "tokens": {
+        "system": 3333,
+        "prompt_eval_count": 4786,
+        "eval_count": 233,
+        "estimados": 5513
+      },
+      "load_duration_s": 0.0057572,
+      "temperatura_usada": 0.5,
+      "seed_usada": 46,
+      "remuestreos": 3,
+      "sql_repetido": true
+    }
+  ],
+  "segundos_caso": 160.38
+}

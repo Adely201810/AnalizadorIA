@@ -260,3 +260,10 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - Interruptor en la barra lateral, apagado por defecto. Apagado, la app es idéntica a antes (mismas preguntas de ejemplo, mismo flujo).
 - Usa el modelo y el cliente del chat (`get_client()`), con pistas de plantilla, intento 1 a T=0 y casillas para anti-repetición y reparación (marcadas por defecto, como la configuración B). La reparación activa también las pistas v2, igual que en B.
 - Muestra la respuesta de referencia del dashboard al final, en un desplegable: es una demo de evaluación, no el chat. El modelo nunca la ve (la garantía es la misma prueba de no fuga del juez).
+
+## D-39 (C) Ronda 2 del juez: mediciones de C y de la reparación sola
+- **Cómo se corrió:** las dos corridas pendientes de D-37 (C = B + `--modo-edicion`, y A + `--reparar-esquema` sin `--pistas-v2`) se corrieron en serie con el código de e4b146a, sin cambios entre ellas, con la misma semilla y los mismos 6 casos. Los JSON por caso están en `eval/baselines/juez/r2_C/` y `r2_B_sin_pv2/`. `consola.log` es la salida estándar de cada corrida, guardada aparte.
+- **Resultado:** 0 rescates en las dos (acierto@N = acierto@1 = 2/6).
+  - Sin pistas v2, la reparación da casi el mismo perfil que B (ejecución 5 frente a 4; resultado incorrecto 8 frente a 7). Así se cierra la limitación de D-37: el cambio de tipo de fallo es de la reparación.
+  - El modo edición sube los reintentos con SQL repetido a 6/16.
+- **Recomendación (no aplicada):** si se lleva algo al chat, que sea la reparación sola, sin pistas v2 ni modo edición. Activarla en el chat queda para otra fase, con su propia medición sobre DESARROLLO.

@@ -119,7 +119,7 @@ Fecha: 2026-10-17 · Decisiones D-37 (cambios y corrida) y D-38 (modo evaluació
 | Ronda 1 (plantilla) | 2/6 | 2/6 | 16 | 9 | 0 | correcto 2, ejecución 10, validación 10 | 18.78 | 0 |
 | **A** anti-repetición | 2/6 | **2/6** | 16 | **3** | 15 | correcto 2, ejecución 11, resultado incorrecto 2, validación 7 | 31.45 | 0 |
 | **B** A + reparación + pistas v2 | 2/6 | **2/6** | 16 | 4 | 17 | correcto 2, **ejecución 4**, **resultado incorrecto 7**, validación 9 | 35.54 | 0 |
-| C | — | — | — | — | — | no corrida (tiempo) | — | — |
+| C | — | — | — | — | — | no corrida (tiempo); medida después, ver R2.6 | — | — |
 
 "Con SQL repetido" usa la misma métrica normalizada en las tres filas (en la ronda 1 coincide con la comparación exacta: 9).
 
@@ -135,7 +135,7 @@ Fecha: 2026-10-17 · Decisiones D-37 (cambios y corrida) y D-38 (modo evaluació
 - **Arreglo 5a medido:** la síntesis de n05 (correcta, 3/3 cifras clave) sale "no confiable" con el chequeo actual y "confiable" con umbrales, en A y en B. El chequeo solo mira que los números estén respaldados por las filas, no que la respuesta sea correcta: la síntesis de n06 (incorrecta) sale "confiable".
 
 ## R2.4 Recomendación para el chat (NO activado)
-- **Activar primero el cambio 2 (reparación con esquema real).** No usa el oráculo, no hace llamadas extra al modelo (solo alarga la pista; el prompt máximo pasó de 4,550 a 5,470 tokens, lejos del límite de 7,373) y ataca el error más frecuente del chat: columnas que no existen en la vista. Encaja en el reintento que el chat ya tiene (N=2). Lo que se gana es que la consulta corra, no necesariamente que acierte. Medido junto con pistas v2, sin separar sus efectos.
+- **Activar primero el cambio 2 (reparación con esquema real).** No usa el oráculo, no hace llamadas extra al modelo (solo alarga la pista; el prompt máximo pasó de 4,550 a 5,470 tokens, lejos del límite de 7,373) y ataca el error más frecuente del chat: columnas que no existen en la vista. Encaja en el reintento que el chat ya tiene (N=2). Lo que se gana es que la consulta corra, no necesariamente que acierte. Medido primero junto con pistas v2; en R2.6 se midió sola y el efecto es el mismo, así que es de la reparación.
 - **No activar todavía el cambio 1 (anti-repetición).** Reduce la repetición, pero no subió ningún acierto y suma 13-17 s por intento. Si se quiere algo barato: detectar el SQL repetido y remuestrear una sola vez, sin cambiar la temperatura del primer intento.
 - **Arreglo 5a:** conviene pasarlo al chat. Hoy oculta síntesis correctas que citan el umbral de la pregunta. Es un cambio de una línea en el llamador; no se hizo, porque cambia el comportamiento por defecto.
 
@@ -147,3 +147,34 @@ Interruptor "🧪 Modo evaluación con juez" en la barra lateral de `app.py`, ap
   - c01: "✅ Respuesta correcta en el intento 1 de 5" (99,441 pedidos).
   - n06 con 2 intentos: "❌ El modelo no acertó en 2 intento(s)", con el desplegable "Intento 1 — ❌ incorrecto" y su SQL.
   - Sin errores en la consola.
+
+## R2.6 Mediciones pendientes: C (modo edición) y reparación sin pistas v2
+Fecha: 2026-10-17 · Decisión D-39 en [DECISIONES.md](DECISIONES.md). Mismo modelo, casos, semilla (42) y código que A y B (commit e4b146a, árbol limpio).
+- **C** = B + modo edición (`--reintento-temp --reparar-esquema --pistas-v2 --modo-edicion`, etiqueta `r2_C`): 747.9 s.
+- **B sin pv2** = A + reparación, sin pistas v2 (`--reintento-temp --reparar-esquema`, etiqueta `r2_B_sin_pv2`): 757.2 s.
+
+Salida exacta de `python -m eval.tabla_juez --ronda2 eval/baselines/juez/ciclo_qwen2_5-coder_plantilla eval/baselines/juez/r2_A eval/baselines/juez/r2_B eval/baselines/juez/r2_C eval/baselines/juez/r2_B_sin_pv2`:
+
+| configuración | acierto@1 | acierto@N | reintentos | con SQL repetido | remuestreos | tipo de resultado por intento | latencia/intento (s) | fugas bloqueadas |
+|---|---|---|---|---|---|---|---|---|
+| plantilla | 2/6 | 2/6 | 16 | 9 | 0 | correcto 2, ejecucion 10, validacion 10 | 18.78 | 0 |
+| plantilla-rt0.5 | 2/6 | 2/6 | 16 | 3 | 15 | correcto 2, ejecucion 11, resultado_incorrecto 2, validacion 7 | 31.45 | 0 |
+| plantilla-rt0.5-rep-pv2 | 2/6 | 2/6 | 16 | 4 | 17 | correcto 2, ejecucion 4, resultado_incorrecto 7, validacion 9 | 35.54 | 0 |
+| plantilla-rt0.5-rep-edi-pv2 | 2/6 | 2/6 | 16 | 6 | 18 | correcto 2, ejecucion 7, resultado_incorrecto 7, validacion 6 | 31.28 | 0 |
+| plantilla-rt0.5-rep | 2/6 | 2/6 | 16 | 3 | 13 | correcto 2, ejecucion 5, resultado_incorrecto 8, validacion 7 | 31.26 | 0 |
+
+(Filas: Ronda 1, A, B, C y B sin pv2, en ese orden.) Prompt máximo: C 5,134 tokens; B sin pv2 5,185.
+
+**Ni C ni la reparación sola rescatan ningún caso.** acierto@N = acierto@1 = 2/6 en las cinco configuraciones: c01 y n05 aciertan en el intento 1, y n02, n04, n06 y n08 siguen en 0.
+
+- **La reparación sola explica el cambio de tipo de fallo que se vio en B.** Sin pistas v2, los errores de ejecución bajan de 11 (A) a 5 y "resultado incorrecto" sube de 2 a 8, casi igual que B (4 y 7). Las pistas v2 no aportan nada medible encima de la reparación. El costo tampoco cambia: 31.26 s por intento, como A (31.45). Los 35.54 s de B parecen ruido de esa corrida, porque C, que hace lo mismo que B y además añade el modo edición, tarda 31.28 s.
+- **El modo edición ancla el SQL anterior.** C tiene más reintentos con SQL repetido (6/16, frente a 4 en B y 3 en B sin pv2), aun con 18 remuestreos. En n02 y n06, C repite el SQL del intento 2 hasta el final. En n06 el resultado es el mismo `computers 91.16` de B. En n04, C pasa del error de columna de la vista a `ambiguous column name: seller_id` y se queda ahí 3 intentos. En n08 sigue pidiendo `t3.product_category_name_english` sobre `order_items` en los intentos 3 a 5.
+- **Caso por caso, B sin pv2:**
+  - **n06:** prueba tres variantes de SQL que ejecutan, con alias distintos, y las tres devuelven `computers 91.16`. Sigue cayendo en el abanico artículos × pagos.
+  - **n02:** ejecuta con `pct_1_2_estrellas >= 2` en lugar de `<= 2`, con una lógica de rangos equivocada.
+  - **n04:** pasa de la vista sin `order_id` a `ambiguous column name` y después a `t2.seller_id` sobre `vw_entregas_retrasos`.
+  - **n08:** pasa de `product_category_name_english` a `product_category_name` sobre `order_items`.
+  - En todos los casos cambia de error, pero no lo resuelve.
+- **Fugas:** 0 bloqueos en C y en B sin pv2.
+
+**Consecuencia para R2.4:** la recomendación de activar primero la reparación se mantiene. Ahora se puede activar sin pistas v2, porque el efecto (que la consulta corra, no que acierte) ya no depende de ellas. El modo edición no se recomienda: no rescata nada y aumenta la repetición. Nada de esto se activó en el chat.
