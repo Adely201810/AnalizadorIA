@@ -1,0 +1,61 @@
+{
+  "etiqueta": "ciclo_qwen2_5-coder_llm_n08",
+  "inicio": "2026-10-17T05:41:33",
+  "argumentos": {
+    "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+    "juez_modelo": null,
+    "max_iter": 5,
+    "temperatura": [
+      0.0
+    ],
+    "num_ctx": [
+      8192
+    ],
+    "esquema": [
+      "compacto"
+    ],
+    "feedback": "llm",
+    "repeticiones": 3,
+    "seed": 42,
+    "casos": [
+      "n08"
+    ],
+    "sin_sintesis": false,
+    "keep_alive": "30m",
+    "etiqueta": "ciclo_qwen2_5-coder_llm_n08",
+    "salida": null,
+    "medir": false
+  },
+  "configuraciones": {
+    "qwen2_5_coder_7b_instruct_q4_K_M__compacto__T0__ctx8192__llm__it5": {
+      "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "semillas": [
+        42
+      ],
+      "corridas_caso": 1,
+      "acierto_1": 0,
+      "acierto_N": 0,
+      "pct_acierto_1": 0.0,
+      "pct_acierto_N": 0.0,
+      "intentos_promedio_hasta_acertar": null,
+      "intentos_totales": 5,
+      "latencia_media_por_intento_s": 33.46,
+      "latencia_mediana_por_intento_s": 30.39,
+      "fugas_bloqueadas": 0,
+      "pistas_llm_sustituidas_por_plantilla": 0,
+      "prompt_eval_count_max": 4217,
+      "tokens_estimados_max": 4770,
+      "load_duration_total_s": 0.05,
+      "sintesis_texto_confiable": null,
+      "sintesis_cifras_clave": null,
+      "por_caso": {
+        "n08_categorias_problema_producto": [
+          false
+        ]
+      }
+    }
+  },
+  "segundos_totales": 235.3
+}

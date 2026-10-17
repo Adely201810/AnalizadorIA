@@ -1,0 +1,266 @@
+{
+  "caso": "n04_vendedores_a_revisar",
+  "necesidad": "4 · Vendedores problemáticos",
+  "pregunta": "Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "juez_modelo": "llama3.1:8b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 1,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = s.seller_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = s.seller_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery )\"}",
+      "sql": "SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = s.seller_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = s.seller_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta compara columnas de dominios distintos en un JOIN/filtro: p.order_id = s.seller_id. Une siempre order_id con order_id, seller_id con seller_id, customer_id con customer_id, etc.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 18.366391600000043,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3556,
+        "eval_count": 403,
+        "estimados": 3713
+      },
+      "load_duration_s": 0.0059035,
+      "diagnostico": {
+        "error": "validacion: La consulta compara columnas de dominios distintos en un JOIN/filtro: p.order_id = s.seller_id. Une siempre order_id con order_id, seller_id con seller_id, customer_id con customer_id, etc.",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas.",
+          "Posible abanico: un JOIN con reseñas o pagos antes de SUM(price) duplica artículos y multiplica los ingresos."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 14.145135199999913,
+        "load_duration_s": 0.006734,
+        "texto": "El tipo de error es de granularidad."
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 2,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nTu consulta anterior:\n```sql\nSELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = s.seller_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = s.seller_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery )\n```\n\nResumen de su resultado: no se pudo ejecutar (validacion: La consulta compara columnas de dominios distintos en un JOIN/filtro: p.order_id = s.seller_id. Une siempre order_id con order_id, seller_id con seller_id, customer_id con customer_id, etc.)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery )\"}",
+      "sql": "SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery )",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: seller_id",
+        "columnas": [],
+        "segundos": 0.0016682999998920423
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 24.15291759999991,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4055,
+        "eval_count": 425,
+        "estimados": 4439
+      },
+      "load_duration_s": 0.0060037,
+      "diagnostico": {
+        "error": "ejecucion: ambiguous column name: seller_id",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas.",
+          "Posible abanico: un JOIN con reseñas o pagos antes de SUM(price) duplica artículos y multiplica los ingresos."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 13.445664899999883,
+        "load_duration_s": 0.0062001,
+        "texto": "El problema se debe a que la columna \"seller_id\" se está utilizando en dos niveles de la consulta, lo que genera ambigüedad. La columna \"seller_id\" se utiliza tanto en el nivel de la subconsulta como en el nivel de la consulta principal."
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 3,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nTu consulta anterior:\n```sql\nSELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery )\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: ambiguous column name: seller_id)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. El problema se debe a que la columna \"seller_id\" se está utilizando en dos niveles de la consulta, lo que genera ambigüedad. La columna \"seller_id\" se utiliza tanto en el nivel de la subconsulta como en el nivel de la consulta principal.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)\"}",
+      "sql": "SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "near \"AS\": syntax error",
+        "columnas": [],
+        "segundos": 0.0014189999997142877
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 23.664817200000016,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4095,
+        "eval_count": 446,
+        "estimados": 4512
+      },
+      "load_duration_s": 0.0059437,
+      "diagnostico": {
+        "error": "ejecucion: near \"AS\": syntax error",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: la calificación de cada pedido es el promedio de sus reseñas.",
+          "Posible abanico: un JOIN con reseñas o pagos antes de SUM(price) duplica artículos y multiplica los ingresos."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 17.308500300000105,
+        "load_duration_s": 0.0059623,
+        "texto": "El problema de la consulta del junior es que no agrupa las reseñas por pedido, lo que da como resultado que la calificación de cada pedido sea el promedio de sus reseñas. Esto multiplica los ingresos de cada vendedor.\n\nPara evitar esta trampa, es importante agrupar las reseñas por pedido antes de calcular la calificación de cada pedido. Esto se puede lograr utilizando una subconsulta o una vista que agrupe las reseñas por pedido.\n\nAdemás, la consulta del junior utiliza un JOIN en abanico que duplica artículos y multiplica los ingresos. Esto se debe a que unir order_items con reseñas o pagos en el mismo nivel que SUM(price) multiplica los ingresos.\n\nPara evitar esta trampa, es importante unir los pedidos con las reseñas o pagos antes de calcular los ingresos. Esto se puede lograr utilizando una subconsulta o una vista que agrupe los pedidos con las reseñas o pagos.\n\nEn resumen, la trampa en"
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 4,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nTu consulta anterior:\n```sql\nSELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN order_reviews rv ON p.order_id = rv.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id AND p.order_id = rv.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: near \"AS\": syntax error)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. El problema se debe a que la columna \"seller_id\" se está utilizando en dos niveles de la consulta, lo que genera ambigüedad. La columna \"seller_id\" se utiliza tanto en el nivel de la subconsulta como en el nivel de la consulta principal.\n3. El problema de la consulta del junior es que no agrupa las reseñas por pedido, lo que da como resultado que la calificación de cada pedido sea el promedio de sus reseñas. Esto multiplica los ingresos de cada vendedor.\n\nPara evitar esta trampa, es importante agrupar las reseñas por pedido antes de calcular la calificación de cada pedido. Esto se puede lograr utilizando una subconsulta o una vista que agrupe las reseñas por pedido.\n\nAdemás, la consulta del junior utiliza un JOIN en abanico que duplica artículos y multiplica los ingresos. Esto se debe a que unir order_items con reseñas o pagos en el mismo nivel que SUM(price) multiplica los ingresos.\n\nPara evitar esta trampa, es importante unir los pedidos con las reseñas o pagos antes de calcular los ingresos. Esto se puede lograr utilizando una subconsulta o una vista que agrupe los pedidos con las reseñas o pagos.\n\nEn resumen, la trampa en\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)\"}",
+      "sql": "SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "near \"AS\": syntax error",
+        "columnas": [],
+        "segundos": 0.0019400999999561463
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 23.955906799999866,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4339,
+        "eval_count": 466,
+        "estimados": 4903
+      },
+      "load_duration_s": 0.0063119,
+      "diagnostico": {
+        "error": "ejecucion: near \"AS\": syntax error",
+        "forma": [],
+        "patrones": [
+          "Posible abanico: un JOIN con reseñas o pagos antes de SUM(price) duplica artículos y multiplica los ingresos."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 15.422049300000253,
+        "load_duration_s": 0.0075669,
+        "texto": "El problema de la consulta del junior es que está utilizando un JOIN en abanico que duplica filas, específicamente al unir order_items con reseñas o pagos en el mismo nivel que SUM(price). Esto multiplica los ingresos de cada vendedor.\n\nPara evitar esta trampa, es importante unir los pedidos válidos con sus reseñas o pagos en un nivel anterior a la suma de los ingresos. De esta manera, se evita la duplicación de filas y los ingresos se calculan correctamente."
+      }
+    },
+    {
+      "caso": "n04_vendedores_a_revisar",
+      "intento": 5,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Considera los vendedores con al menos 30 pedidos (pedidos distintos con algún artículo suyo, de cualquier estatus). Para cada uno calcula: sus ingresos (suma de price de sus artículos en pedidos válidos (sin contar cancelados ni no disponibles)); su calificación (promedio, entre sus pedidos válidos con reseña, de la calificación de cada pedido, que es el promedio de las reseñas de ese pedido); y su % de entregas tardías (porcentaje de sus pedidos válidos entregados al cliente en los que la entrega real fue posterior a la estimada). ¿Cuántos de esos vendedores están en el 25 % con más ingresos y además tienen una calificación menor a 3.5 o más del 15 % de entregas tardías, y cuánto suman los ingresos de esos vendedores?\n\nTu consulta anterior:\n```sql\nSELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: near \"AS\": syntax error)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. El problema se debe a que la columna \"seller_id\" se está utilizando en dos niveles de la consulta, lo que genera ambigüedad. La columna \"seller_id\" se utiliza tanto en el nivel de la subconsulta como en el nivel de la consulta principal.\n3. El problema de la consulta del junior es que no agrupa las reseñas por pedido, lo que da como resultado que la calificación de cada pedido sea el promedio de sus reseñas. Esto multiplica los ingresos de cada vendedor.\n\nPara evitar esta trampa, es importante agrupar las reseñas por pedido antes de calcular la calificación de cada pedido. Esto se puede lograr utilizando una subconsulta o una vista que agrupe las reseñas por pedido.\n\nAdemás, la consulta del junior utiliza un JOIN en abanico que duplica artículos y multiplica los ingresos. Esto se debe a que unir order_items con reseñas o pagos en el mismo nivel que SUM(price) multiplica los ingresos.\n\nPara evitar esta trampa, es importante unir los pedidos con las reseñas o pagos antes de calcular los ingresos. Esto se puede lograr utilizando una subconsulta o una vista que agrupe los pedidos con las reseñas o pagos.\n\nEn resumen, la trampa en\n4. El problema de la consulta del junior es que está utilizando un JOIN en abanico que duplica filas, específicamente al unir order_items con reseñas o pagos en el mismo nivel que SUM(price). Esto multiplica los ingresos de cada vendedor.\n\nPara evitar esta trampa, es importante unir los pedidos válidos con sus reseñas o pagos en un nivel anterior a la suma de los ingresos. De esta manera, se evita la duplicación de filas y los ingresos se calculan correctamente.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)\"}",
+      "sql": "SELECT COUNT(*) AS cantidad, SUM(ingresos) AS ingresos FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery WHERE calificacion < 3.5 OR porcentaje_entregas_tardias > 15 ORDER BY ingresos DESC LIMIT 0.25 * ( SELECT COUNT(*) FROM ( SELECT seller_id, SUM(price) AS ingresos, AVG(review_score) AS calificacion, AVG(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) * 100 / COUNT(DISTINCT order_id) AS porcentaje_entregas_tardias FROM vw_pedidos_validos p JOIN ( SELECT order_id, AVG(review_score) AS review_score FROM order_reviews GROUP BY order_id ) rv ON p.order_id = rv.order_id JOIN order_items oi ON p.order_id = oi.order_id JOIN order_payments op ON p.order_id = op.order_id JOIN sellers s ON oi.seller_id = s.seller_id WHERE oi.seller_id = s.seller_id AND p.order_id = oi.order_id AND p.order_id = op.order_id GROUP BY seller_id HAVING COUNT(DISTINCT order_id) >= 30 ) AS subquery ) AS cantidad_vendedores ORDER BY ingresos DESC LIMIT cantidad_vendedores * 0.25)",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "near \"AS\": syntax error",
+        "columnas": [],
+        "segundos": 0.0015267000003404974
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 30.900030400000105,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4474,
+        "eval_count": 466,
+        "estimados": 5129
+      },
+      "load_duration_s": 0.006043
+    }
+  ],
+  "segundos_caso": 181.38
+}

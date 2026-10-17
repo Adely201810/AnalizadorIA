@@ -240,3 +240,9 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **Juez = mismo modelo que el candidato.** Cargar un modelo cuesta unos 20-23 s (`load_duration` medido: qwen 21-23 s, llama3.1 20-21 s). qwen (5.15 GB) y llama3.1 (5.82 GB) no caben juntos en los 8 GB de la RX 6600, así que alternar candidato y juez recargaría un modelo en cada pista.
 - **VRAM por num_ctx** (`/api/ps`): qwen 8192 = 5.15 GB, 12288 = 5.23 GB, 16384 = 5.47 GB, todo en VRAM. llama3.1 8192 = 5.82 GB, 12288 = 6.36 GB, todo en VRAM; 16384 = 7.26 GB con solo 6.50 GB en VRAM (**descarga a CPU**). 16384 queda descartado para llama3.1.
 - **num_ctx del barrido (solo intento 1): 8192.** Es el menor que cabe con margen en ambos esquemas: completo 5,294 + ~300 de pregunta + 600 de num_predict ≈ 6,200 < 7,373 (90 %).
+
+## D-36 (C) Configuración del ciclo con juez y manejo de la interrupción
+- **Configuración del ciclo:** compacto, T = 0, num_ctx 8192. Se eligió con la regla fijada tras el barrido y antes de correr el ciclo: mayor % de acierto@1 (2/6); si empatan, esquema más corto y T más baja. Toda la diferencia viene de un caso (n05): es ruido.
+- **Guarda en el ciclo:** si `ContextoInsuficienteError` salta a mitad de un caso, el caso se cierra como fallo y queda registrado (no se continúa con un prompt recortado). No saltó en ninguna corrida (máximo 4,822 tokens).
+- **Interrupción:** Windows Update reinició el equipo (05:07 y 05:09, KB5127648) durante qwen-llm. n08 se repitió en `ciclo_qwen2_5-coder_llm_n08/` con el mismo código de `llm/juez.py` (commit d2c7ecf) y la misma semilla; `eval/tabla_juez.py` recalcula las métricas uniendo los JSON por caso.
+- **No se cambió nada entre corridas** (p. ej. el patrón "no filtra pedidos válidos", demasiado amplio): queda como lección en `docs/INFORME_JUEZ.md` para no mezclar condiciones.

@@ -1,0 +1,410 @@
+{
+  "caso": "n02_quiebre_retraso_calificacion",
+  "necesidad": "2 · Retraso vs reseñas",
+  "pregunta": "Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "juez_modelo": "llama3.1:8b-instruct-q4_K_M",
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "llm",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 1,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*)) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id GROUP BY rango_retraso) AS subquery GROUP BY rango_retraso ORDER BY pedidos DESC\"\n}",
+      "sql": "SELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*)) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id GROUP BY rango_retraso) AS subquery GROUP BY rango_retraso ORDER BY pedidos DESC",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_2_o_menos",
+          "pct_2_o_menos_atiempo"
+        ],
+        "segundos": 1.9031827000003432
+      },
+      "filas_obtenidas": 5,
+      "muestra_filas": [
+        [
+          "a_tiempo",
+          1,
+          0.0,
+          null
+        ],
+        [
+          "8-14",
+          1,
+          100.0,
+          1.0
+        ],
+        [
+          "4-7",
+          1,
+          0.0,
+          null
+        ],
+        [
+          "15+",
+          1,
+          100.0,
+          1.0
+        ],
+        [
+          "1-3",
+          1,
+          0.0,
+          null
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "devolvió más filas de las admitidas"
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": false,
+            "motivo": "el valor clave no aparece (dentro de tolerancia)"
+          }
+        ]
+      },
+      "segundos_generacion": 16.50468860000001,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3599,
+        "eval_count": 324,
+        "estimados": 3753
+      },
+      "load_duration_s": 0.0061662,
+      "diagnostico": {
+        "error": null,
+        "forma": [
+          "La pregunta pide una sola respuesta (una fila) y la consulta devolvió 5 filas."
+        ],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 11.748280100000102,
+        "load_duration_s": 0.0055826,
+        "texto": "El tipo de error es de granularidad."
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 2,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*)) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id GROUP BY rango_retraso) AS subquery GROUP BY rango_retraso ORDER BY pedidos DESC\n```\n\nResumen de su resultado: 5 fila(s); columnas: rango_retraso, pedidos, pct_2_o_menos, pct_2_o_menos_atiempo\na_tiempo | 1 | 0.0 | NULL\n8-14 | 1 | 100.0 | 1.0\n4-7 | 1 | 0.0 | NULL\n15+ | 1 | 100.0 | 1.0\n1-3 | 1 | 0.0 | NULL\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\"}",
+      "sql": "SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_2_o_menos",
+          "pct_2_o_menos_atiempo"
+        ],
+        "segundos": 1.9051182999996854
+      },
+      "filas_obtenidas": 5,
+      "muestra_filas": [
+        [
+          "a_tiempo",
+          88653,
+          0.0,
+          null
+        ],
+        [
+          "1-3",
+          2651,
+          0.0,
+          null
+        ],
+        [
+          "4-7",
+          1777,
+          0.0,
+          null
+        ],
+        [
+          "8-14",
+          1758,
+          0.06,
+          0.0
+        ],
+        [
+          "15+",
+          1514,
+          0.07,
+          0.0
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "devolvió más filas de las admitidas"
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": false,
+            "motivo": "el valor clave no aparece (dentro de tolerancia)"
+          }
+        ]
+      },
+      "segundos_generacion": 20.825985100000253,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4069,
+        "eval_count": 339,
+        "estimados": 4306
+      },
+      "load_duration_s": 0.0059214,
+      "diagnostico": {
+        "error": null,
+        "forma": [
+          "La pregunta pide una sola respuesta (una fila) y la consulta devolvió 5 filas."
+        ],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 13.127817999999934,
+        "load_duration_s": 0.0051811,
+        "texto": "\"Recuerda que la calificación de cada pedido es el promedio de sus reseñas, no la reseña individual. También, asegúrate de agrupar las reseñas por pedido para obtener la calificación correcta de cada pedido. Finalmente, revisa la condición en el WHERE para asegurarte de que estás comparando los porcentajes correctos entre los rangos de retraso.\""
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 3,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\n```\n\nResumen de su resultado: 5 fila(s); columnas: rango_retraso, pedidos, pct_2_o_menos, pct_2_o_menos_atiempo\na_tiempo | 88653 | 0.0 | NULL\n1-3 | 2651 | 0.0 | NULL\n4-7 | 1777 | 0.0 | NULL\n8-14 | 1758 | 0.06 | 0.0\n15+ | 1514 | 0.07 | 0.0\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. \"Recuerda que la calificación de cada pedido es el promedio de sus reseñas, no la reseña individual. También, asegúrate de agrupar las reseñas por pedido para obtener la calificación correcta de cada pedido. Finalmente, revisa la condición en el WHERE para asegurarte de que estás comparando los porcentajes correctos entre los rangos de retraso.\"\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\"}",
+      "sql": "SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC",
+      "ejecucion": {
+        "ok": true,
+        "etapa": null,
+        "error": null,
+        "columnas": [
+          "rango_retraso",
+          "pedidos",
+          "pct_2_o_menos",
+          "pct_2_o_menos_atiempo"
+        ],
+        "segundos": 1.8951318999997966
+      },
+      "filas_obtenidas": 5,
+      "muestra_filas": [
+        [
+          "a_tiempo",
+          88653,
+          0.0,
+          null
+        ],
+        [
+          "1-3",
+          2651,
+          0.0,
+          null
+        ],
+        [
+          "4-7",
+          1777,
+          0.0,
+          null
+        ],
+        [
+          "8-14",
+          1758,
+          0.06,
+          0.0
+        ],
+        [
+          "15+",
+          1514,
+          0.07,
+          0.0
+        ]
+      ],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": [
+          {
+            "comparador": "fila_contiene",
+            "ok": false,
+            "motivo": "devolvió más filas de las admitidas"
+          },
+          {
+            "comparador": "valor_con_tolerancia",
+            "ok": false,
+            "motivo": "el valor clave no aparece (dentro de tolerancia)"
+          }
+        ]
+      },
+      "segundos_generacion": 22.621300399999654,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4184,
+        "eval_count": 339,
+        "estimados": 4484
+      },
+      "load_duration_s": 0.0069613,
+      "diagnostico": {
+        "error": null,
+        "forma": [
+          "La pregunta pide una sola respuesta (una fila) y la consulta devolvió 5 filas."
+        ],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 6.981838699999571,
+        "load_duration_s": 0.005849,
+        "texto": "El junior cometió un error al no agrupar las reseñas por pedido. La calificación de cada pedido es el promedio de sus reseñas, pero la consulta no tiene en cuenta esto. \n\nPara evitar esta trampa, es importante recordar que cuando se trabaja con datos que pueden tener varias filas por registro (como en este caso, un pedido puede tener varias reseñas), es necesario agruparlos adecuadamente para obtener resultados precisos. En este caso, la calificación del pedido es el promedio de sus reseñas, por lo que la consulta debe tener en cuenta esto al agrupar los datos."
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 4,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(*) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\n```\n\nResumen de su resultado: 5 fila(s); columnas: rango_retraso, pedidos, pct_2_o_menos, pct_2_o_menos_atiempo\na_tiempo | 88653 | 0.0 | NULL\n1-3 | 2651 | 0.0 | NULL\n4-7 | 1777 | 0.0 | NULL\n8-14 | 1758 | 0.06 | 0.0\n15+ | 1514 | 0.07 | 0.0\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. \"Recuerda que la calificación de cada pedido es el promedio de sus reseñas, no la reseña individual. También, asegúrate de agrupar las reseñas por pedido para obtener la calificación correcta de cada pedido. Finalmente, revisa la condición en el WHERE para asegurarte de que estás comparando los porcentajes correctos entre los rangos de retraso.\"\n3. El junior cometió un error al no agrupar las reseñas por pedido. La calificación de cada pedido es el promedio de sus reseñas, pero la consulta no tiene en cuenta esto. \n\nPara evitar esta trampa, es importante recordar que cuando se trabaja con datos que pueden tener varias filas por registro (como en este caso, un pedido puede tener varias reseñas), es necesario agruparlos adecuadamente para obtener resultados precisos. En este caso, la calificación del pedido es el promedio de sus reseñas, por lo que la consulta debe tener en cuenta esto al agrupar los datos.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(DISTINCT order_id) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\"}",
+      "sql": "SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(DISTINCT order_id) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: order_id",
+        "columnas": [],
+        "segundos": 0.0013966999999865948
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 16.758831699999973,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4321,
+        "eval_count": 344,
+        "estimados": 4712
+      },
+      "load_duration_s": 0.0062652,
+      "diagnostico": {
+        "error": "ejecucion: ambiguous column name: order_id",
+        "forma": [],
+        "patrones": [
+          "No agrupa las reseñas por pedido: un pedido puede tener varias reseñas y su calificación es el promedio."
+        ],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "llm",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 12.628755100000035,
+        "load_duration_s": 0.0057689,
+        "texto": "La trampa en la que cayó la consulta es que no agrupa las reseñas por pedido. Un pedido puede tener varias reseñas y su calificación es el promedio de esas reseñas. La consulta original no tiene en cuenta esto y, por lo tanto, no calcula correctamente la calificación de cada pedido.\n\nPara evitar esta trampa, es importante agrupar las reseñas por pedido y calcular el promedio de las reseñas para cada pedido. Esto se puede lograr utilizando una subconsulta o una vista que agrupe las reseñas por pedido y calcule el promedio de las reseñas para cada pedido."
+      }
+    },
+    {
+      "caso": "n02_quiebre_retraso_calificacion",
+      "intento": 5,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "llm",
+      "prompt_candidato": "Pregunta: Toma los pedidos válidos (sin contar cancelados ni no disponibles) que ya fueron entregados al cliente y tienen al menos una reseña. La calificación de cada pedido es el promedio de sus reseñas, y su retraso son los días (con decimales) entre la fecha estimada de entrega y la fecha real de entrega al cliente (real menos estimada). Agrupa los pedidos en rangos de retraso: a tiempo (0 o menos), más de 0 y hasta 3 días, más de 3 y hasta 7, más de 7 y hasta 14, y más de 14. Decimos que la calificación cae notablemente en el primer rango, en orden creciente de retraso, cuyo porcentaje de pedidos con calificación de 2 o menos es al menos el doble que el de los pedidos a tiempo. ¿Cuál es ese rango, cuántos pedidos tiene, qué porcentaje de ellos tiene calificación de 2 o menos y cuál es ese porcentaje en los pedidos a tiempo?\n\nTu consulta anterior:\n```sql\nSELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(DISTINCT order_id) AS pedidos FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: ambiguous column name: order_id)\n\nRetroalimentación de un revisor:\n1. El tipo de error es de granularidad.\n2. \"Recuerda que la calificación de cada pedido es el promedio de sus reseñas, no la reseña individual. También, asegúrate de agrupar las reseñas por pedido para obtener la calificación correcta de cada pedido. Finalmente, revisa la condición en el WHERE para asegurarte de que estás comparando los porcentajes correctos entre los rangos de retraso.\"\n3. El junior cometió un error al no agrupar las reseñas por pedido. La calificación de cada pedido es el promedio de sus reseñas, pero la consulta no tiene en cuenta esto. \n\nPara evitar esta trampa, es importante recordar que cuando se trabaja con datos que pueden tener varias filas por registro (como en este caso, un pedido puede tener varias reseñas), es necesario agruparlos adecuadamente para obtener resultados precisos. En este caso, la calificación del pedido es el promedio de sus reseñas, por lo que la consulta debe tener en cuenta esto al agrupar los datos.\n4. La trampa en la que cayó la consulta es que no agrupa las reseñas por pedido. Un pedido puede tener varias reseñas y su calificación es el promedio de esas reseñas. La consulta original no tiene en cuenta esto y, por lo tanto, no calcula correctamente la calificación de cada pedido.\n\nPara evitar esta trampa, es importante agrupar las reseñas por pedido y calcular el promedio de las reseñas para cada pedido. Esto se puede lograr utilizando una subconsulta o una vista que agrupe las reseñas por pedido y calcule el promedio de las reseñas para cada pedido.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(DISTINCT order_id) AS pedidos FROM (SELECT order_id, AVG(review_score) AS review_score FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY order_id) AS subquery GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC\"}",
+      "sql": "SELECT rango_retraso, pedidos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos, ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos) / ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / pedidos, 2) AS pct_2_o_menos_atiempo FROM (SELECT CASE WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 0 THEN 'a_tiempo' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 3 THEN '1-3' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 7 THEN '4-7' WHEN julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) <= 14 THEN '8-14' ELSE '15+' END AS rango_retraso, AVG(review_score) AS review_score, COUNT(DISTINCT order_id) AS pedidos FROM (SELECT order_id, AVG(review_score) AS review_score FROM vw_pedidos_validos p LEFT JOIN order_reviews rv ON rv.order_id = p.order_id WHERE order_delivered_customer_date IS NOT NULL AND review_score IS NOT NULL GROUP BY order_id) AS subquery GROUP BY rango_retraso) AS subquery WHERE pedidos > 0 GROUP BY rango_retraso ORDER BY pedidos DESC",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "ambiguous column name: order_id",
+        "columnas": [],
+        "segundos": 0.0017530000000078871
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 22.59216490000017,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4368,
+        "eval_count": 365,
+        "estimados": 4886
+      },
+      "load_duration_s": 0.0071709
+    }
+  ],
+  "segundos_caso": 149.51
+}

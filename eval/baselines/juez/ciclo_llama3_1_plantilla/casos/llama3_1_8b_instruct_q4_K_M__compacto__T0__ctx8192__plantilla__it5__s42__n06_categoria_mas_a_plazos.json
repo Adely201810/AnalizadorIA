@@ -1,0 +1,255 @@
+{
+  "caso": "n06_categoria_mas_a_plazos",
+  "necesidad": "6 · Pagos",
+  "pregunta": "Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?",
+  "modelo": "llama3.1:8b-instruct-q4_K_M",
+  "juez_modelo": null,
+  "esquema": "compacto",
+  "temperatura": 0.0,
+  "seed": 42,
+  "num_ctx": 8192,
+  "feedback": "plantilla",
+  "max_iter": 5,
+  "acierto_1": false,
+  "acierto_final": false,
+  "intentos_usados": 5,
+  "fugas_bloqueadas": 0,
+  "sintesis": null,
+  "intentos": [
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 1,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\n  \"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, p.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles ORDER BY porcentaje DESC LIMIT 1\"\n}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, p.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles ORDER BY porcentaje DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "validacion",
+        "error": "La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "columnas": [],
+        "segundos": 0.0
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 9.786679299999832,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3524,
+        "eval_count": 157,
+        "estimados": 3674
+      },
+      "load_duration_s": 0.0058946,
+      "diagnostico": {
+        "error": "validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+        "forma": [],
+        "patrones": [],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 1,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 2,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, p.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles ORDER BY porcentaje DESC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.)\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, t.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles ORDER BY porcentaje DESC LIMIT 1\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, t.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles ORDER BY porcentaje DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "misuse of aggregate function COUNT()",
+        "columnas": [],
+        "segundos": 0.001271800000267831
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 13.250577700000122,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3890,
+        "eval_count": 170,
+        "estimados": 4257
+      },
+      "load_duration_s": 0.0065743,
+      "diagnostico": {
+        "error": "ejecucion: misuse of aggregate function COUNT()",
+        "forma": [],
+        "patrones": [],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 2,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 3,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, t.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles ORDER BY porcentaje DESC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: misuse of aggregate function COUNT())\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error.\n2. La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, t.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles HAVING COUNT(DISTINCT order_id) > 100 ORDER BY porcentaje DESC LIMIT 1\"}",
+      "sql": "SELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, t.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles HAVING COUNT(DISTINCT order_id) > 100 ORDER BY porcentaje DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "misuse of aggregate function COUNT()",
+        "columnas": [],
+        "segundos": 0.0015576000000692147
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 13.212786699999924,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 3933,
+        "eval_count": 182,
+        "estimados": 4335
+      },
+      "load_duration_s": 0.0066525,
+      "diagnostico": {
+        "error": "ejecucion: misuse of aggregate function COUNT()",
+        "forma": [],
+        "patrones": [],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 4,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT order_id) > 100 THEN COUNT(CASE WHEN MAX(payment_installments) > 1 THEN order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT order_id), 2) AS porcentaje FROM (SELECT oi.order_id, t.product_category_name_english AS categoria_ingles FROM order_items oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN order_payments op ON oi.order_id = op.order_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name WHERE op.payment_type != 'not_defined' AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) GROUP BY categoria_ingles HAVING COUNT(DISTINCT order_id) > 100 ORDER BY porcentaje DESC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: misuse of aggregate function COUNT())\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error.\n2. La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n3. La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT oi.order_id) > 100 THEN COUNT(CASE WHEN MAX(op.payment_installments) > 1 THEN oi.order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT oi.order_id), 2) AS porcentaje FROM (SELECT oi.order_id, oi.product_id FROM order_items oi INNER JOIN orders o ON oi.order_id = o.order_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND o.order_status IN ('delivered', 'shipped') AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(DISTINCT oi.order_id) > 100 ORDER BY porcentaje DESC LIMIT 1\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT oi.order_id) > 100 THEN COUNT(CASE WHEN MAX(op.payment_installments) > 1 THEN oi.order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT oi.order_id), 2) AS porcentaje FROM (SELECT oi.order_id, oi.product_id FROM order_items oi INNER JOIN orders o ON oi.order_id = o.order_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND o.order_status IN ('delivered', 'shipped') AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(DISTINCT oi.order_id) > 100 ORDER BY porcentaje DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "misuse of aggregate function COUNT()",
+        "columnas": [],
+        "segundos": 0.0012567000003400608
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 14.82206240000005,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4044,
+        "eval_count": 216,
+        "estimados": 4504
+      },
+      "load_duration_s": 0.0058577,
+      "diagnostico": {
+        "error": "ejecucion: misuse of aggregate function COUNT()",
+        "forma": [],
+        "patrones": [],
+        "sanidad": []
+      },
+      "retroalimentacion": {
+        "modo": "plantilla",
+        "nivel": 3,
+        "fugas_bloqueadas": 0,
+        "motivos_fuga": [],
+        "fallback_plantilla": false,
+        "segundos": 0.0,
+        "load_duration_s": 0.0,
+        "texto": "La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite."
+      }
+    },
+    {
+      "caso": "n06_categoria_mas_a_plazos",
+      "intento": 5,
+      "modelo": "llama3.1:8b-instruct-q4_K_M",
+      "esquema": "compacto",
+      "temperatura": 0.0,
+      "seed": 42,
+      "num_ctx": 8192,
+      "feedback": "plantilla",
+      "prompt_candidato": "Pregunta: Considera los pedidos válidos (sin contar cancelados ni no disponibles) y sus pagos, sin contar los pagos cuyo método es 'not_defined'. El número de cuotas de un pedido es el mayor número de cuotas entre sus pagos, y un pedido se pagó a plazos si ese número es mayor que 1. Para cada categoría de producto (nombre en inglés; sin categoría = 'sin_categoria') cuenta los pedidos distintos que tienen al menos un artículo de esa categoría (un pedido con varias categorías cuenta en cada una). Entre las categorías con al menos 100 de esos pedidos, ¿cuál tiene el mayor porcentaje de pedidos pagados a plazos y cuál es ese porcentaje?\n\nTu consulta anterior:\n```sql\nSELECT t.product_category_name_english AS categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT oi.order_id) > 100 THEN COUNT(CASE WHEN MAX(op.payment_installments) > 1 THEN oi.order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT oi.order_id), 2) AS porcentaje FROM (SELECT oi.order_id, oi.product_id FROM order_items oi INNER JOIN orders o ON oi.order_id = o.order_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND o.order_status IN ('delivered', 'shipped') AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(DISTINCT oi.order_id) > 100 ORDER BY porcentaje DESC LIMIT 1\n```\n\nResumen de su resultado: no se pudo ejecutar (ejecucion: misuse of aggregate function COUNT())\n\nRetroalimentación de un revisor:\n1. La consulta anterior falló (validacion: La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.). Corrige ese error.\n2. La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n3. La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n4. La consulta anterior falló (ejecucion: misuse of aggregate function COUNT()). Corrige ese error. Revisa con cuidado: JOIN que multiplica filas (agrega cada tabla de detalle por pedido antes de unir), COUNT frente a COUNT(DISTINCT), granularidad del GROUP BY, condición en WHERE frente a HAVING, fechas NULL, promedio de razones frente a razón de sumas, y división entera en SQLite.\n\nGenera una consulta corregida.\n\nResponde SOLO en JSON con la forma {\"sql\": \"<consulta SQL>\"}.",
+      "respuesta_cruda": "{\"sql\": \"SELECT t.product_category_name_english AS categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT oi.order_id) > 100 THEN COUNT(CASE WHEN MAX(op.payment_installments) > 1 THEN oi.order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT oi.order_id), 2) AS porcentaje FROM (SELECT oi.order_id, oi.product_id FROM order_items oi INNER JOIN orders o ON oi.order_id = o.order_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND o.order_status IN ('delivered', 'shipped') AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(DISTINCT oi.order_id) > 100 ORDER BY porcentaje DESC LIMIT 1\"}",
+      "sql": "SELECT t.product_category_name_english AS categoria_ingles, ROUND(100.0 * SUM(CASE WHEN COUNT(DISTINCT oi.order_id) > 100 THEN COUNT(CASE WHEN MAX(op.payment_installments) > 1 THEN oi.order_id ELSE NULL END) ELSE 0 END) / COUNT(DISTINCT oi.order_id), 2) AS porcentaje FROM (SELECT oi.order_id, oi.product_id FROM order_items oi INNER JOIN orders o ON oi.order_id = o.order_id INNER JOIN order_payments op ON oi.order_id = op.order_id WHERE op.payment_type != 'not_defined' AND o.order_status IN ('delivered', 'shipped') AND oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)) oi INNER JOIN products p ON oi.product_id = p.product_id INNER JOIN product_category_translation t ON p.product_category_name = t.product_category_name GROUP BY t.product_category_name_english HAVING COUNT(DISTINCT oi.order_id) > 100 ORDER BY porcentaje DESC LIMIT 1",
+      "ejecucion": {
+        "ok": false,
+        "etapa": "ejecucion",
+        "error": "misuse of aggregate function COUNT()",
+        "columnas": [],
+        "segundos": 0.002222099999926286
+      },
+      "filas_obtenidas": 0,
+      "muestra_filas": [],
+      "veredicto": {
+        "correcto": false,
+        "comprobaciones": []
+      },
+      "segundos_generacion": 19.203315900000234,
+      "tokens": {
+        "system": 3329,
+        "prompt_eval_count": 4177,
+        "eval_count": 216,
+        "estimados": 4708
+      },
+      "load_duration_s": 0.0067715
+    }
+  ],
+  "segundos_caso": 70.29
+}
