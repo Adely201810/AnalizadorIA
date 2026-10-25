@@ -285,3 +285,24 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
   - PRUEBA_2 no se tocó, así que no hay confirmación fuera de DESARROLLO.
 - **Tiempo:** 61 min (12:11 → 13:12), dentro del límite de ~1 h.
 - **Punto 2 de la tarea (qwen2.5-coder:14b):** no se hizo; queda pendiente de la confirmación del usuario.
+
+## D-41 (C) Banco de necesidades negativas y su anti-contaminación (mejoras del profesor, fase A)
+- **Qué:** 35 necesidades negativas, 7 por familia (2 retraso vs reseñas, 4 vendedores, 5 flete, 6 pagos, 8 insatisfacción). Definiciones en `llm/banco_ejemplos/definiciones.py`; banco validado en `data/necesidades_negativas.json`, que genera `python -m llm.banco_ejemplos.construir`. Cada una cambia una dimensión respecto de la necesidad real (otra métrica, dimensión, periodo, filtro o tipo de agregación) y lo explica en `en_que_se_diferencia`.
+- **SQL:** usa tablas base + `vw_pedidos_validos`, que es la vista descrita en el prompt. No usa las vistas de negocio de E4 (existen en la base, pero el modelo no las ve descritas), para que lo aprendido sirva con el esquema visible.
+- **Validación:** cada SQL pasa los mismos validadores del chat y se ejecuta en solo lectura. Se rechazan errores, 0 filas, columnas todas NULL y porcentajes fuera de [0, 100]. `respuesta_nl` se genera con una plantilla rellenada con las filas ejecutadas y se comprueba con el chequeo de "texto confiable" (acepta los números de la pregunta). Ninguna cifra se escribió a mano.
+- **Anti-contaminación** (umbrales fijados ANTES de medir), contra las 56 preguntas que se evalúan (oráculo v4: DESARROLLO 30 y PRUEBA_2 20; y los 6 casos del juez):
+  1. Jaccard de tokens de la pregunta y de cada variante < **0.35**.
+  2. Jaccard de tokens del SQL < **0.70**.
+  3. SQL normalizado distinto.
+  4. El resultado de la negativa **no acierta** ninguna pregunta de evaluación, ni con el árbitro del oráculo ni con el veredicto del juez. Es la garantía más fuerte: copiar el SQL de la negativa no da la respuesta correcta.
+  - La prueba es `tests/test_banco_negativas.py`.
+- **Por qué no se reutilizó el umbral de 0.25 de `test_fewshot_disjunto`:** ese umbral es para ejemplos genéricos que no deben parecerse a nada del oráculo. Aquí el profesor pide ejemplos MUY parecidos a las necesidades reales, así que es esperable compartir vocabulario de la familia. El umbral de 0.35 queda por encima de ese parecido de familia y por debajo de las reformulaciones casi literales. El criterio 4 cubre lo que el texto no capta.
+- **Primera validación (salida real):** los 35 SQL ejecutaron y ninguno acertaba una pregunta de evaluación, pero **13 de 35 fallaron**:
+  - 11 por texto ≥ 0.35, por vocabulario compartido ("categorías con al menos 100 reseñas", "pedidos válidos entregados"). **Se reescribieron con otra redacción, conservando la diferencia de contenido.**
+  - f8_01 tenía el SQL a 0.718 del de n08: era casi la misma consulta. **Se cambió de contenido** (pasó de categorías a vendedores).
+  - En f8_06, el chequeo de texto confiable lee "2017-11" como 2017 y −11. Se cambió la plantilla. **Es una debilidad real de ese chequeo con fechas AAAA-MM** (en el chat también marcaría como no confiable una respuesta correcta con mes ≥ 10). No se tocó el chequeo.
+  - Los umbrales no se movieron. Resultado final: 35/35. Similitud máxima frente a la evaluación: texto, media 0.261 y máximo 0.348; SQL, media 0.422 y máximo 0.640.
+- **Limitación honesta:**
+  - El mismo agente que escribió las negativas conoce las preguntas de evaluación. Los controles limitan las copias, pero las familias se eligieron justamente porque son las que se evalúan: el RAG tendrá ejemplos parecidos a propósito. Es lo que pidió el profesor, y se informa así.
+  - PRUEBA_2 entra en el control de contaminación, pero no se usa para medir.
+- **Alternativas descartadas:** umbral 0.25 (rechazaría casi todas por vocabulario de familia); solo Jaccard (no garantiza que copiar no acierte); similitud por embeddings para la contaminación (se reserva para la recuperación; el control es léxico y por resultado, que es reproducible sin Ollama).
