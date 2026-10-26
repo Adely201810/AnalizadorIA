@@ -109,7 +109,10 @@ class TestPrueba2NoSeFiltra(unittest.TestCase):
 
     def test_bitacora_sin_contenido_de_prueba_2(self):
         b = BitacoraEsquema()  # la bitácora real del chat (runtime/), si existe
-        texto = json.dumps(b.entradas(), ensure_ascii=False)
+        # Solo el CONTENIDO que vuelve al prompt (D-48): las marcas de tiempo y los contadores daban falsos
+        # positivos (los segundos "19" de "13:57:19" coinciden con la forma /100 de 1891, de p2_03).
+        texto = json.dumps([{k: e.get(k) for k in ("clave", "mensaje", "ejemplo_pregunta")} for e in b.entradas()],
+                           ensure_ascii=False)
         for q in PRUEBA_2:
             self.assertNotIn(_normalizar(q["pregunta"])[:60], _normalizar(texto), q["id"])
             self.assertEqual(fugas(texto, valores_de_referencia(q["resultado_esperado"], q["tipos_columnas"])), [], q["id"])

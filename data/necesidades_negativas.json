@@ -1,0 +1,1414 @@
+{
+  "version": 1,
+  "fecha": "2026-10-25",
+  "descripcion": "Necesidades negativas (D-41): parecidas a las necesidades 2, 4, 5, 6 y 8 pero distintas. SQL ejecutado contra db/olist.db; respuesta_nl generada desde el resultado.",
+  "generado_con": "python -m llm.banco_ejemplos.construir",
+  "umbrales_anticontaminacion": {
+    "texto_jaccard_max": 0.35,
+    "sql_jaccard_max": 0.7,
+    "sql_normalizado_distinto": true,
+    "resultado_no_acierta_evaluacion": true
+  },
+  "necesidades": [
+    {
+      "id": "neg_f2_01_pct_5_estrellas_tarde_vs_tiempo",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "De los pedidos válidos entregados con reseña, ¿qué porcentaje tiene calificación de 5 estrellas entre los que llegaron tarde y entre los que llegaron a tiempo?",
+      "variantes": [
+        "¿Cuántos pedidos (en %) reciben 5 estrellas cuando llegan tarde frente a cuando llegan a tiempo?"
+      ],
+      "en_que_se_diferencia": "Mide la proporción de calificaciones perfectas (= 5), no la calificación promedio ni las bajas.",
+      "sql": "SELECT\n  ROUND(100.0 * SUM(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) AND r.calif = 5 THEN 1 ELSE 0 END) / SUM(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END), 2) AS pct_5_tarde,\n  ROUND(100.0 * SUM(CASE WHEN NOT (julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date)) AND r.calif = 5 THEN 1 ELSE 0 END) / SUM(CASE WHEN NOT (julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date)) THEN 1 ELSE 0 END), 2) AS pct_5_a_tiempo\nFROM vw_pedidos_validos v\nJOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id\nWHERE v.order_delivered_customer_date IS NOT NULL",
+      "resumen_resultado": {
+        "columnas": [
+          "pct_5_tarde",
+          "pct_5_a_tiempo"
+        ],
+        "filas": [
+          [
+            22.2,
+            62.38
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "Entre los pedidos que llegaron tarde, el 22.20 % tiene 5 estrellas; entre los que llegaron a tiempo, el 62.38 %.",
+      "trampas": [
+        "La calificación del pedido es el promedio de sus reseñas (agrupar order_reviews por order_id).",
+        "El denominador de cada porcentaje es su propio grupo (tarde o a tiempo), no el total.",
+        "Excluir pedidos sin fecha de entrega (NULL)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.333,
+        "max_texto_con": "n02_calificacion_retraso_vs_a_tiempo",
+        "max_sql": 0.556,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f2_02_estados_peor_calif_retraso_10",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "¿Qué 3 estados de clientes ponen las peores notas a los pedidos que llegan más de 10 días después de lo prometido? (solo estados con 50 o más pedidos válidos así)",
+      "variantes": [
+        "¿Qué 3 estados califican peor los pedidos que llegan más de 10 días tarde?"
+      ],
+      "en_que_se_diferencia": "Cambia la dimensión (estado del cliente) y filtra solo retrasos de más de 10 días.",
+      "sql": "SELECT v.customer_state, COUNT(*) AS pedidos, ROUND(AVG(r.calif), 2) AS calificacion\nFROM vw_pedidos_validos v\nJOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id\nWHERE v.order_delivered_customer_date IS NOT NULL\n  AND julianday(v.order_delivered_customer_date) - julianday(v.order_estimated_delivery_date) > 10\nGROUP BY v.customer_state\nHAVING COUNT(*) >= 50\nORDER BY calificacion ASC\nLIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "customer_state",
+          "pedidos",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "CE",
+            92,
+            1.41
+          ],
+          [
+            "RJ",
+            713,
+            1.51
+          ],
+          [
+            "PE",
+            69,
+            1.61
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "Los estados con peor calificación en pedidos con más de 10 días de retraso son CE (1.41), RJ (1.51) y PE (1.61).",
+      "trampas": [
+        "El umbral de 50 pedidos va en HAVING, después de agrupar.",
+        "Retraso en días con decimales: julianday(real) - julianday(estimada)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.182,
+        "max_texto_con": "n10_estado_mas_clientes_por_vendedor",
+        "max_sql": 0.345,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f2_03_dias_retraso_por_calificacion",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "En los pedidos válidos entregados con reseña, ¿cuántos días de diferencia promedio entre la entrega real y la estimada tienen los pedidos calificados con 1 estrella y los calificados con 5?",
+      "variantes": [
+        "¿Los pedidos de 1 estrella llegan más tarde respecto a lo prometido que los de 5 estrellas? Dame el promedio de días de cada grupo."
+      ],
+      "en_que_se_diferencia": "Invierte la dirección: agrupa por calificación y mide los días de retraso promedio.",
+      "sql": "SELECT CAST(r.calif AS INTEGER) AS estrellas,\n       COUNT(*) AS pedidos,\n       ROUND(AVG(julianday(v.order_delivered_customer_date) - julianday(v.order_estimated_delivery_date)), 2) AS dias_vs_estimada\nFROM vw_pedidos_validos v\nJOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id\nWHERE v.order_delivered_customer_date IS NOT NULL AND r.calif IN (1, 5)\nGROUP BY r.calif\nORDER BY estrellas",
+      "resumen_resultado": {
+        "columnas": [
+          "estrellas",
+          "pedidos",
+          "dias_vs_estimada"
+        ],
+        "filas": [
+          [
+            1,
+            9312,
+            -3.32
+          ],
+          [
+            5,
+            56697,
+            -12.68
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "Los pedidos de 1 estrella llegan en promedio -3.32 días respecto de la fecha estimada y los de 5 estrellas, -12.68 días (negativo = antes de lo estimado).",
+      "trampas": [
+        "Un valor negativo significa que llegó ANTES de lo estimado.",
+        "Solo pedidos cuyo promedio de reseñas es exactamente 1 o 5."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.25,
+        "max_texto_con": "p2_18_dias_entrega_por_flete",
+        "max_sql": 0.333,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f2_04_calif_retraso_por_anio",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "Para los años de compra 2017 y 2018, ¿cuál fue la calificación promedio de los pedidos válidos que se entregaron después de la fecha estimada?",
+      "variantes": [
+        "¿Mejoró de 2017 a 2018 la calificación de los pedidos que llegaron tarde?"
+      ],
+      "en_que_se_diferencia": "Agrega por periodo (año de compra) y solo mira pedidos con retraso.",
+      "sql": "SELECT strftime('%Y', v.order_purchase_timestamp) AS anio, COUNT(*) AS pedidos, ROUND(AVG(r.calif), 2) AS calificacion\nFROM vw_pedidos_validos v\nJOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id\nWHERE v.order_delivered_customer_date IS NOT NULL AND julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date)\n  AND strftime('%Y', v.order_purchase_timestamp) IN ('2017', '2018')\nGROUP BY anio\nORDER BY anio",
+      "resumen_resultado": {
+        "columnas": [
+          "anio",
+          "pedidos",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "2017",
+            2805,
+            2.55
+          ],
+          [
+            "2018",
+            4853,
+            2.58
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "Los pedidos con retraso se calificaron en promedio con 2.55 en 2017 (2,805 pedidos) y con 2.58 en 2018 (4,853 pedidos).",
+      "trampas": [
+        "El año sale de order_purchase_timestamp con strftime('%Y', ...).",
+        "La comparación de fechas es con julianday, no como texto."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.227,
+        "max_texto_con": "x02_pct_entregas_con_retraso",
+        "max_sql": 0.323,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f2_05_semanas_de_retraso",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "Solo para los pedidos válidos que llegaron tarde, agrupándolos por semanas de retraso (hasta 7 días, de 8 a 14, de 15 a 21 y más de 21), ¿cuántos pedidos hay y cuál es la calificación promedio en cada grupo?",
+      "variantes": [
+        "¿Cómo cae la calificación semana a semana de retraso?"
+      ],
+      "en_que_se_diferencia": "Usa otros rangos (semanas) y excluye los pedidos a tiempo.",
+      "sql": "WITH d AS (\n  SELECT r.calif, julianday(v.order_delivered_customer_date) - julianday(v.order_estimated_delivery_date) AS dias\n  FROM vw_pedidos_validos v JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL AND julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date)\n)\nSELECT CASE WHEN dias <= 7 THEN '1) hasta 7' WHEN dias <= 14 THEN '2) 8-14' WHEN dias <= 21 THEN '3) 15-21' ELSE '4) mas de 21' END AS semanas,\n       COUNT(*) AS pedidos, ROUND(AVG(calif), 2) AS calificacion\nFROM d GROUP BY semanas ORDER BY semanas",
+      "resumen_resultado": {
+        "columnas": [
+          "semanas",
+          "pedidos",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "1) hasta 7",
+            4409,
+            3.18
+          ],
+          [
+            "2) 8-14",
+            1748,
+            1.75
+          ],
+          [
+            "3) 15-21",
+            740,
+            1.65
+          ],
+          [
+            "4) mas de 21",
+            764,
+            1.77
+          ]
+        ],
+        "total_filas": 4
+      },
+      "respuesta_nl": "Con hasta 7 días de retraso la calificación promedio es 3.18 (4,409 pedidos); de 8 a 14, 1.75; de 15 a 21, 1.65; y con más de 21 días, 1.77 (764 pedidos).",
+      "trampas": [
+        "Los rangos deben ser excluyentes y en cascada (CASE en orden).",
+        "Etiquetas con prefijo numérico para que ORDER BY respete el orden."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.25,
+        "max_texto_con": "n02_calificacion_retraso_vs_a_tiempo",
+        "max_sql": 0.485,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f2_06_comentario_tarde_vs_tiempo",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "¿Qué porcentaje de los pedidos válidos entregados que llegaron tarde tiene al menos una reseña con comentario escrito, y qué porcentaje entre los que llegaron a tiempo?",
+      "variantes": [
+        "¿Los clientes escriben más comentarios cuando el pedido llega tarde?"
+      ],
+      "en_que_se_diferencia": "La métrica es la presencia de comentario (review_comment_message no nulo), no la calificación.",
+      "sql": "WITH p AS (\n  SELECT v.order_id, CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END AS tarde,\n         MAX(CASE WHEN rv.review_comment_message IS NOT NULL THEN 1 ELSE 0 END) AS con_comentario\n  FROM vw_pedidos_validos v JOIN order_reviews rv ON rv.order_id = v.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n  GROUP BY v.order_id\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN tarde = 1 THEN con_comentario ELSE 0 END) / SUM(tarde), 2) AS pct_comentario_tarde,\n       ROUND(100.0 * SUM(CASE WHEN tarde = 0 THEN con_comentario ELSE 0 END) / SUM(1 - tarde), 2) AS pct_comentario_a_tiempo\nFROM p",
+      "resumen_resultado": {
+        "columnas": [
+          "pct_comentario_tarde",
+          "pct_comentario_a_tiempo"
+        ],
+        "filas": [
+          [
+            55.62,
+            39.35
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El 55.62 % de los pedidos que llegaron tarde tiene un comentario escrito, frente al 39.35 % de los que llegaron a tiempo.",
+      "trampas": [
+        "Agregar primero por pedido (MAX) para no contar dos veces pedidos con varias reseñas.",
+        "Comentario = review_comment_message IS NOT NULL."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.214,
+        "max_texto_con": "n02_calificacion_retraso_vs_a_tiempo",
+        "max_sql": 0.406,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f2_07_mes_2018_mas_tardios",
+      "familia": "2 · Retraso vs reseñas",
+      "pregunta": "En 2018, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de pedidos válidos entregados después de la fecha estimada, y cuál fue la calificación promedio de los pedidos de ese mes?",
+      "variantes": [
+        "¿Cuál fue el peor mes de 2018 en puntualidad y cómo lo calificaron?"
+      ],
+      "en_que_se_diferencia": "Agrega por mes y combina porcentaje de retraso con calificación del mes.",
+      "sql": "SELECT strftime('%Y-%m', v.order_purchase_timestamp) AS mes,\n       ROUND(100.0 * SUM(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_tarde,\n       ROUND(AVG(r.calif), 2) AS calificacion\nFROM vw_pedidos_validos v\nLEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = v.order_id\nWHERE v.order_delivered_customer_date IS NOT NULL AND strftime('%Y', v.order_purchase_timestamp) = '2018'\nGROUP BY mes\nORDER BY pct_tarde DESC\nLIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "mes",
+          "pct_tarde",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "2018-03",
+            21.36,
+            3.81
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El mes de 2018 con más retrasos fue 2018-03: el 21.36 % de sus pedidos llegó tarde y su calificación promedio fue 3.81.",
+      "trampas": [
+        "LEFT JOIN a las reseñas para no perder pedidos sin reseña en el denominador del porcentaje.",
+        "Solo pedidos entregados (fecha no NULL)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.304,
+        "max_texto_con": "x02_pct_entregas_con_retraso",
+        "max_sql": 0.455,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f4_01_top5_vendedores_pct_tarde",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "Entre los vendedores con 50 o más pedidos válidos ya recibidos por el cliente, ¿qué 5 vendedores incumplen más seguido el plazo prometido y en qué proporción?",
+      "variantes": [
+        "¿Qué 5 vendedores entregan tarde más seguido (con al menos 50 pedidos entregados)?"
+      ],
+      "en_que_se_diferencia": "Ordena vendedores solo por porcentaje de entregas tardías; no usa ingresos ni calificación.",
+      "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id, CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END AS tarde\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n)\nSELECT seller_id, COUNT(*) AS pedidos, ROUND(100.0 * SUM(tarde) / COUNT(*), 2) AS pct_tarde\nFROM pv GROUP BY seller_id HAVING COUNT(*) >= 50\nORDER BY pct_tarde DESC LIMIT 5",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_id",
+          "pedidos",
+          "pct_tarde"
+        ],
+        "filas": [
+          [
+            "54965bbe3e4f07ae045b90b0b8541f52",
+            73,
+            30.14
+          ],
+          [
+            "a49928bcdf77c55c6d6e05e09a9b4ca5",
+            96,
+            26.04
+          ],
+          [
+            "beadbee30901a7f61d031b6b686095ad",
+            64,
+            25.0
+          ],
+          [
+            "06a2c3af7b3aee5d69171b0e14f0ee87",
+            389,
+            23.14
+          ],
+          [
+            "cac4c8e7b1ca6252d8f20b2fc1a2e4af",
+            74,
+            22.97
+          ]
+        ],
+        "total_filas": 5
+      },
+      "respuesta_nl": "El vendedor con más entregas tardías es 54965bbe3e4f07ae045b90b0b8541f52 (30.14 % de 73 pedidos); le siguen a49928bcdf77c55c6d6e05e09a9b4ca5 (26.04 %) y beadbee30901a7f61d031b6b686095ad (25.00 %).",
+      "trampas": [
+        "DISTINCT vendedor-pedido: un pedido con varios artículos del mismo vendedor cuenta una vez.",
+        "Denominador: pedidos entregados del vendedor."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.188,
+        "max_texto_con": "x12_vendedores_health_beauty",
+        "max_sql": 0.387,
+        "max_sql_con": "p2_06_pct_vendedores_sin_ventas"
+      }
+    },
+    {
+      "id": "neg_f4_02_vendedor_peor_calificado_100",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "De los vendedores que tienen 100 o más pedidos válidos, ¿quién recibe las peores notas de sus clientes (nota media por pedido) y cuánto ha facturado?",
+      "variantes": [
+        "¿Cuál es el vendedor grande peor calificado y cuánto vende?"
+      ],
+      "en_que_se_diferencia": "Busca un solo vendedor (el peor calificado) y reporta sus ingresos; umbral de 100 pedidos.",
+      "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ncal AS (\n  SELECT pv.seller_id, COUNT(*) AS pedidos, AVG(r.calif) AS calif\n  FROM pv LEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id GROUP BY pv.seller_id HAVING COUNT(*) >= 100\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n)\nSELECT cal.seller_id, cal.pedidos, ROUND(cal.calif, 2) AS calificacion, ROUND(ing.ingresos, 2) AS ingresos\nFROM cal JOIN ing ON ing.seller_id = cal.seller_id\nORDER BY cal.calif ASC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_id",
+          "pedidos",
+          "calificacion",
+          "ingresos"
+        ],
+        "filas": [
+          [
+            "1ca7077d890b907f89be8c954a02686a",
+            115,
+            2.33,
+            13341.57
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El vendedor peor calificado con al menos 100 pedidos es 1ca7077d890b907f89be8c954a02686a: calificación 2.33 en 115 pedidos y R$ 13,341.57 de ingresos.",
+      "trampas": [
+        "Calcular ingresos en una subconsulta aparte: unirlos con reseñas multiplica filas.",
+        "La calificación del vendedor promedia la de cada pedido, no las reseñas crudas."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.182,
+        "max_texto_con": "n10_estado_mas_clientes_por_vendedor",
+        "max_sql": 0.394,
+        "max_sql_con": "p2_19_vendedor_mejor_calificado"
+      }
+    },
+    {
+      "id": "neg_f4_03_vendedores_sp_calif_menor_4",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "¿Cuántos vendedores con sede en SP y 30 o más pedidos válidos tienen una nota media por pedido inferior a 4?",
+      "variantes": [
+        "¿Cuántos vendedores paulistas medianos o grandes están por debajo de 4 estrellas?"
+      ],
+      "en_que_se_diferencia": "Filtra por estado del vendedor y usa otro umbral de calificación; no mira ingresos ni retrasos.",
+      "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN sellers s ON s.seller_id = oi.seller_id WHERE s.seller_state = 'SP'\n),\ncal AS (\n  SELECT pv.seller_id, COUNT(*) AS pedidos, AVG(r.calif) AS calif\n  FROM pv LEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id GROUP BY pv.seller_id HAVING COUNT(*) >= 30\n)\nSELECT COUNT(*) AS vendedores, (SELECT COUNT(*) FROM cal) AS vendedores_con_30_pedidos FROM cal WHERE calif < 4",
+      "resumen_resultado": {
+        "columnas": [
+          "vendedores",
+          "vendedores_con_30_pedidos"
+        ],
+        "filas": [
+          [
+            137,
+            412
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "137 de los 412 vendedores de SP con al menos 30 pedidos tienen calificación promedio menor a 4.",
+      "trampas": [
+        "El estado del vendedor está en sellers.seller_state (no en el cliente).",
+        "COUNT sobre vendedores ya agregados, no sobre pedidos."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.2,
+        "max_texto_con": "x17_top2_ciudades_vendedores",
+        "max_sql": 0.394,
+        "max_sql_con": "p2_19_vendedor_mejor_calificado"
+      }
+    },
+    {
+      "id": "neg_f4_04_top3_vendedores_cancelados",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+      "variantes": [
+        "¿Qué vendedores cancelan más pedidos en proporción?"
+      ],
+      "en_que_se_diferencia": "La métrica es la tasa de cancelación, que exige contar TODOS los estatus.",
+      "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, o.order_id, o.order_status FROM order_items oi JOIN orders o ON o.order_id = oi.order_id\n)\nSELECT seller_id, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN order_status = 'canceled' THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_cancelados\nFROM pv GROUP BY seller_id HAVING COUNT(*) >= 20\nORDER BY pct_cancelados DESC, pedidos DESC LIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_id",
+          "pedidos",
+          "pct_cancelados"
+        ],
+        "filas": [
+          [
+            "ffff564a4f9085cd26170f4732393726",
+            20,
+            20.0
+          ],
+          [
+            "4c8b8048e33af2bf94f2eb547746a916",
+            23,
+            17.39
+          ],
+          [
+            "bc47d5d1490df2b36add65d733eafaba",
+            24,
+            8.33
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "El vendedor con mayor tasa de cancelación es ffff564a4f9085cd26170f4732393726 (20.00 % de 20 pedidos), seguido de 4c8b8048e33af2bf94f2eb547746a916 (17.39 %) y bc47d5d1490df2b36add65d733eafaba (8.33 %).",
+      "trampas": [
+        "Aquí NO se filtran pedidos válidos: los cancelados son justamente lo que se mide.",
+        "Pedidos distintos por vendedor (DISTINCT)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.333,
+        "max_texto_con": "x17_top2_ciudades_vendedores",
+        "max_sql": 0.64,
+        "max_sql_con": "p2_06_pct_vendedores_sin_ventas"
+      }
+    },
+    {
+      "id": "neg_f4_05_calif_top10pct_vs_resto",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "¿Cuál es la calificación promedio de los pedidos válidos de los vendedores que están en el 10 % con más ingresos, comparada con la del resto de vendedores?",
+      "variantes": [
+        "¿Los vendedores que más facturan tienen clientes más satisfechos que el resto?"
+      ],
+      "en_que_se_diferencia": "Compara dos grupos de vendedores (top 10 % por ingresos frente al resto) en lugar de contar problemáticos.",
+      "sql": "WITH ing AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n),\ngrupo AS (\n  SELECT seller_id, CASE WHEN PERCENT_RANK() OVER (ORDER BY ingresos DESC) <= 0.10 THEN 'top_10' ELSE 'resto' END AS grupo FROM ing\n),\npv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n)\nSELECT g.grupo, COUNT(*) AS pedidos_vendedor, ROUND(AVG(r.calif), 2) AS calificacion\nFROM pv JOIN grupo g ON g.seller_id = pv.seller_id JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\nGROUP BY g.grupo ORDER BY g.grupo DESC",
+      "resumen_resultado": {
+        "columnas": [
+          "grupo",
+          "pedidos_vendedor",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "top_10",
+            60015,
+            4.08
+          ],
+          [
+            "resto",
+            38781,
+            4.13
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "Los pedidos de los vendedores del 10 % con más ingresos tienen calificación promedio 4.08; los del resto, 4.13.",
+      "trampas": [
+        "El percentil se calcula sobre los ingresos ya agregados por vendedor (ventana sobre la CTE).",
+        "Pedidos distintos por vendedor antes de unir con reseñas."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.304,
+        "max_texto_con": "n04_vendedores_problematicos",
+        "max_sql": 0.407,
+        "max_sql_con": "n04_vendedores_problematicos"
+      }
+    },
+    {
+      "id": "neg_f4_06_estado_vendedor_mas_tardias",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "Agrupando por el estado donde está el vendedor (solo estados con 20 o más vendedores que hayan vendido), ¿cuál incumple más el plazo de entrega prometido, en porcentaje?",
+      "variantes": [
+        "¿Desde qué estado se despacha con peor puntualidad?"
+      ],
+      "en_que_se_diferencia": "Agrega por estado del vendedor (no por vendedor) y filtra estados por cantidad de vendedores.",
+      "sql": "WITH pv AS (\n  SELECT DISTINCT s.seller_state, oi.seller_id, v.order_id, CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END AS tarde\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id JOIN sellers s ON s.seller_id = oi.seller_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n)\nSELECT seller_state, COUNT(DISTINCT seller_id) AS vendedores, ROUND(100.0 * SUM(tarde) / COUNT(*), 2) AS pct_tarde\nFROM pv GROUP BY seller_state HAVING COUNT(DISTINCT seller_id) >= 20\nORDER BY pct_tarde DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_state",
+          "vendedores",
+          "pct_tarde"
+        ],
+        "filas": [
+          [
+            "SP",
+            1769,
+            8.67
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El estado de vendedor con más entregas tardías es SP: 8.67 % de entregas tarde, con 1,769 vendedores.",
+      "trampas": [
+        "El umbral es de vendedores distintos (COUNT DISTINCT seller_id) en HAVING.",
+        "Cada par vendedor-pedido cuenta una vez."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.182,
+        "max_texto_con": "n10_estado_mas_clientes_por_vendedor",
+        "max_sql": 0.438,
+        "max_sql_con": "p2_06_pct_vendedores_sin_ventas"
+      }
+    },
+    {
+      "id": "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "familia": "4 · Vendedores problemáticos",
+      "pregunta": "¿Qué porcentaje de los ingresos de pedidos válidos generan los vendedores con al menos 10 pedidos y calificación promedio menor a 3?",
+      "variantes": [
+        "¿Cuánto del negocio (en % de ingresos) depende de vendedores mal calificados?"
+      ],
+      "en_que_se_diferencia": "Mide la participación en ingresos de un grupo de vendedores, no cuántos son.",
+      "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ncal AS (\n  SELECT pv.seller_id FROM pv LEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 10 AND AVG(r.calif) < 3\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN seller_id IN (SELECT seller_id FROM cal) THEN ingresos ELSE 0 END) / SUM(ingresos), 2) AS pct_ingresos,\n       (SELECT COUNT(*) FROM cal) AS vendedores\nFROM ing",
+      "resumen_resultado": {
+        "columnas": [
+          "pct_ingresos",
+          "vendedores"
+        ],
+        "filas": [
+          [
+            1.06,
+            16
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "Los 16 vendedores con calificación menor a 3 (y al menos 10 pedidos) generan el 1.06 % de los ingresos.",
+      "trampas": [
+        "Ingresos = SUM(price) de pedidos válidos, calculados aparte de las reseñas.",
+        "El denominador son los ingresos de todos los vendedores."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.348,
+        "max_texto_con": "n04_vendedores_problematicos",
+        "max_sql": 0.44,
+        "max_sql_con": "n04_vendedores_problematicos"
+      }
+    },
+    {
+      "id": "neg_f5_01_estado_vendedor_peso_flete",
+      "familia": "5 · Flete",
+      "pregunta": "¿En qué 3 estados del VENDEDOR pesa más el flete sobre el precio (flete total entre precio total, en pedidos válidos), considerando estados con al menos 1,000 artículos vendidos?",
+      "variantes": [
+        "¿Desde qué estados sale más caro el envío en proporción al precio?"
+      ],
+      "en_que_se_diferencia": "La dimensión es el estado del vendedor (origen del envío), no el del cliente ni la categoría.",
+      "sql": "SELECT s.seller_state, COUNT(*) AS articulos, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id JOIN sellers s ON s.seller_id = oi.seller_id\nGROUP BY s.seller_state HAVING COUNT(*) >= 1000\nORDER BY pct_flete DESC LIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_state",
+          "articulos",
+          "pct_flete"
+        ],
+        "filas": [
+          [
+            "MG",
+            8774,
+            21.09
+          ],
+          [
+            "SP",
+            79945,
+            16.98
+          ],
+          [
+            "SC",
+            4050,
+            16.94
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "Los estados de vendedor donde más pesa el flete son MG (21.09 %), SP (16.98 %) y SC (16.94 %).",
+      "trampas": [
+        "SUM(flete) / SUM(precio), no el promedio de la razón por artículo.",
+        "El estado del vendedor está en sellers, unido por order_items.seller_id."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.333,
+        "max_texto_con": "n05_estado_mayor_peso_flete",
+        "max_sql": 0.357,
+        "max_sql_con": "x14_ingresos_vendedores_sp_fuera_sp"
+      }
+    },
+    {
+      "id": "neg_f5_02_categorias_flete_mas_liviano",
+      "familia": "5 · Flete",
+      "pregunta": "¿En qué 3 categorías (nombre en inglés) el envío resulta más barato comparado con lo que cuestan los productos? Solo categorías que facturaron R$ 10,000 o más en pedidos válidos.",
+      "variantes": [
+        "¿En qué categorías el envío es más barato en proporción al precio?"
+      ],
+      "en_que_se_diferencia": "Busca el mínimo (no el máximo) y usa otro umbral de ingresos.",
+      "sql": "SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,\n       ROUND(SUM(oi.price), 2) AS ingresos, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nJOIN products p ON p.product_id = oi.product_id\nLEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY categoria HAVING SUM(oi.price) >= 10000\nORDER BY pct_flete ASC LIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "categoria",
+          "ingresos",
+          "pct_flete"
+        ],
+        "filas": [
+          [
+            "computers",
+            222963.13,
+            4.41
+          ],
+          [
+            "small_appliances_home_oven_and_coffee",
+            47445.71,
+            5.79
+          ],
+          [
+            "fixed_telephony",
+            57824.21,
+            7.94
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "Las categorías donde menos pesa el flete son computers (4.41 %), small_appliances_home_oven_and_coffee (5.79 %) y fixed_telephony (7.94 %).",
+      "trampas": [
+        "LEFT JOIN a la traducción; sin categoría = 'sin_categoria'.",
+        "Umbral de ingresos en HAVING sobre SUM(price)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.189,
+        "max_texto_con": "n05_categorias_peso_flete",
+        "max_sql": 0.594,
+        "max_sql_con": "n05_categorias_peso_flete"
+      }
+    },
+    {
+      "id": "neg_f5_03_peso_flete_por_anio",
+      "familia": "5 · Flete",
+      "pregunta": "¿Cómo cambió el peso del flete sobre el precio (flete total entre precio total) de los pedidos válidos entre 2017 y 2018, según el año de compra?",
+      "variantes": [
+        "¿El flete pesó más o menos en 2018 que en 2017?"
+      ],
+      "en_que_se_diferencia": "Agrega por periodo (año de compra) en lugar de por estado o categoría.",
+      "sql": "SELECT strftime('%Y', v.order_purchase_timestamp) AS anio, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nWHERE strftime('%Y', v.order_purchase_timestamp) IN ('2017', '2018')\nGROUP BY anio ORDER BY anio",
+      "resumen_resultado": {
+        "columnas": [
+          "anio",
+          "pct_flete"
+        ],
+        "filas": [
+          [
+            "2017",
+            16.08
+          ],
+          [
+            "2018",
+            17.06
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "El flete representó el 16.08 % del precio en 2017 y el 17.06 % en 2018.",
+      "trampas": [
+        "Razón de sumas por año, no promedio de razones."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.278,
+        "max_texto_con": "n05_estado_mayor_peso_flete",
+        "max_sql": 0.5,
+        "max_sql_con": "x19_anio_mas_ingresos"
+      }
+    },
+    {
+      "id": "neg_f5_04_flete_mismo_estado_vs_otro",
+      "familia": "5 · Flete",
+      "pregunta": "¿Sale proporcionalmente más caro el envío cuando el vendedor despacha a otro estado que cuando vende dentro de su propio estado? Compara flete total entre precio total en ambos casos (pedidos válidos).",
+      "variantes": [
+        "¿Cuánto encarece el envío vender a otro estado?"
+      ],
+      "en_que_se_diferencia": "Filtra por la relación entre el estado del vendedor y el del cliente.",
+      "sql": "SELECT CASE WHEN s.seller_state = v.customer_state THEN 'mismo_estado' ELSE 'otro_estado' END AS tipo,\n       COUNT(*) AS articulos, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id JOIN sellers s ON s.seller_id = oi.seller_id\nGROUP BY tipo ORDER BY tipo",
+      "resumen_resultado": {
+        "columnas": [
+          "tipo",
+          "articulos",
+          "pct_flete"
+        ],
+        "filas": [
+          [
+            "mismo_estado",
+            40462,
+            12.93
+          ],
+          [
+            "otro_estado",
+            71639,
+            18.28
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "Cuando vendedor y cliente están en el mismo estado, el flete pesa el 12.93 % del precio; en estados distintos, el 18.28 %.",
+      "trampas": [
+        "El estado del cliente viene de vw_pedidos_validos.customer_state y el del vendedor de sellers."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.24,
+        "max_texto_con": "n05_estado_mayor_peso_flete",
+        "max_sql": 0.484,
+        "max_sql_con": "p2_07_pct_ingresos_vendedores_mg"
+      }
+    },
+    {
+      "id": "neg_f5_05_flete_por_pedido_top3_estados",
+      "familia": "5 · Flete",
+      "pregunta": "Para los 3 estados con más pedidos válidos, ¿cuánto se paga de envío por pedido en promedio, sumando el flete de todos los artículos de cada pedido?",
+      "variantes": [
+        "¿Cuánto paga de envío, en promedio por pedido, un cliente de los estados más grandes?"
+      ],
+      "en_que_se_diferencia": "El promedio es por pedido (agregando primero los artículos), no por artículo ni como proporción.",
+      "sql": "WITH fp AS (\n  SELECT v.order_id, v.customer_state, SUM(oi.freight_value) AS flete\n  FROM vw_pedidos_validos v JOIN order_items oi ON oi.order_id = v.order_id GROUP BY v.order_id, v.customer_state\n),\ntop AS (SELECT customer_state FROM vw_pedidos_validos GROUP BY customer_state ORDER BY COUNT(*) DESC LIMIT 3)\nSELECT customer_state, COUNT(*) AS pedidos, ROUND(AVG(flete), 2) AS flete_promedio_pedido\nFROM fp WHERE customer_state IN (SELECT customer_state FROM top)\nGROUP BY customer_state ORDER BY pedidos DESC",
+      "resumen_resultado": {
+        "columnas": [
+          "customer_state",
+          "pedidos",
+          "flete_promedio_pedido"
+        ],
+        "filas": [
+          [
+            "SP",
+            41125,
+            17.37
+          ],
+          [
+            "RJ",
+            12697,
+            23.95
+          ],
+          [
+            "MG",
+            11496,
+            23.45
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "El flete promedio por pedido es R$ 17.37 en SP, R$ 23.95 en RJ y R$ 23.45 en MG.",
+      "trampas": [
+        "Sumar el flete por pedido ANTES de promediar.",
+        "Elegir los 3 estados por número de pedidos en una subconsulta aparte."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.273,
+        "max_texto_con": "x13_estado_mayor_gasto_promedio",
+        "max_sql": 0.333,
+        "max_sql_con": "x13_estado_mayor_gasto_promedio"
+      }
+    },
+    {
+      "id": "neg_f5_06_furniture_decor_estado_flete",
+      "familia": "5 · Flete",
+      "pregunta": "Dentro de furniture_decor, ¿a qué estado (de quien compra) le cuesta más el envío en proporción al valor de los artículos, entre estados con 100 o más artículos vendidos en pedidos válidos?",
+      "variantes": [
+        "¿Dónde sale más caro, en proporción, enviar artículos de decoración?"
+      ],
+      "en_que_se_diferencia": "Fija una categoría y busca el estado del cliente.",
+      "sql": "SELECT v.customer_state, COUNT(*) AS articulos, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nJOIN products p ON p.product_id = oi.product_id\nJOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE t.product_category_name_english = 'furniture_decor'\nGROUP BY v.customer_state HAVING COUNT(*) >= 100\nORDER BY pct_flete DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "customer_state",
+          "articulos",
+          "pct_flete"
+        ],
+        "filas": [
+          [
+            "BA",
+            252,
+            31.04
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "En furniture_decor, el flete pesa más en BA: 31.04 % del precio (252 artículos).",
+      "trampas": [
+        "La categoría en inglés está en product_category_translation; se llega por products."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.227,
+        "max_texto_con": "x18_peso_promedio_furniture_decor",
+        "max_sql": 0.467,
+        "max_sql_con": "x10_categoria_precio_promedio_mas_alto"
+      }
+    },
+    {
+      "id": "neg_f5_07_flete_un_articulo_vs_varios",
+      "familia": "5 · Flete",
+      "pregunta": "¿Cuánto pesa el flete sobre el precio en los pedidos válidos de un solo artículo, y cuánto en los pedidos de varios artículos?",
+      "variantes": [
+        "¿Comprar varios artículos juntos abarata el envío en proporción?"
+      ],
+      "en_que_se_diferencia": "Agrupa por tamaño del pedido, lo que exige contar artículos por pedido primero.",
+      "sql": "WITH tp AS (\n  SELECT oi.order_id, COUNT(*) AS articulos, SUM(oi.price) AS precio, SUM(oi.freight_value) AS flete\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.order_id\n)\nSELECT CASE WHEN articulos = 1 THEN 'un_articulo' ELSE 'varios_articulos' END AS tipo,\n       COUNT(*) AS pedidos, ROUND(100.0 * SUM(flete) / SUM(precio), 2) AS pct_flete\nFROM tp GROUP BY tipo ORDER BY tipo",
+      "resumen_resultado": {
+        "columnas": [
+          "tipo",
+          "pedidos",
+          "pct_flete"
+        ],
+        "filas": [
+          [
+            "un_articulo",
+            88438,
+            15.65
+          ],
+          [
+            "varios_articulos",
+            9761,
+            22.12
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "En pedidos de un solo artículo el flete pesa el 15.65 % del precio; en pedidos de varios artículos, el 22.12 %.",
+      "trampas": [
+        "Agregar por pedido antes de clasificar por número de artículos."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.333,
+        "max_texto_con": "n05_estado_mayor_peso_flete",
+        "max_sql": 0.433,
+        "max_sql_con": "p2_09_pct_articulos_flete_mayor_precio"
+      }
+    },
+    {
+      "id": "neg_f6_01_pct_credito_mas_10_cuotas",
+      "familia": "6 · Pagos",
+      "pregunta": "De los pedidos válidos pagados con tarjeta de crédito, ¿qué porcentaje usó más de 10 cuotas en ese pago?",
+      "variantes": [
+        "¿Qué tan común es financiar en más de 10 cuotas con tarjeta?"
+      ],
+      "en_que_se_diferencia": "Fija un método de pago y otro umbral de cuotas; no agrupa por categoría.",
+      "sql": "WITH pc AS (\n  SELECT op.order_id, MAX(op.payment_installments) AS cuotas\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id\n  WHERE op.payment_type = 'credit_card' GROUP BY op.order_id\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN cuotas > 10 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_mas_10_cuotas, COUNT(*) AS pedidos\nFROM pc",
+      "resumen_resultado": {
+        "columnas": [
+          "pct_mas_10_cuotas",
+          "pedidos"
+        ],
+        "filas": [
+          [
+            0.44,
+            75618
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El 0.44 % de los 75,618 pedidos pagados con tarjeta de crédito usó más de 10 cuotas.",
+      "trampas": [
+        "Agregar por pedido (MAX de cuotas) para no contar dos veces pedidos con varios pagos con tarjeta."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.235,
+        "max_texto_con": "n05_estado_mayor_peso_flete",
+        "max_sql": 0.364,
+        "max_sql_con": "p2_20_pct_pagado_varios_metodos"
+      }
+    },
+    {
+      "id": "neg_f6_02_cuotas_promedio_credito_estado",
+      "familia": "6 · Pagos",
+      "pregunta": "Entre los estados del cliente con al menos 1,000 pagos con tarjeta de crédito en pedidos válidos, ¿cuáles son los 3 con más cuotas promedio por pago?",
+      "variantes": [
+        "¿En qué estados se financian más las compras con tarjeta?"
+      ],
+      "en_que_se_diferencia": "Promedio de cuotas por pago, agrupado por estado del cliente.",
+      "sql": "SELECT v.customer_state, COUNT(*) AS pagos, ROUND(AVG(op.payment_installments), 2) AS cuotas_promedio\nFROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id\nWHERE op.payment_type = 'credit_card'\nGROUP BY v.customer_state HAVING COUNT(*) >= 1000\nORDER BY cuotas_promedio DESC LIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "customer_state",
+          "pagos",
+          "cuotas_promedio"
+        ],
+        "filas": [
+          [
+            "PE",
+            1328,
+            4.22
+          ],
+          [
+            "CE",
+            1084,
+            4.18
+          ],
+          [
+            "BA",
+            2637,
+            3.97
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "Los estados con más cuotas promedio por pago con tarjeta son PE (4.22), CE (4.18) y BA (3.97).",
+      "trampas": [
+        "Aquí la unidad es el pago (fila de order_payments), no el pedido."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.273,
+        "max_texto_con": "p2_17_gasto_clientes_2_pedidos",
+        "max_sql": 0.24,
+        "max_sql_con": "x15_calificacion_pedidos_boleto"
+      }
+    },
+    {
+      "id": "neg_f6_03_metodo_mayor_valor_2018",
+      "familia": "6 · Pagos",
+      "pregunta": "Entre los pedidos válidos comprados en 2018, ¿qué método de pago deja el mayor valor pagado promedio por pedido (sumando lo pagado con ese método en cada pedido)?",
+      "variantes": [
+        "En 2018, ¿con qué método se pagan los pedidos más caros?"
+      ],
+      "en_que_se_diferencia": "Restringe a un año y compara el valor promedio por método, no la cantidad de pedidos.",
+      "sql": "WITH pm AS (\n  SELECT op.order_id, op.payment_type, SUM(op.payment_value) AS valor\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id\n  WHERE strftime('%Y', v.order_purchase_timestamp) = '2018' AND op.payment_type != 'not_defined'\n  GROUP BY op.order_id, op.payment_type\n)\nSELECT payment_type, COUNT(*) AS pedidos, ROUND(AVG(valor), 2) AS valor_promedio\nFROM pm GROUP BY payment_type ORDER BY valor_promedio DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "payment_type",
+          "pedidos",
+          "valor_promedio"
+        ],
+        "filas": [
+          [
+            "credit_card",
+            41515,
+            163.6
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "En 2018, el método con mayor valor promedio por pedido fue credit_card: R$ 163.60 en promedio (41,515 pedidos).",
+      "trampas": [
+        "Sumar los pagos del mismo método dentro de cada pedido antes de promediar."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.24,
+        "max_texto_con": "x13_estado_mayor_gasto_promedio",
+        "max_sql": 0.269,
+        "max_sql_con": "n06_metodo_pago_mas_usado"
+      }
+    },
+    {
+      "id": "neg_f6_04_estado_mas_a_plazos",
+      "familia": "6 · Pagos",
+      "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+      "variantes": [
+        "¿Dónde se compra más a plazos?"
+      ],
+      "en_que_se_diferencia": "La dimensión es el estado del cliente, no la categoría de producto.",
+      "sql": "WITH pp AS (\n  SELECT v.order_id, v.customer_state, MAX(op.payment_installments) AS cuotas\n  FROM vw_pedidos_validos v JOIN order_payments op ON op.order_id = v.order_id\n  WHERE op.payment_type != 'not_defined' GROUP BY v.order_id, v.customer_state\n)\nSELECT customer_state, COUNT(*) AS pedidos, ROUND(100.0 * SUM(CASE WHEN cuotas > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_a_plazos\nFROM pp GROUP BY customer_state HAVING COUNT(*) >= 1000\nORDER BY pct_a_plazos DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "customer_state",
+          "pedidos",
+          "pct_a_plazos"
+        ],
+        "filas": [
+          [
+            "PE",
+            1643,
+            62.81
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El estado donde más se paga a plazos es PE: el 62.81 % de sus 1,643 pedidos usó más de una cuota.",
+      "trampas": [
+        "Cuotas del pedido = MAX entre sus pagos; 'a plazos' es > 1.",
+        "Agregar los pagos por pedido antes de contar."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.292,
+        "max_texto_con": "x13_estado_mayor_gasto_promedio",
+        "max_sql": 0.382,
+        "max_sql_con": "p2_20_pct_pagado_varios_metodos"
+      }
+    },
+    {
+      "id": "neg_f6_05_pedidos_voucher_combinado",
+      "familia": "6 · Pagos",
+      "pregunta": "¿Cuántos pedidos válidos se pagaron con voucher combinado con al menos otro método de pago distinto, y cuántos solo con voucher?",
+      "variantes": [
+        "¿Los vouchers se usan solos o junto con otro medio de pago?"
+      ],
+      "en_que_se_diferencia": "Cuenta combinaciones de métodos por pedido.",
+      "sql": "WITH mp AS (\n  SELECT op.order_id, COUNT(DISTINCT op.payment_type) AS metodos, MAX(CASE WHEN op.payment_type = 'voucher' THEN 1 ELSE 0 END) AS usa_voucher\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id GROUP BY op.order_id\n)\nSELECT SUM(CASE WHEN usa_voucher = 1 AND metodos > 1 THEN 1 ELSE 0 END) AS voucher_combinado,\n       SUM(CASE WHEN usa_voucher = 1 AND metodos = 1 THEN 1 ELSE 0 END) AS solo_voucher\nFROM mp",
+      "resumen_resultado": {
+        "columnas": [
+          "voucher_combinado",
+          "solo_voucher"
+        ],
+        "filas": [
+          [
+            2210,
+            1535
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "2,210 pedidos combinaron voucher con otro método y 1,535 se pagaron solo con voucher.",
+      "trampas": [
+        "COUNT(DISTINCT payment_type) por pedido: un pedido puede tener varios pagos del mismo método."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.3,
+        "max_texto_con": "p2_20_pct_pagado_varios_metodos",
+        "max_sql": 0.364,
+        "max_sql_con": "p2_20_pct_pagado_varios_metodos"
+      }
+    },
+    {
+      "id": "neg_f6_06_mes_2017_boleto_valor",
+      "familia": "6 · Pagos",
+      "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue más alto el valor promedio de los pagos con boleto en pedidos válidos?",
+      "variantes": [
+        "¿Qué mes de 2017 tuvo los boletos más caros en promedio?"
+      ],
+      "en_que_se_diferencia": "Fija un método y un año, y agrega por mes.",
+      "sql": "SELECT strftime('%Y-%m', v.order_purchase_timestamp) AS mes, COUNT(*) AS pagos, ROUND(AVG(op.payment_value), 2) AS valor_promedio\nFROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id\nWHERE op.payment_type = 'boleto' AND strftime('%Y', v.order_purchase_timestamp) = '2017'\nGROUP BY mes ORDER BY valor_promedio DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "mes",
+          "pagos",
+          "valor_promedio"
+        ],
+        "filas": [
+          [
+            "2017-05",
+            758,
+            166.99
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El mes de 2017 con boletos más altos en promedio fue 2017-05: R$ 166.99 por pago (758 pagos).",
+      "trampas": [
+        "El mes es el de compra (order_purchase_timestamp), con strftime('%Y-%m', ...)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.235,
+        "max_texto_con": "n07_mes_mayores_ingresos",
+        "max_sql": 0.273,
+        "max_sql_con": "x09_mes_mas_cancelados"
+      }
+    },
+    {
+      "id": "neg_f6_07_calif_por_rango_cuotas",
+      "familia": "6 · Pagos",
+      "pregunta": "Agrupando los pedidos válidos por el mayor número de cuotas de sus pagos (1, de 2 a 5, de 6 a 10 y más de 10), ¿cuál es la calificación promedio de cada grupo?",
+      "variantes": [
+        "¿Los clientes que financian en muchas cuotas califican distinto?"
+      ],
+      "en_que_se_diferencia": "Cruza pagos con reseñas por rango de cuotas, lo que exige agregar ambas tablas por pedido.",
+      "sql": "WITH pp AS (\n  SELECT op.order_id, MAX(op.payment_installments) AS cuotas\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id GROUP BY op.order_id\n)\nSELECT CASE WHEN pp.cuotas <= 1 THEN '1) 1' WHEN pp.cuotas <= 5 THEN '2) 2-5' WHEN pp.cuotas <= 10 THEN '3) 6-10' ELSE '4) mas de 10' END AS rango_cuotas,\n       COUNT(*) AS pedidos, ROUND(AVG(r.calif), 2) AS calificacion\nFROM pp JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pp.order_id\nGROUP BY rango_cuotas ORDER BY rango_cuotas",
+      "resumen_resultado": {
+        "columnas": [
+          "rango_cuotas",
+          "pedidos",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "1) 1",
+            47288,
+            4.15
+          ],
+          [
+            "2) 2-5",
+            34441,
+            4.1
+          ],
+          [
+            "3) 6-10",
+            15413,
+            4.05
+          ],
+          [
+            "4) mas de 10",
+            330,
+            3.9
+          ]
+        ],
+        "total_filas": 4
+      },
+      "respuesta_nl": "La calificación promedio es 4.15 con 1 cuota, 4.10 con 2 a 5, 4.05 con 6 a 10 y 3.90 con más de 10 cuotas.",
+      "trampas": [
+        "Agregar pagos y reseñas por pedido ANTES de unirlos (si no, el JOIN multiplica filas).",
+        "Pagos con 0 cuotas caen en el grupo de 1."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.238,
+        "max_texto_con": "x07_calificacion_pedidos_bed_bath_table",
+        "max_sql": 0.361,
+        "max_sql_con": "n02_calificacion_retraso_vs_a_tiempo"
+      }
+    },
+    {
+      "id": "neg_f8_01_top3_vendedores_resenas_malas",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "¿Qué 3 vendedores con 200 o más reseñas en pedidos válidos acumulan la mayor proporción de reseñas malas (1 o 2 estrellas)?",
+      "variantes": [
+        "¿Qué vendedores grandes concentran más notas bajas?"
+      ],
+      "en_que_se_diferencia": "La insatisfacción se mide por vendedor y cuenta 1 y 2 estrellas.",
+      "sql": "WITH sp AS (\n  SELECT DISTINCT oi.seller_id, oi.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n)\nSELECT sp.seller_id, COUNT(*) AS resenas, ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_malas\nFROM sp JOIN order_reviews rv ON rv.order_id = sp.order_id\nGROUP BY sp.seller_id HAVING COUNT(*) >= 200\nORDER BY pct_malas DESC LIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_id",
+          "resenas",
+          "pct_malas"
+        ],
+        "filas": [
+          [
+            "88460e8ebdecbfecb5f9601833981930",
+            252,
+            30.56
+          ],
+          [
+            "7040e82f899a04d1b434b795a43b4617",
+            207,
+            26.09
+          ],
+          [
+            "7c67e1448b00f6e969d365cea6b010ab",
+            982,
+            25.76
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "Los vendedores con más reseñas de 1 o 2 estrellas son 88460e8ebdecbfecb5f9601833981930 (30.56 % de 252 reseñas), 7040e82f899a04d1b434b795a43b4617 (26.09 %) y 7c67e1448b00f6e969d365cea6b010ab (25.76 %).",
+      "trampas": [
+        "DISTINCT vendedor-pedido antes de unir reseñas, para que un pedido con varios artículos no repita sus reseñas.",
+        "1 o 2 estrellas = review_score <= 2."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.25,
+        "max_texto_con": "x17_top2_ciudades_vendedores",
+        "max_sql": 0.417,
+        "max_sql_con": "x04_pct_resenas_5_estrellas"
+      }
+    },
+    {
+      "id": "neg_f8_02_estado_mas_1_estrella",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "Entre los estados de los compradores con 500 o más reseñas de pedidos válidos, ¿dónde es más frecuente la nota mínima (1 estrella), en porcentaje?",
+      "variantes": [
+        "¿En qué estado están los clientes más insatisfechos?"
+      ],
+      "en_que_se_diferencia": "La dimensión es el estado del cliente, no la categoría.",
+      "sql": "SELECT v.customer_state, COUNT(*) AS resenas, ROUND(100.0 * SUM(CASE WHEN rv.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\nGROUP BY v.customer_state HAVING COUNT(*) >= 500\nORDER BY pct_1_estrella DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "customer_state",
+          "resenas",
+          "pct_1_estrella"
+        ],
+        "filas": [
+          [
+            "MA",
+            735,
+            17.01
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El estado con mayor proporción de reseñas de 1 estrella es MA: 17.01 % de sus 735 reseñas.",
+      "trampas": [
+        "La unidad es la reseña; no hace falta pasar por order_items (evita duplicar)."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.263,
+        "max_texto_con": "n08_categoria_mas_resenas_1_estrella",
+        "max_sql": 0.526,
+        "max_sql_con": "x04_pct_resenas_5_estrellas"
+      }
+    },
+    {
+      "id": "neg_f8_03_top3_categorias_mejor_calificadas",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "¿Qué 3 categorías (100 o más reseñas de pedidos válidos) tienen a los clientes más contentos según la nota media de las reseñas?",
+      "variantes": [
+        "¿Cuáles son las categorías que más gustan a los clientes?"
+      ],
+      "en_que_se_diferencia": "Busca lo opuesto (mejor calificadas) y usa el promedio de estrellas.",
+      "sql": "WITH cp AS (\n  SELECT DISTINCT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, oi.order_id\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n)\nSELECT cp.categoria, COUNT(*) AS resenas, ROUND(AVG(rv.review_score), 2) AS calificacion\nFROM cp JOIN order_reviews rv ON rv.order_id = cp.order_id\nGROUP BY cp.categoria HAVING COUNT(*) >= 100\nORDER BY calificacion DESC LIMIT 3",
+      "resumen_resultado": {
+        "columnas": [
+          "categoria",
+          "resenas",
+          "calificacion"
+        ],
+        "filas": [
+          [
+            "books_general_interest",
+            501,
+            4.5
+          ],
+          [
+            "books_technical",
+            259,
+            4.41
+          ],
+          [
+            "food_drink",
+            227,
+            4.4
+          ]
+        ],
+        "total_filas": 3
+      },
+      "respuesta_nl": "Las categorías mejor calificadas son books_general_interest (4.50), books_technical (4.41) y food_drink (4.40).",
+      "trampas": [
+        "DISTINCT categoría-pedido antes de unir reseñas.",
+        "Umbral de reseñas en HAVING."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.278,
+        "max_texto_con": "n08_categoria_mas_resenas_1_estrella",
+        "max_sql": 0.55,
+        "max_sql_con": "n08_categoria_mas_resenas_1_estrella"
+      }
+    },
+    {
+      "id": "neg_f8_04_estados_vendedor_problema_producto",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "Entre los estados de vendedor con al menos 300 reseñas de pedidos válidos, ¿cuáles tienen calificación promedio menor que la global y, a la vez, un porcentaje de entregas tardías menor que el global?",
+      "variantes": [
+        "¿Desde qué estados se vende con mala calificación aunque se entregue a tiempo?"
+      ],
+      "en_que_se_diferencia": "Hace la clasificación 'producto vs logística' por estado del vendedor, no por categoría.",
+      "sql": "WITH sp AS (\n  SELECT DISTINCT s.seller_state, v.order_id, CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END AS tarde,\n         v.order_delivered_customer_date AS entregado\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id JOIN sellers s ON s.seller_id = oi.seller_id\n),\nres AS (\n  SELECT sp.seller_state, COUNT(*) AS resenas, AVG(rv.review_score) AS calif\n  FROM sp JOIN order_reviews rv ON rv.order_id = sp.order_id GROUP BY sp.seller_state HAVING COUNT(*) >= 300\n),\ntar AS (\n  SELECT seller_state, 100.0 * SUM(tarde) / COUNT(*) AS pct_tarde FROM sp WHERE entregado IS NOT NULL GROUP BY seller_state\n),\ng AS (\n  SELECT (SELECT AVG(rv.review_score) FROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id) AS calif_global,\n         (SELECT 100.0 * SUM(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END) / COUNT(*) FROM vw_pedidos_validos v WHERE v.order_delivered_customer_date IS NOT NULL) AS tarde_global\n)\nSELECT res.seller_state, res.resenas, ROUND(res.calif, 2) AS calificacion, ROUND(tar.pct_tarde, 2) AS pct_tarde\nFROM res JOIN tar ON tar.seller_state = res.seller_state CROSS JOIN g\nWHERE res.calif < g.calif_global AND tar.pct_tarde < g.tarde_global\nORDER BY res.calif",
+      "resumen_resultado": {
+        "columnas": [
+          "seller_state",
+          "resenas",
+          "calificacion",
+          "pct_tarde"
+        ],
+        "filas": [
+          [
+            "DF",
+            822,
+            4.07,
+            6.06
+          ],
+          [
+            "ES",
+            313,
+            4.08,
+            7.1
+          ]
+        ],
+        "total_filas": 2
+      },
+      "respuesta_nl": "Hay 2 estado(s) de vendedor con calificación bajo la global pese a entregar a tiempo más que el promedio; el primero es DF (calificación 4.07, 6.06 % tardías).",
+      "trampas": [
+        "Promedios globales sobre todas las reseñas y todos los pedidos entregados válidos, no promedio de promedios.",
+        "% tardías solo sobre pedidos entregados."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.286,
+        "max_texto_con": "x15_calificacion_pedidos_boleto",
+        "max_sql": 0.361,
+        "max_sql_con": "n04_vendedores_problematicos"
+      }
+    },
+    {
+      "id": "neg_f8_05_pct_1_estrella_con_comentario",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "De las reseñas de 1 estrella de pedidos válidos, ¿qué porcentaje incluye un comentario escrito?",
+      "variantes": [
+        "¿Los clientes muy insatisfechos suelen explicar por qué?"
+      ],
+      "en_que_se_diferencia": "Mide comentarios dentro de las reseñas de 1 estrella.",
+      "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN rv.review_comment_message IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_con_comentario,\n       COUNT(*) AS resenas_1_estrella\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\nWHERE rv.review_score = 1",
+      "resumen_resultado": {
+        "columnas": [
+          "pct_con_comentario",
+          "resenas_1_estrella"
+        ],
+        "filas": [
+          [
+            76.78,
+            10539
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El 76.78 % de las 10,539 reseñas de 1 estrella incluye un comentario escrito.",
+      "trampas": [
+        "El universo (1 estrella) va en el WHERE; la condición (comentario) en el CASE."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.312,
+        "max_texto_con": "n08_categoria_mas_resenas_1_estrella",
+        "max_sql": 0.556,
+        "max_sql_con": "x04_pct_resenas_5_estrellas"
+      }
+    },
+    {
+      "id": "neg_f8_06_mes_2017_mas_1_estrella",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+      "variantes": [
+        "¿Cuál fue el mes de 2017 con clientes más insatisfechos?"
+      ],
+      "en_que_se_diferencia": "Agrega por periodo (mes de compra).",
+      "sql": "SELECT strftime('%Y-%m', v.order_purchase_timestamp) AS mes, COUNT(*) AS resenas,\n       ROUND(100.0 * SUM(CASE WHEN rv.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\nWHERE strftime('%Y', v.order_purchase_timestamp) = '2017'\nGROUP BY mes ORDER BY pct_1_estrella DESC LIMIT 1",
+      "resumen_resultado": {
+        "columnas": [
+          "mes",
+          "resenas",
+          "pct_1_estrella"
+        ],
+        "filas": [
+          [
+            "2017-11",
+            7416,
+            14.09
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "El mes de 2017 con más reseñas de 1 estrella fue el mes 11: 14.09 % de sus 7,416 reseñas.",
+      "trampas": [
+        "El mes sale de la fecha de compra del pedido, no de la fecha de la reseña."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.333,
+        "max_texto_con": "n08_categoria_mas_resenas_1_estrella",
+        "max_sql": 0.455,
+        "max_sql_con": "x04_pct_resenas_5_estrellas"
+      }
+    },
+    {
+      "id": "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo",
+      "familia": "8 · Insatisfacción",
+      "pregunta": "En la categoría bed_bath_table, ¿qué porcentaje de las reseñas de pedidos válidos entregados es de 1 estrella cuando el pedido llegó tarde, y cuál cuando llegó a tiempo?",
+      "variantes": [
+        "En cama, mesa y baño, ¿cuánto empeoran las reseñas si el pedido llega tarde?"
+      ],
+      "en_que_se_diferencia": "Fija una categoría y separa por puntualidad.",
+      "sql": "WITH cp AS (\n  SELECT DISTINCT v.order_id, CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE 0 END AS tarde\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  WHERE t.product_category_name_english = 'bed_bath_table' AND v.order_delivered_customer_date IS NOT NULL\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN cp.tarde = 1 AND rv.review_score = 1 THEN 1 ELSE 0 END) / SUM(cp.tarde), 2) AS pct_1_tarde,\n       ROUND(100.0 * SUM(CASE WHEN cp.tarde = 0 AND rv.review_score = 1 THEN 1 ELSE 0 END) / SUM(1 - cp.tarde), 2) AS pct_1_a_tiempo\nFROM cp JOIN order_reviews rv ON rv.order_id = cp.order_id",
+      "resumen_resultado": {
+        "columnas": [
+          "pct_1_tarde",
+          "pct_1_a_tiempo"
+        ],
+        "filas": [
+          [
+            47.75,
+            8.7
+          ]
+        ],
+        "total_filas": 1
+      },
+      "respuesta_nl": "En bed_bath_table, el 47.75 % de las reseñas es de 1 estrella cuando el pedido llegó tarde, frente al 8.70 % cuando llegó a tiempo.",
+      "trampas": [
+        "DISTINCT pedido antes de unir reseñas.",
+        "Cada porcentaje con el denominador de su propio grupo."
+      ],
+      "similitud_maxima_evaluacion": {
+        "max_texto": 0.238,
+        "max_texto_con": "n08_categoria_mas_resenas_1_estrella",
+        "max_sql": 0.489,
+        "max_sql_con": "n08_categoria_mas_resenas_1_estrella"
+      }
+    }
+  ]
+}

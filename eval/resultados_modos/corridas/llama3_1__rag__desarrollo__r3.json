@@ -1,0 +1,1943 @@
+{
+ "modelo": "llama3.1:8b-instruct-q4_K_M",
+ "modo": "rag",
+ "conjunto": "desarrollo",
+ "repeticion": 3,
+ "seed": 44,
+ "temperatura": 0.3,
+ "num_ctx": 8192,
+ "fecha": "2026-10-26T00:13:09",
+ "aciertos": 11,
+ "preguntas": 30,
+ "segundos_totales": 841.5,
+ "resultados": [
+  {
+   "id": "n01_pct_clientes_recurrentes",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "WITH clientes_recurrentes AS (\n  SELECT customer_unique_id, COUNT(DISTINCT order_id) AS num_pedidos\n  FROM vw_pedidos_validos\n  GROUP BY customer_unique_id\n  HAVING COUNT(DISTINCT order_id) > 1\n)\nSELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(DISTINCT customer_unique_id) FROM customers), 2) AS pct_clientes_recurrentes\nFROM clientes_recurrentes",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     3.01
+    ]
+   ],
+   "segundos": 20.58,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.773
+    },
+    {
+     "id": "neg_f4_04_top3_vendedores_cancelados",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+     "similitud": 0.745
+    },
+    {
+     "id": "neg_f4_02_vendedor_peor_calificado_100",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "De los vendedores que tienen 100 o más pedidos válidos, ¿quién recibe las peores notas de sus clientes (nota media por pedido) y cuánto ha facturado?",
+     "similitud": 0.739
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4108,
+    "tokens_prompt_total": 4735,
+    "tokens_generados_total": 149,
+    "caracteres_prompt_sql_max": 15568,
+    "segundos_llm": 19.34
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH clientes_recurrentes AS (\n  SELECT customer_unique_id, COUNT(DISTINCT order_id) AS num_pedidos\n  FROM vw_pedidos_validos\n  GROUP BY customer_unique_id\n  HAVING COUNT(DISTINCT order_id) > 1\n)\nSELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(DISTINCT customer_unique_id) FROM customers), 2) AS pct_clientes_recurrentes\nFROM clientes_recurrentes",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f4_02_vendedor_peor_calificado_100"
+     ],
+     "tokens_prompt": 4108,
+     "segundos_generacion": 15.278
+    }
+   ]
+  },
+  {
+   "id": "n02_calificacion_retraso_vs_a_tiempo",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  ROUND(AVG(CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date) THEN rv.review_score ELSE NULL END), 2) AS calificacion_retraso,\n  ROUND(AVG(CASE WHEN julianday(o.order_delivered_customer_date) <= julianday(o.order_estimated_delivery_date) THEN rv.review_score ELSE NULL END), 2) AS calificacion_a_tiempo\nFROM vw_pedidos_validos o\nJOIN order_reviews rv ON rv.order_id = o.order_id",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     2.57,
+     4.29
+    ]
+   ],
+   "segundos": 23.3,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f2_05_semanas_de_retraso",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "Solo para los pedidos válidos que llegaron tarde, agrupándolos por semanas de retraso (hasta 7 días, de 8 a 14, de 15 a 21 y más de 21), ¿cuántos pedidos hay y cuál es la calificación promedio en cada grupo?",
+     "similitud": 0.796
+    },
+    {
+     "id": "neg_f2_03_dias_retraso_por_calificacion",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En los pedidos válidos entregados con reseña, ¿cuántos días de diferencia promedio entre la entrega real y la estimada tienen los pedidos calificados con 1 estrella y los calificados con 5?",
+     "similitud": 0.771
+    },
+    {
+     "id": "neg_f2_01_pct_5_estrellas_tarde_vs_tiempo",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "De los pedidos válidos entregados con reseña, ¿qué porcentaje tiene calificación de 5 estrellas entre los que llegaron tarde y entre los que llegaron a tiempo?",
+     "similitud": 0.758
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4235,
+    "tokens_prompt_total": 4899,
+    "tokens_generados_total": 163,
+    "caracteres_prompt_sql_max": 15961,
+    "segundos_llm": 21.42
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(AVG(CASE WHEN julianday(o.order_delivered_customer_date) > julianday(o.order_estimated_delivery_date) THEN rv.review_score ELSE NULL END), 2) AS calificacion_retraso,\n  ROUND(AVG(CASE WHEN julianday(o.order_delivered_customer_date) <= julianday(o.order_estimated_delivery_date) THEN rv.review_score ELSE NULL END), 2) AS calificacion_a_tiempo\nFROM vw_pedidos_validos o\nJOIN order_reviews rv ON rv.order_id = o.order_id",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f2_05_semanas_de_retraso",
+      "neg_f2_03_dias_retraso_por_calificacion",
+      "neg_f2_01_pct_5_estrellas_tarde_vs_tiempo"
+     ],
+     "tokens_prompt": 4235,
+     "segundos_generacion": 17.509
+    }
+   ]
+  },
+  {
+   "id": "n03_pct_ingresos_top5_categorias",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "WITH ingresos AS (\n  SELECT ptc.product_category_name_english AS categoria, SUM(oi.price) AS ingresos\n  FROM order_items oi JOIN products p ON p.product_id = oi.product_id\n  JOIN product_category_translation ptc ON ptc.product_category_name = p.product_category_name\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE v.order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY ptc.product_category_name_english\n),\ntop5 AS (\n  SELECT categoria, ingresos, RANK() OVER (ORDER BY ingresos DESC) AS posicion\n  FROM ingresos\n  WHERE categoria IS NOT NULL\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN categoria IN (SELECT categoria FROM top5 WHERE posicion <= 5) THEN ingresos ELSE 0 END) / SUM(ingresos), 2) AS pct_ingresos,\n       (SELECT COUNT(*) FROM top5 WHERE posicion <= 5) AS categorias\nFROM ingresos",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     40.37,
+     5
+    ]
+   ],
+   "segundos": 38.92,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Qué porcentaje de los ingresos de pedidos válidos generan los vendedores con al menos 10 pedidos y calificación promedio menor a 3?",
+     "similitud": 0.744
+    },
+    {
+     "id": "neg_f4_04_top3_vendedores_cancelados",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+     "similitud": 0.722
+    },
+    {
+     "id": "neg_f8_02_estado_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de los compradores con 500 o más reseñas de pedidos válidos, ¿dónde es más frecuente la nota mínima (1 estrella), en porcentaje?",
+     "similitud": 0.699
+    }
+   ],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8506,
+    "tokens_prompt_total": 9266,
+    "tokens_generados_total": 476,
+    "caracteres_prompt_sql_max": 17013,
+    "segundos_llm": 36.63
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH ingresos AS (\n  SELECT p.product_category_name_english AS categoria, SUM(oi.price) AS ingresos\n  FROM order_items oi JOIN products p ON p.product_id = oi.product_id\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE v.order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY p.product_category_name_english\n),\ntop5 AS (\n  SELECT categoria, ingresos, RANK() OVER (ORDER BY ingresos DESC) AS posicion\n  FROM ingresos\n  WHERE categoria IS NOT NULL\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN categoria IN (SELECT categoria FROM top5 WHERE posicion <= 5) THEN ingresos ELSE 0 END) / SUM(ingresos), 2) AS pct_ingresos,\n       (SELECT COUNT(*) FROM top5 WHERE posicion <= 5) AS categorias\nFROM ingresos",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde products: products → product_category_translation (por product_category_name).",
+     "ejemplos_usados": [
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f8_02_estado_mas_1_estrella"
+     ],
+     "tokens_prompt": 4049,
+     "segundos_generacion": 17.428
+    },
+    {
+     "intento": 2,
+     "sql": "WITH ingresos AS (\n  SELECT ptc.product_category_name_english AS categoria, SUM(oi.price) AS ingresos\n  FROM order_items oi JOIN products p ON p.product_id = oi.product_id\n  JOIN product_category_translation ptc ON ptc.product_category_name = p.product_category_name\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE v.order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY ptc.product_category_name_english\n),\ntop5 AS (\n  SELECT categoria, ingresos, RANK() OVER (ORDER BY ingresos DESC) AS posicion\n  FROM ingresos\n  WHERE categoria IS NOT NULL\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN categoria IN (SELECT categoria FROM top5 WHERE posicion <= 5) THEN ingresos ELSE 0 END) / SUM(ingresos), 2) AS pct_ingresos,\n       (SELECT COUNT(*) FROM top5 WHERE posicion <= 5) AS categorias\nFROM ingresos",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f8_02_estado_mas_1_estrella"
+     ],
+     "tokens_prompt": 4457,
+     "segundos_generacion": 14.61
+    }
+   ]
+  },
+  {
+   "id": "n04_vendedores_problematicos",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n),\ncal AS (\n  SELECT pv.seller_id, AVG(r.calif) AS calif FROM pv JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 30\n),\ntar AS (\n  SELECT pv.seller_id, 100.0 * COUNT(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE NULL END) / COUNT(*) AS pct_tarde FROM pv JOIN vw_pedidos_validos v ON v.order_id = pv.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n  GROUP BY pv.seller_id\n),\ntop_ing AS (\n  SELECT seller_id FROM ing ORDER BY ingresos DESC LIMIT 25 / 100 * (SELECT COUNT(*) FROM ing) AS top_ing\n)\nSELECT seller_id, ingresos, calif, pct_tarde\nFROM ing\nJOIN top_ing ON top_ing.seller_id = ing.seller_id\nJOIN cal ON cal.seller_id = ing.seller_id\nJOIN tar ON tar.seller_id = ing.seller_id\nWHERE cal.calif < 3.5 OR tar.p",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 47.48,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_05_calif_top10pct_vs_resto",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Cuál es la calificación promedio de los pedidos válidos de los vendedores que están en el 10 % con más ingresos, comparada con la del resto de vendedores?",
+     "similitud": 0.837
+    },
+    {
+     "id": "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Qué porcentaje de los ingresos de pedidos válidos generan los vendedores con al menos 10 pedidos y calificación promedio menor a 3?",
+     "similitud": 0.824
+    },
+    {
+     "id": "neg_f8_04_estados_vendedor_problema_producto",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de vendedor con al menos 300 reseñas de pedidos válidos, ¿cuáles tienen calificación promedio menor que la global y, a la vez, un porcentaje de entregas tardías menor que el global?",
+     "similitud": 0.802
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 9389,
+    "tokens_prompt_total": 9389,
+    "tokens_generados_total": 700,
+    "caracteres_prompt_sql_max": 18378,
+    "segundos_llm": 47.46
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n),\ncal AS (\n  SELECT pv.seller_id, AVG(r.calif) AS calif FROM pv JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 30\n),\ntar AS (\n  SELECT pv.seller_id, 100.0 * COUNT(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE NULL END) / COUNT(*) AS pct_tarde FROM pv JOIN vw_pedidos_validos v ON v.order_id = pv.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n  GROUP BY pv.seller_id\n),\ntop_ing AS (\n  SELECT seller_id FROM ing ORDER BY ingresos DESC LIMIT 25 / 100 * COUNT(*) AS top_ing\n)\nSELECT seller_id, ingresos, calif, pct_tarde\nFROM ing\nJOIN top_ing ON top_ing.seller_id = ing.seller_id\nJOIN cal ON cal.seller_id = ing.seller_id\nJOIN tar ON tar.seller_id = ing.seller_id\nWHERE cal.calif < 3.5 OR tar.pct_tarde <",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: near \"AS\": syntax error",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: near \"AS\": syntax error",
+     "ejemplos_usados": [
+      "neg_f4_05_calif_top10pct_vs_resto",
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f8_04_estados_vendedor_problema_producto"
+     ],
+     "tokens_prompt": 4495,
+     "segundos_generacion": 28.384
+    },
+    {
+     "intento": 2,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n),\ncal AS (\n  SELECT pv.seller_id, AVG(r.calif) AS calif FROM pv JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 30\n),\ntar AS (\n  SELECT pv.seller_id, 100.0 * COUNT(CASE WHEN julianday(v.order_delivered_customer_date) > julianday(v.order_estimated_delivery_date) THEN 1 ELSE NULL END) / COUNT(*) AS pct_tarde FROM pv JOIN vw_pedidos_validos v ON v.order_id = pv.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n  GROUP BY pv.seller_id\n),\ntop_ing AS (\n  SELECT seller_id FROM ing ORDER BY ingresos DESC LIMIT 25 / 100 * (SELECT COUNT(*) FROM ing) AS top_ing\n)\nSELECT seller_id, ingresos, calif, pct_tarde\nFROM ing\nJOIN top_ing ON top_ing.seller_id = ing.seller_id\nJOIN cal ON cal.seller_id = ing.seller_id\nJOIN tar ON tar.seller_id = ing.seller_id\nWHERE cal.calif < 3.5 OR tar.p",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: near \"AS\": syntax error",
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_05_calif_top10pct_vs_resto",
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f8_04_estados_vendedor_problema_producto"
+     ],
+     "tokens_prompt": 4894,
+     "segundos_generacion": 19.077
+    }
+   ]
+  },
+  {
+   "id": "n05_estado_mayor_peso_flete",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT customer_state, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nGROUP BY customer_state\nORDER BY pct_flete DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "RR",
+     28.55
+    ]
+   ],
+   "segundos": 18.56,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f5_03_peso_flete_por_anio",
+     "familia": "5 · Flete",
+     "pregunta": "¿Cómo cambió el peso del flete sobre el precio (flete total entre precio total) de los pedidos válidos entre 2017 y 2018, según el año de compra?",
+     "similitud": 0.797
+    },
+    {
+     "id": "neg_f5_01_estado_vendedor_peso_flete",
+     "familia": "5 · Flete",
+     "pregunta": "¿En qué 3 estados del VENDEDOR pesa más el flete sobre el precio (flete total entre precio total, en pedidos válidos), considerando estados con al menos 1,000 artículos vendidos?",
+     "similitud": 0.778
+    },
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.774
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3982,
+    "tokens_prompt_total": 4597,
+    "tokens_generados_total": 132,
+    "caracteres_prompt_sql_max": 15124,
+    "segundos_llm": 16.63
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT customer_state, ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nGROUP BY customer_state\nORDER BY pct_flete DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f5_03_peso_flete_por_anio",
+      "neg_f5_01_estado_vendedor_peso_flete",
+      "neg_f6_04_estado_mas_a_plazos"
+     ],
+     "tokens_prompt": 3982,
+     "segundos_generacion": 12.315
+    }
+   ]
+  },
+  {
+   "id": "n06_metodo_pago_mas_usado",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "WITH mp AS (\n  SELECT op.order_id, COUNT(DISTINCT op.payment_type) AS metodos, MAX(CASE WHEN op.payment_type = 'voucher' THEN 1 ELSE 0 END) AS usa_voucher\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id GROUP BY op.order_id\n)\nSELECT \n  (SELECT payment_type FROM mp GROUP BY payment_type ORDER BY SUM(CASE WHEN usa_voucher = 1 AND metodos > 1 THEN 1 ELSE 0 END) DESC LIMIT 1) AS metodo_pago,\n  (SELECT COUNT(*) FROM mp WHERE usa_voucher = 1 AND metodos > 1) AS pedidos_con_metodo_pago\nFROM mp",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 27.49,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_05_pedidos_voucher_combinado",
+     "familia": "6 · Pagos",
+     "pregunta": "¿Cuántos pedidos válidos se pagaron con voucher combinado con al menos otro método de pago distinto, y cuántos solo con voucher?",
+     "similitud": 0.772
+    },
+    {
+     "id": "neg_f6_03_metodo_mayor_valor_2018",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los pedidos válidos comprados en 2018, ¿qué método de pago deja el mayor valor pagado promedio por pedido (sumando lo pagado con ese método en cada pedido)?",
+     "similitud": 0.76
+    },
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.753
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8391,
+    "tokens_prompt_total": 8391,
+    "tokens_generados_total": 316,
+    "caracteres_prompt_sql_max": 16653,
+    "segundos_llm": 27.47
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH mp AS (\n  SELECT op.order_id, COUNT(DISTINCT op.payment_type) AS metodos, MAX(CASE WHEN op.payment_type = 'voucher' THEN 1 ELSE 0 END) AS usa_voucher\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id GROUP BY op.order_id\n)\nSELECT \n  (SELECT payment_type FROM mp GROUP BY payment_type ORDER BY SUM(CASE WHEN usa_voucher = 1 AND metodos > 1 THEN 1 ELSE 0 END) DESC LIMIT 1) AS metodo_pago,\n  (SELECT COUNT(*) FROM mp WHERE usa_voucher = 1 AND metodos > 1) AS pedidos_con_metodo_pago\nFROM mp",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: payment_type",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: payment_type Reparación con el esquema real: columnas reales de order_payments: order_id, payment_installments, payment_sequential, payment_type, payment_value. columnas reales de vw_pedidos_validos: customer_id, customer_state, customer_unique_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. La columna payment_type existe en las tablas order_payments. Ruta por tablas base para llegar a payment_type desde vw_pedidos_validos: vw_pedidos_validos → order_payments (por order_id).",
+     "ejemplos_usados": [
+      "neg_f6_05_pedidos_voucher_combinado",
+      "neg_f6_03_metodo_mayor_valor_2018",
+      "neg_f6_04_estado_mas_a_plazos"
+     ],
+     "tokens_prompt": 4027,
+     "segundos_generacion": 15.78
+    },
+    {
+     "intento": 2,
+     "sql": "WITH mp AS (\n  SELECT op.order_id, COUNT(DISTINCT op.payment_type) AS metodos, MAX(CASE WHEN op.payment_type = 'voucher' THEN 1 ELSE 0 END) AS usa_voucher\n  FROM order_payments op JOIN vw_pedidos_validos v ON v.order_id = op.order_id GROUP BY op.order_id\n)\nSELECT \n  (SELECT payment_type FROM mp GROUP BY payment_type ORDER BY SUM(CASE WHEN usa_voucher = 1 AND metodos > 1 THEN 1 ELSE 0 END) DESC LIMIT 1) AS metodo_pago,\n  (SELECT COUNT(*) FROM mp WHERE usa_voucher = 1 AND metodos > 1) AS pedidos_con_metodo_pago\nFROM mp",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: payment_type",
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_05_pedidos_voucher_combinado",
+      "neg_f6_03_metodo_mayor_valor_2018",
+      "neg_f6_04_estado_mas_a_plazos"
+     ],
+     "tokens_prompt": 4364,
+     "segundos_generacion": 11.693
+    }
+   ]
+  },
+  {
+   "id": "n07_mes_mayores_ingresos",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  strftime('%Y-%m', v.order_purchase_timestamp) AS mes, \n  SUM(op.payment_value) AS ingresos\nFROM vw_pedidos_validos v\nJOIN order_payments op ON v.order_id = op.order_id\nWHERE op.payment_type = 'boleto' AND v.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "2017-11",
+     219899.16
+    ]
+   ],
+   "segundos": 17.2,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f8_06_mes_2017_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+     "similitud": 0.743
+    },
+    {
+     "id": "neg_f2_07_mes_2018_mas_tardios",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En 2018, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de pedidos válidos entregados después de la fecha estimada, y cuál fue la calificación promedio de los pedidos de ese mes?",
+     "similitud": 0.74
+    },
+    {
+     "id": "neg_f6_06_mes_2017_boleto_valor",
+     "familia": "6 · Pagos",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue más alto el valor promedio de los pagos con boleto en pedidos válidos?",
+     "similitud": 0.739
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3995,
+    "tokens_prompt_total": 4619,
+    "tokens_generados_total": 125,
+    "caracteres_prompt_sql_max": 15168,
+    "segundos_llm": 16.79
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  strftime('%Y-%m', v.order_purchase_timestamp) AS mes, \n  SUM(op.payment_value) AS ingresos\nFROM vw_pedidos_validos v\nJOIN order_payments op ON v.order_id = op.order_id\nWHERE op.payment_type = 'boleto' AND v.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f8_06_mes_2017_mas_1_estrella",
+      "neg_f2_07_mes_2018_mas_tardios",
+      "neg_f6_06_mes_2017_boleto_valor"
+     ],
+     "tokens_prompt": 3995,
+     "segundos_generacion": 13.176
+    }
+   ]
+  },
+  {
+   "id": "n08_categoria_mas_resenas_1_estrella",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * SUM(CASE WHEN rv.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella\nFROM \n  order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\n  JOIN order_items oi ON oi.order_id = v.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(*) >= 100\nORDER BY \n  pct_1_estrella DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "fashion_male_clothing",
+     25.38
+    ]
+   ],
+   "segundos": 21.4,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f8_06_mes_2017_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+     "similitud": 0.828
+    },
+    {
+     "id": "neg_f8_05_pct_1_estrella_con_comentario",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "De las reseñas de 1 estrella de pedidos válidos, ¿qué porcentaje incluye un comentario escrito?",
+     "similitud": 0.817
+    },
+    {
+     "id": "neg_f8_02_estado_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de los compradores con 500 o más reseñas de pedidos válidos, ¿dónde es más frecuente la nota mínima (1 estrella), en porcentaje?",
+     "similitud": 0.796
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3912,
+    "tokens_prompt_total": 4629,
+    "tokens_generados_total": 202,
+    "caracteres_prompt_sql_max": 14846,
+    "segundos_llm": 18.29
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * SUM(CASE WHEN rv.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella\nFROM \n  order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\n  JOIN order_items oi ON oi.order_id = v.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(*) >= 100\nORDER BY \n  pct_1_estrella DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f8_06_mes_2017_mas_1_estrella",
+      "neg_f8_05_pct_1_estrella_con_comentario",
+      "neg_f8_02_estado_mas_1_estrella"
+     ],
+     "tokens_prompt": 3912,
+     "segundos_generacion": 14.178
+    }
+   ]
+  },
+  {
+   "id": "n09_categorias_mas_compra_unica",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 5",
+   "sql": "WITH pedidos_categoria AS (\n  SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, COUNT(DISTINCT oi.order_id) AS pedidos\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  GROUP BY categoria\n),\npedidos_cliente AS (\n  SELECT customer_unique_id, COUNT(DISTINCT order_id) AS pedidos_unicos\n  FROM orders\n  WHERE order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY customer_unique_id\n)\nSELECT pc.categoria, ROUND(100.0 * COUNT(DISTINCT pc.customer_id) / pc.pedidos, 2) AS pct_cliente_unico\nFROM pedidos_categoria pc\nJOIN pedidos_cliente pcu ON pcu.customer_unique_id IN (\n  SELECT customer_unique_id\n  FROM pedidos_cliente\n  WHERE pedidos_unicos = 1\n)\nJOIN orders o ON o.customer_id = pcu.customer_unique_id\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE pc.pedidos >= 500\nGROUP BY pc.categoria\nORDER BY pct_cliente_unico DESC\nLIMIT 5",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 41.53,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f5_02_categorias_flete_mas_liviano",
+     "familia": "5 · Flete",
+     "pregunta": "¿En qué 3 categorías (nombre en inglés) el envío resulta más barato comparado con lo que cuestan los productos? Solo categorías que facturaron R$ 10,000 o más en pedidos válidos.",
+     "similitud": 0.786
+    },
+    {
+     "id": "neg_f4_01_top5_vendedores_pct_tarde",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con 50 o más pedidos válidos ya recibidos por el cliente, ¿qué 5 vendedores incumplen más seguido el plazo prometido y en qué proporción?",
+     "similitud": 0.768
+    },
+    {
+     "id": "neg_f8_03_top3_categorias_mejor_calificadas",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "¿Qué 3 categorías (100 o más reseñas de pedidos válidos) tienen a los clientes más contentos según la nota media de las reseñas?",
+     "similitud": 0.762
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8903,
+    "tokens_prompt_total": 8903,
+    "tokens_generados_total": 539,
+    "caracteres_prompt_sql_max": 18678,
+    "segundos_llm": 41.52
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pedidos_categoria AS (\n  SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, COUNT(DISTINCT oi.order_id) AS pedidos\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  GROUP BY categoria\n),\npedidos_cliente AS (\n  SELECT customer_unique_id, COUNT(DISTINCT order_id) AS pedidos_unicos\n  FROM orders\n  WHERE order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY customer_unique_id\n)\nSELECT pc.categoria, ROUND(100.0 * COUNT(DISTINCT pc.customer_unique_id) / pc.pedidos, 2) AS pct_cliente_unico\nFROM pedidos_categoria pc\nJOIN pedidos_cliente pcu ON pcu.customer_unique_id IN (\n  SELECT customer_unique_id\n  FROM pedidos_cliente\n  WHERE pedidos_unicos = 1\n)\nWHERE pc.pedidos >= 500\nGROUP BY pc.categoria\nORDER BY pct_cliente_unico DESC\nLIMIT 5",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: customer_unique_id Reparación con el esquema real: columnas reales de order_items: freight_value, order_id, order_item_id, price, product_id, seller_id, shipping_limit_date. columnas reales de vw_pedidos_validos: customer_id, customer_state, customer_unique_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de orders: customer_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. La columna customer_unique_id existe en las tablas customers y en las vistas vw_articulos_vendidos, vw_clientes_recurrentes, vw_pedidos_entregados, vw_pedidos_validos, vw_totales_pedido, vw_ventas_pedido. Ruta por tablas base para llegar a customer_unique_id desde order_items: order_items → orders (por order_id) → customers (por customer_id). Ruta por tablas base para llegar a customer_unique_id desde vw_pedidos_validos: vw_pedidos_validos → customers (por customer_id). Ruta por tablas base para llegar a customer_unique_id desde products: products → order_items (por product_id) → orders (por order_id) → customers (por customer_id). Ruta por tablas base para llegar a customer_unique_id desde product_category_translation: product_category_translation → products (por product_category_name) → order_items (por product_id) → orders (por order_id) → customers (por customer_id). Ruta por tablas base para llegar a customer_unique_id desde orders: orders → customers (por customer_id).",
+     "ejemplos_usados": [
+      "neg_f5_02_categorias_flete_mas_liviano",
+      "neg_f4_01_top5_vendedores_pct_tarde",
+      "neg_f8_03_top3_categorias_mejor_calificadas"
+     ],
+     "tokens_prompt": 4085,
+     "segundos_generacion": 19.545
+    },
+    {
+     "intento": 2,
+     "sql": "WITH pedidos_categoria AS (\n  SELECT COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria, COUNT(DISTINCT oi.order_id) AS pedidos\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  GROUP BY categoria\n),\npedidos_cliente AS (\n  SELECT customer_unique_id, COUNT(DISTINCT order_id) AS pedidos_unicos\n  FROM orders\n  WHERE order_status NOT IN ('canceled', 'unavailable')\n  GROUP BY customer_unique_id\n)\nSELECT pc.categoria, ROUND(100.0 * COUNT(DISTINCT pc.customer_id) / pc.pedidos, 2) AS pct_cliente_unico\nFROM pedidos_categoria pc\nJOIN pedidos_cliente pcu ON pcu.customer_unique_id IN (\n  SELECT customer_unique_id\n  FROM pedidos_cliente\n  WHERE pedidos_unicos = 1\n)\nJOIN orders o ON o.customer_id = pcu.customer_unique_id\nJOIN customers c ON c.customer_id = o.customer_id\nWHERE pc.pedidos >= 500\nGROUP BY pc.categoria\nORDER BY pct_cliente_unico DESC\nLIMIT 5",
+     "tipo": "semantico",
+     "error": "La consulta compara columnas de dominios distintos en un JOIN/filtro: o.customer_id = pcu.customer_unique_id. Une siempre order_id con order_id, seller_id con seller_id, customer_id con customer_id, etc.",
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f5_02_categorias_flete_mas_liviano",
+      "neg_f4_01_top5_vendedores_pct_tarde",
+      "neg_f8_03_top3_categorias_mejor_calificadas"
+     ],
+     "tokens_prompt": 4818,
+     "segundos_generacion": 21.971
+    }
+   ]
+  },
+  {
+   "id": "n10_estado_mas_clientes_por_vendedor",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id, v.customer_state\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n),\nvp AS (\n  SELECT pv.seller_id, pv.customer_state, COUNT(*) AS clientes, SUM(CASE WHEN pv.customer_state = v.customer_state THEN 1 ELSE 0 END) AS clientes_estado\n  FROM pv JOIN vw_pedidos_validos v ON v.order_id = pv.order_id GROUP BY pv.seller_id, pv.customer_state\n)\nSELECT customer_state, MAX(clientes_estado) AS max_clientes_estado, MAX(clientes) AS max_clientes\nFROM vp GROUP BY customer_state HAVING COUNT(*) >= 10\nORDER BY max_clientes_estado DESC, max_clientes DESC LIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "SP",
+     800,
+     800
+    ]
+   ],
+   "segundos": 25.93,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_01_top5_vendedores_pct_tarde",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con 50 o más pedidos válidos ya recibidos por el cliente, ¿qué 5 vendedores incumplen más seguido el plazo prometido y en qué proporción?",
+     "similitud": 0.768
+    },
+    {
+     "id": "neg_f4_02_vendedor_peor_calificado_100",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "De los vendedores que tienen 100 o más pedidos válidos, ¿quién recibe las peores notas de sus clientes (nota media por pedido) y cuánto ha facturado?",
+     "similitud": 0.765
+    },
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.76
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4167,
+    "tokens_prompt_total": 4912,
+    "tokens_generados_total": 232,
+    "caracteres_prompt_sql_max": 15758,
+    "segundos_llm": 22.47
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id, v.customer_state\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE v.order_delivered_customer_date IS NOT NULL\n),\nvp AS (\n  SELECT pv.seller_id, pv.customer_state, COUNT(*) AS clientes, SUM(CASE WHEN pv.customer_state = v.customer_state THEN 1 ELSE 0 END) AS clientes_estado\n  FROM pv JOIN vw_pedidos_validos v ON v.order_id = pv.order_id GROUP BY pv.seller_id, pv.customer_state\n)\nSELECT customer_state, MAX(clientes_estado) AS max_clientes_estado, MAX(clientes) AS max_clientes\nFROM vp GROUP BY customer_state HAVING COUNT(*) >= 10\nORDER BY max_clientes_estado DESC, max_clientes DESC LIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_01_top5_vendedores_pct_tarde",
+      "neg_f4_02_vendedor_peor_calificado_100",
+      "neg_f6_04_estado_mas_a_plazos"
+     ],
+     "tokens_prompt": 4167,
+     "segundos_generacion": 18.173
+    }
+   ]
+  },
+  {
+   "id": "x01_pedidos_cancelados",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT COUNT(*) AS pedidos_cancelados\nFROM vw_pedidos_validos\nWHERE order_status = 'canceled'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     0
+    ]
+   ],
+   "segundos": 16.3,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_04_top3_vendedores_cancelados",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+     "similitud": 0.764
+    },
+    {
+     "id": "neg_f5_07_flete_un_articulo_vs_varios",
+     "familia": "5 · Flete",
+     "pregunta": "¿Cuánto pesa el flete sobre el precio en los pedidos válidos de un solo artículo, y cuánto en los pedidos de varios artículos?",
+     "similitud": 0.684
+    },
+    {
+     "id": "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En la categoría bed_bath_table, ¿qué porcentaje de las reseñas de pedidos válidos entregados es de 1 estrella cuando el pedido llegó tarde, y cuál cuando llegó a tiempo?",
+     "similitud": 0.679
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4095,
+    "tokens_prompt_total": 4636,
+    "tokens_generados_total": 54,
+    "caracteres_prompt_sql_max": 15489,
+    "segundos_llm": 16.29
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(*) AS pedidos_cancelados\nFROM vw_pedidos_validos\nWHERE order_status = 'canceled'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f5_07_flete_un_articulo_vs_varios",
+      "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo"
+     ],
+     "tokens_prompt": 4095,
+     "segundos_generacion": 13.066
+    }
+   ]
+  },
+  {
+   "id": "x02_pct_entregas_con_retraso",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_tarde\nFROM vw_pedidos_validos\nWHERE order_delivered_customer_date IS NOT NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     8.11
+    ]
+   ],
+   "segundos": 19.16,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.782
+    },
+    {
+     "id": "neg_f2_07_mes_2018_mas_tardios",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En 2018, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de pedidos válidos entregados después de la fecha estimada, y cuál fue la calificación promedio de los pedidos de ese mes?",
+     "similitud": 0.757
+    },
+    {
+     "id": "neg_f2_03_dias_retraso_por_calificacion",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En los pedidos válidos entregados con reseña, ¿cuántos días de diferencia promedio entre la entrega real y la estimada tienen los pedidos calificados con 1 estrella y los calificados con 5?",
+     "similitud": 0.754
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4098,
+    "tokens_prompt_total": 4711,
+    "tokens_generados_total": 133,
+    "caracteres_prompt_sql_max": 15611,
+    "segundos_llm": 18.7
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN julianday(order_delivered_customer_date) > julianday(order_estimated_delivery_date) THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_tarde\nFROM vw_pedidos_validos\nWHERE order_delivered_customer_date IS NOT NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f2_07_mes_2018_mas_tardios",
+      "neg_f2_03_dias_retraso_por_calificacion"
+     ],
+     "tokens_prompt": 4098,
+     "segundos_generacion": 14.463
+    }
+   ]
+  },
+  {
+   "id": "x03_flete_promedio_por_articulo",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nWHERE order_status NOT IN ('canceled', 'unavailable')",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     16.61
+    ]
+   ],
+   "segundos": 17.92,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f5_05_flete_por_pedido_top3_estados",
+     "familia": "5 · Flete",
+     "pregunta": "Para los 3 estados con más pedidos válidos, ¿cuánto se paga de envío por pedido en promedio, sumando el flete de todos los artículos de cada pedido?",
+     "similitud": 0.774
+    },
+    {
+     "id": "neg_f5_01_estado_vendedor_peso_flete",
+     "familia": "5 · Flete",
+     "pregunta": "¿En qué 3 estados del VENDEDOR pesa más el flete sobre el precio (flete total entre precio total, en pedidos válidos), considerando estados con al menos 1,000 artículos vendidos?",
+     "similitud": 0.768
+    },
+    {
+     "id": "neg_f5_07_flete_un_articulo_vs_varios",
+     "familia": "5 · Flete",
+     "pregunta": "¿Cuánto pesa el flete sobre el precio en los pedidos válidos de un solo artículo, y cuánto en los pedidos de varios artículos?",
+     "similitud": 0.766
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3987,
+    "tokens_prompt_total": 4583,
+    "tokens_generados_total": 119,
+    "caracteres_prompt_sql_max": 15192,
+    "segundos_llm": 16.67
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(oi.freight_value) / SUM(oi.price), 2) AS pct_flete\nFROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nWHERE order_status NOT IN ('canceled', 'unavailable')",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f5_05_flete_por_pedido_top3_estados",
+      "neg_f5_01_estado_vendedor_peso_flete",
+      "neg_f5_07_flete_un_articulo_vs_varios"
+     ],
+     "tokens_prompt": 3987,
+     "segundos_generacion": 12.621
+    }
+   ]
+  },
+  {
+   "id": "x04_pct_resenas_5_estrellas",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN rv.review_score = 5 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_5_estrellas\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     58.38
+    ]
+   ],
+   "segundos": 18.95,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f2_01_pct_5_estrellas_tarde_vs_tiempo",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "De los pedidos válidos entregados con reseña, ¿qué porcentaje tiene calificación de 5 estrellas entre los que llegaron tarde y entre los que llegaron a tiempo?",
+     "similitud": 0.787
+    },
+    {
+     "id": "neg_f8_05_pct_1_estrella_con_comentario",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "De las reseñas de 1 estrella de pedidos válidos, ¿qué porcentaje incluye un comentario escrito?",
+     "similitud": 0.749
+    },
+    {
+     "id": "neg_f8_06_mes_2017_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+     "similitud": 0.738
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4034,
+    "tokens_prompt_total": 4619,
+    "tokens_generados_total": 118,
+    "caracteres_prompt_sql_max": 15256,
+    "segundos_llm": 17.12
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN rv.review_score = 5 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_5_estrellas\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f2_01_pct_5_estrellas_tarde_vs_tiempo",
+      "neg_f8_05_pct_1_estrella_con_comentario",
+      "neg_f8_06_mes_2017_mas_1_estrella"
+     ],
+     "tokens_prompt": 4034,
+     "segundos_generacion": 13.177
+    }
+   ]
+  },
+  {
+   "id": "x05_vendedor_mas_ingresos",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n),\ntop_ing AS (\n  SELECT seller_id, ingresos FROM ing ORDER BY ingresos DESC LIMIT 1\n)\nSELECT t.seller_id, SUM(ing.ingresos) AS total_ingresos\nFROM top_ing t JOIN ing ing ON ing.seller_id = t.seller_id",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "4869f7a5dfa277a7dca6462dcf3b52b2",
+     229237.63
+    ]
+   ],
+   "segundos": 25.63,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Qué porcentaje de los ingresos de pedidos válidos generan los vendedores con al menos 10 pedidos y calificación promedio menor a 3?",
+     "similitud": 0.771
+    },
+    {
+     "id": "neg_f4_02_vendedor_peor_calificado_100",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "De los vendedores que tienen 100 o más pedidos válidos, ¿quién recibe las peores notas de sus clientes (nota media por pedido) y cuánto ha facturado?",
+     "similitud": 0.753
+    },
+    {
+     "id": "neg_f4_05_calif_top10pct_vs_resto",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Cuál es la calificación promedio de los pedidos válidos de los vendedores que están en el 10 % con más ingresos, comparada con la del resto de vendedores?",
+     "similitud": 0.75
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4279,
+    "tokens_prompt_total": 4992,
+    "tokens_generados_total": 204,
+    "caracteres_prompt_sql_max": 16129,
+    "segundos_llm": 23.23
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id GROUP BY oi.seller_id\n),\ntop_ing AS (\n  SELECT seller_id, ingresos FROM ing ORDER BY ingresos DESC LIMIT 1\n)\nSELECT t.seller_id, SUM(ing.ingresos) AS total_ingresos\nFROM top_ing t JOIN ing ing ON ing.seller_id = t.seller_id",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f4_02_vendedor_peor_calificado_100",
+      "neg_f4_05_calif_top10pct_vs_resto"
+     ],
+     "tokens_prompt": 4279,
+     "segundos_generacion": 18.803
+    }
+   ]
+  },
+  {
+   "id": "x06_pct_pedidos_varios_articulos",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "WITH pedidos_con_articulos AS (\n  SELECT oi.order_id, COUNT(*) AS articulos\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  GROUP BY oi.order_id\n),\npedidos_con_articulos_promedio AS (\n  SELECT AVG(articulos) AS articulos_promedio\n  FROM pedidos_con_articulos\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN articulos > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_articulos_mas_de_uno\nFROM pedidos_con_articulos",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     9.94
+    ]
+   ],
+   "segundos": 21.13,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f2_06_comentario_tarde_vs_tiempo",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "¿Qué porcentaje de los pedidos válidos entregados que llegaron tarde tiene al menos una reseña con comentario escrito, y qué porcentaje entre los que llegaron a tiempo?",
+     "similitud": 0.758
+    },
+    {
+     "id": "neg_f4_04_top3_vendedores_cancelados",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+     "similitud": 0.75
+    },
+    {
+     "id": "neg_f5_05_flete_por_pedido_top3_estados",
+     "familia": "5 · Flete",
+     "pregunta": "Para los 3 estados con más pedidos válidos, ¿cuánto se paga de envío por pedido en promedio, sumando el flete de todos los artículos de cada pedido?",
+     "similitud": 0.742
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4065,
+    "tokens_prompt_total": 4728,
+    "tokens_generados_total": 181,
+    "caracteres_prompt_sql_max": 15507,
+    "segundos_llm": 19.88
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pedidos_con_articulos AS (\n  SELECT oi.order_id, COUNT(*) AS articulos\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  GROUP BY oi.order_id\n),\npedidos_con_articulos_promedio AS (\n  SELECT AVG(articulos) AS articulos_promedio\n  FROM pedidos_con_articulos\n)\nSELECT ROUND(100.0 * SUM(CASE WHEN articulos > 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_articulos_mas_de_uno\nFROM pedidos_con_articulos",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f2_06_comentario_tarde_vs_tiempo",
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f5_05_flete_por_pedido_top3_estados"
+     ],
+     "tokens_prompt": 4065,
+     "segundos_generacion": 15.757
+    }
+   ]
+  },
+  {
+   "id": "x07_calificacion_pedidos_bed_bath_table",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT ROUND(AVG(rv.review_score), 2) AS calificacion_promedio\nFROM vw_pedidos_validos v\nJOIN order_items oi ON v.order_id = oi.order_id\nJOIN order_payments op ON oi.order_id = op.order_id\nJOIN order_reviews rv ON v.order_id = rv.order_id\nJOIN products p ON oi.product_id = p.product_id\nJOIN product_category_translation t ON p.product_category_name = t.product_category_name\nWHERE t.product_category_name_english = 'bed_bath_table'\nAND v.order_status NOT IN ('canceled', 'unavailable')\nAND op.payment_value IS NOT NULL\nAND rv.review_score IS NOT NULL",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     3.89
+    ]
+   ],
+   "segundos": 36.1,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En la categoría bed_bath_table, ¿qué porcentaje de las reseñas de pedidos válidos entregados es de 1 estrella cuando el pedido llegó tarde, y cuál cuando llegó a tiempo?",
+     "similitud": 0.786
+    },
+    {
+     "id": "neg_f6_07_calif_por_rango_cuotas",
+     "familia": "6 · Pagos",
+     "pregunta": "Agrupando los pedidos válidos por el mayor número de cuotas de sus pagos (1, de 2 a 5, de 6 a 10 y más de 10), ¿cuál es la calificación promedio de cada grupo?",
+     "similitud": 0.752
+    },
+    {
+     "id": "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Qué porcentaje de los ingresos de pedidos válidos generan los vendedores con al menos 10 pedidos y calificación promedio menor a 3?",
+     "similitud": 0.731
+    }
+   ],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8912,
+    "tokens_prompt_total": 9602,
+    "tokens_generados_total": 333,
+    "caracteres_prompt_sql_max": 17470,
+    "segundos_llm": 34.32
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(AVG(rv.review_score), 2) AS calificacion_promedio\nFROM vw_pedidos_validos v\nJOIN order_items oi ON v.order_id = oi.order_id\nJOIN order_payments op ON oi.order_id = op.order_id\nJOIN order_reviews rv ON v.order_id = rv.order_id\nJOIN product_category_translation t ON oi.product_id = t.product_id\nWHERE t.product_category_name_english = 'bed_bath_table'\nAND v.order_status NOT IN ('canceled', 'unavailable')\nAND op.payment_value IS NOT NULL\nAND rv.review_score IS NOT NULL",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 't.product_id': la tabla/vista 'product_category_translation' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 't.product_id': la tabla/vista 'product_category_translation' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de product_category_translation: product_category_name, product_category_name_english. La columna product_id existe en las tablas order_items, products y en las vistas vw_articulos_vendidos. Ruta por tablas base para llegar a product_id desde product_category_translation: product_category_translation → products (por product_category_name).",
+     "ejemplos_usados": [
+      "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo",
+      "neg_f6_07_calif_por_rango_cuotas",
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja"
+     ],
+     "tokens_prompt": 4295,
+     "segundos_generacion": 18.418
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT ROUND(AVG(rv.review_score), 2) AS calificacion_promedio\nFROM vw_pedidos_validos v\nJOIN order_items oi ON v.order_id = oi.order_id\nJOIN order_payments op ON oi.order_id = op.order_id\nJOIN order_reviews rv ON v.order_id = rv.order_id\nJOIN products p ON oi.product_id = p.product_id\nJOIN product_category_translation t ON p.product_category_name = t.product_category_name\nWHERE t.product_category_name_english = 'bed_bath_table'\nAND v.order_status NOT IN ('canceled', 'unavailable')\nAND op.payment_value IS NOT NULL\nAND rv.review_score IS NOT NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo",
+      "neg_f6_07_calif_por_rango_cuotas",
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja"
+     ],
+     "tokens_prompt": 4617,
+     "segundos_generacion": 11.26
+    }
+   ]
+  },
+  {
+   "id": "x08_dias_entrega_rj",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT ROUND(AVG(julianday(order_delivered_customer_date) - julianday(order_purchase_timestamp)), 2) AS dias_promedio\nFROM vw_pedidos_validos\nWHERE order_delivered_customer_date IS NOT NULL\n  AND customer_state = 'RJ'\n  AND order_status NOT IN ('canceled', 'unavailable')",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     15.31
+    ]
+   ],
+   "segundos": 18.58,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.767
+    },
+    {
+     "id": "neg_f5_05_flete_por_pedido_top3_estados",
+     "familia": "5 · Flete",
+     "pregunta": "Para los 3 estados con más pedidos válidos, ¿cuánto se paga de envío por pedido en promedio, sumando el flete de todos los artículos de cada pedido?",
+     "similitud": 0.762
+    },
+    {
+     "id": "neg_f2_02_estados_peor_calif_retraso_10",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "¿Qué 3 estados de clientes ponen las peores notas a los pedidos que llegan más de 10 días después de lo prometido? (solo estados con 50 o más pedidos válidos así)",
+     "similitud": 0.76
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4056,
+    "tokens_prompt_total": 4671,
+    "tokens_generados_total": 145,
+    "caracteres_prompt_sql_max": 15491,
+    "segundos_llm": 18.39
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(AVG(julianday(order_delivered_customer_date) - julianday(order_purchase_timestamp)), 2) AS dias_promedio\nFROM vw_pedidos_validos\nWHERE order_delivered_customer_date IS NOT NULL\n  AND customer_state = 'RJ'\n  AND order_status NOT IN ('canceled', 'unavailable')",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f5_05_flete_por_pedido_top3_estados",
+      "neg_f2_02_estados_peor_calif_retraso_10"
+     ],
+     "tokens_prompt": 4056,
+     "segundos_generacion": 13.83
+    }
+   ]
+  },
+  {
+   "id": "x09_mes_mas_cancelados",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  COUNT(*) AS pedidos_cancelados,\n  ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM vw_pedidos_validos), 2) AS pct_cancelados\nFROM orders o\nWHERE o.order_status = 'canceled'\nGROUP BY mes\nORDER BY pct_cancelados DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "2018-08",
+     84,
+     0.09
+    ]
+   ],
+   "segundos": 17.26,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f2_07_mes_2018_mas_tardios",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En 2018, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de pedidos válidos entregados después de la fecha estimada, y cuál fue la calificación promedio de los pedidos de ese mes?",
+     "similitud": 0.755
+    },
+    {
+     "id": "neg_f8_06_mes_2017_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+     "similitud": 0.732
+    },
+    {
+     "id": "neg_f6_06_mes_2017_boleto_valor",
+     "familia": "6 · Pagos",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue más alto el valor promedio de los pagos con boleto en pedidos válidos?",
+     "similitud": 0.726
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3999,
+    "tokens_prompt_total": 4633,
+    "tokens_generados_total": 116,
+    "caracteres_prompt_sql_max": 15188,
+    "segundos_llm": 16.81
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  COUNT(*) AS pedidos_cancelados,\n  ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM vw_pedidos_validos), 2) AS pct_cancelados\nFROM orders o\nWHERE o.order_status = 'canceled'\nGROUP BY mes\nORDER BY pct_cancelados DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f2_07_mes_2018_mas_tardios",
+      "neg_f8_06_mes_2017_mas_1_estrella",
+      "neg_f6_06_mes_2017_boleto_valor"
+     ],
+     "tokens_prompt": 3999,
+     "segundos_generacion": 13.317
+    }
+   ]
+  },
+  {
+   "id": "x10_categoria_precio_promedio_mas_alto",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "WITH pedidos_categoria AS (\n  SELECT ptc.product_category_name_english AS categoria, oi.order_id, oi.price, oi.freight_value\n  FROM products p LEFT JOIN product_category_translation ptc ON ptc.product_category_name = p.product_category_name\n  LEFT JOIN order_items oi ON oi.product_id = p.product_id\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE oi.price IS NOT NULL AND oi.freight_value IS NOT NULL\n),\npromedio_categoria AS (\n  SELECT categoria, ROUND(AVG(price), 2) AS precio_promedio, ROUND(AVG(freight_value), 2) AS flete_promedio\n  FROM pedidos_categoria GROUP BY categoria\n)\nSELECT categoria, precio_promedio, flete_promedio, precio_promedio / flete_promedio AS ratio\nFROM (\n  SELECT categoria, precio_promedio, flete_promedio,\n         ROW_NUMBER() OVER (PARTITION BY categoria ORDER BY precio_promedio / flete_promedio DESC) AS row_num\n  FROM promedio_categoria\n) AS subquery\nWHERE row_num = 1\nORDER BY precio_promedio / flete_promedio DESC\nLIMIT 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "computers",
+     1098.34,
+     48.45,
+     22.669556243550048
+    ]
+   ],
+   "segundos": 40.79,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f5_01_estado_vendedor_peso_flete",
+     "familia": "5 · Flete",
+     "pregunta": "¿En qué 3 estados del VENDEDOR pesa más el flete sobre el precio (flete total entre precio total, en pedidos válidos), considerando estados con al menos 1,000 artículos vendidos?",
+     "similitud": 0.766
+    },
+    {
+     "id": "neg_f5_07_flete_un_articulo_vs_varios",
+     "familia": "5 · Flete",
+     "pregunta": "¿Cuánto pesa el flete sobre el precio en los pedidos válidos de un solo artículo, y cuánto en los pedidos de varios artículos?",
+     "similitud": 0.762
+    },
+    {
+     "id": "neg_f5_05_flete_por_pedido_top3_estados",
+     "familia": "5 · Flete",
+     "pregunta": "Para los 3 estados con más pedidos válidos, ¿cuánto se paga de envío por pedido en promedio, sumando el flete de todos los artículos de cada pedido?",
+     "similitud": 0.737
+    }
+   ],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8464,
+    "tokens_prompt_total": 9298,
+    "tokens_generados_total": 520,
+    "caracteres_prompt_sql_max": 17112,
+    "segundos_llm": 38.45
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pedidos_categoria AS (\n  SELECT p.product_category_name_english AS categoria, oi.order_id, oi.price, oi.freight_value\n  FROM products p LEFT JOIN order_items oi ON oi.product_id = p.product_id\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE oi.price IS NOT NULL AND oi.freight_value IS NOT NULL\n),\npromedio_categoria AS (\n  SELECT categoria, ROUND(AVG(price), 2) AS precio_promedio, ROUND(AVG(freight_value), 2) AS flete_promedio\n  FROM pedidos_categoria GROUP BY categoria\n)\nSELECT categoria, precio_promedio, flete_promedio, precio_promedio / flete_promedio AS ratio\nFROM (\n  SELECT categoria, precio_promedio, flete_promedio,\n         ROW_NUMBER() OVER (PARTITION BY categoria ORDER BY precio_promedio / flete_promedio DESC) AS row_num\n  FROM promedio_categoria\n) AS subquery\nWHERE row_num = 1\nORDER BY precio_promedio / flete_promedio DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'p.product_category_name_english': la tabla/vista 'products' no tiene la columna 'product_category_name_english'. Esa columna sí existe en: product_category_translation. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. La columna product_category_name_english existe en las tablas product_category_translation. Ruta por tablas base para llegar a product_category_name_english desde products: products → product_category_translation (por product_category_name).",
+     "ejemplos_usados": [
+      "neg_f5_01_estado_vendedor_peso_flete",
+      "neg_f5_07_flete_un_articulo_vs_varios",
+      "neg_f5_05_flete_por_pedido_top3_estados"
+     ],
+     "tokens_prompt": 4011,
+     "segundos_generacion": 17.802
+    },
+    {
+     "intento": 2,
+     "sql": "WITH pedidos_categoria AS (\n  SELECT ptc.product_category_name_english AS categoria, oi.order_id, oi.price, oi.freight_value\n  FROM products p LEFT JOIN product_category_translation ptc ON ptc.product_category_name = p.product_category_name\n  LEFT JOIN order_items oi ON oi.product_id = p.product_id\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE oi.price IS NOT NULL AND oi.freight_value IS NOT NULL\n),\npromedio_categoria AS (\n  SELECT categoria, ROUND(AVG(price), 2) AS precio_promedio, ROUND(AVG(freight_value), 2) AS flete_promedio\n  FROM pedidos_categoria GROUP BY categoria\n)\nSELECT categoria, precio_promedio, flete_promedio, precio_promedio / flete_promedio AS ratio\nFROM (\n  SELECT categoria, precio_promedio, flete_promedio,\n         ROW_NUMBER() OVER (PARTITION BY categoria ORDER BY precio_promedio / flete_promedio DESC) AS row_num\n  FROM promedio_categoria\n) AS subquery\nWHERE row_num = 1\nORDER BY precio_promedio / flete_promedio DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f5_01_estado_vendedor_peso_flete",
+      "neg_f5_07_flete_un_articulo_vs_varios",
+      "neg_f5_05_flete_por_pedido_top3_estados"
+     ],
+     "tokens_prompt": 4453,
+     "segundos_generacion": 16.005
+    }
+   ]
+  },
+  {
+   "id": "x11_clientes_unicos_sp",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS clientes\nFROM vw_pedidos_validos\nWHERE customer_state = 'SP' AND order_status NOT IN ('canceled', 'unavailable')",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     39749
+    ]
+   ],
+   "segundos": 19.18,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.768
+    },
+    {
+     "id": "neg_f2_02_estados_peor_calif_retraso_10",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "¿Qué 3 estados de clientes ponen las peores notas a los pedidos que llegan más de 10 días después de lo prometido? (solo estados con 50 o más pedidos válidos así)",
+     "similitud": 0.76
+    },
+    {
+     "id": "neg_f4_02_vendedor_peor_calificado_100",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "De los vendedores que tienen 100 o más pedidos válidos, ¿quién recibe las peores notas de sus clientes (nota media por pedido) y cuánto ha facturado?",
+     "similitud": 0.734
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4131,
+    "tokens_prompt_total": 4696,
+    "tokens_generados_total": 107,
+    "caracteres_prompt_sql_max": 15659,
+    "segundos_llm": 18.04
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(DISTINCT customer_unique_id) AS clientes\nFROM vw_pedidos_validos\nWHERE customer_state = 'SP' AND order_status NOT IN ('canceled', 'unavailable')",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f2_02_estados_peor_calif_retraso_10",
+      "neg_f4_02_vendedor_peor_calificado_100"
+     ],
+     "tokens_prompt": 4131,
+     "segundos_generacion": 13.761
+    }
+   ]
+  },
+  {
+   "id": "x12_vendedores_health_beauty",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 489, la referencia tiene 1",
+   "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN order_items oi2 ON oi2.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi2.product_id\n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  WHERE t.product_category_name_english = 'health_beauty'\n),\ncal AS (\n  SELECT pv.seller_id, COUNT(*) AS pedidos, AVG(r.calif) AS calif\n  FROM pv\n  LEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id\n  HAVING COUNT(*) >= 1\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE oi.product_id IN (SELECT product_id FROM products p JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE t.product_category_name_english = 'health_beauty')\n  GROUP BY oi.seller_id\n)\nSELECT cal.seller_id, cal.pedidos, ROUND(cal.calif, 2) AS calificacion, ROUND(ing.ingresos, 2) AS ingresos\nFROM cal\nJOIN ing ON ing.seller_id = cal.seller_id\nORDER BY cal.calif ASC",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "08d2d642cf72b622b14dde1d2f5eb2f5",
+     1,
+     null,
+     5.0
+    ],
+    [
+     "0747d5bb69f0586cc869d8af4c50f93e",
+     1,
+     1.0,
+     14.9
+    ],
+    [
+     "15aec03fe4cf30dfa574cf550f5ff5ff",
+     1,
+     1.0,
+     28.9
+    ],
+    [
+     "15b3b1b81484422eb41df68ac87f1f50",
+     2,
+     1.0,
+     78.35
+    ],
+    [
+     "4c2b230173bb36f9b240f2b8ac11786e",
+     1,
+     1.0,
+     29.99
+    ]
+   ],
+   "segundos": 60.52,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_02_vendedor_peor_calificado_100",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "De los vendedores que tienen 100 o más pedidos válidos, ¿quién recibe las peores notas de sus clientes (nota media por pedido) y cuánto ha facturado?",
+     "similitud": 0.744
+    },
+    {
+     "id": "neg_f4_04_top3_vendedores_cancelados",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+     "similitud": 0.737
+    },
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.72
+    }
+   ],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8675,
+    "tokens_prompt_total": 11191,
+    "tokens_generados_total": 686,
+    "caracteres_prompt_sql_max": 17198,
+    "segundos_llm": 56.72
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN product_category_translation p ON p.product_category_name = oi.product_id\n  WHERE p.product_category_name_english = 'health_beauty'\n),\ncal AS (\n  SELECT pv.seller_id, COUNT(*) AS pedidos, AVG(r.calif) AS calif\n  FROM pv\n  LEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id\n  HAVING COUNT(*) >= 1\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE oi.product_id IN (SELECT product_id FROM products p JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE t.product_category_name_english = 'health_beauty')\n  GROUP BY oi.seller_id\n)\nSELECT cal.seller_id, cal.pedidos, ROUND(cal.calif, 2) AS calificacion, ROUND(ing.ingresos, 2) AS ingresos\nFROM cal\nJOIN ing ON ing.seller_id = cal.seller_id\nORDER BY cal.calif ASC\nLIMIT 1",
+     "tipo": "semantico",
+     "error": "La consulta se ejecutó sin errores pero no devolvió ninguna fila.",
+     "pista_siguiente": "La consulta se ejecutó sin errores pero no devolvió ninguna fila. Revisa si el JOIN o el filtro está mal planteado (por ejemplo, saltarte la tabla orders al relacionar customers con order_items); si aplica, usa directamente una de las vistas del esquema. Recuerda también que los datos de Olist solo cubren 2016-2018. Genera una consulta corregida.",
+     "ejemplos_usados": [
+      "neg_f4_02_vendedor_peor_calificado_100",
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f6_04_estado_mas_a_plazos"
+     ],
+     "tokens_prompt": 4120,
+     "segundos_generacion": 21.494
+    },
+    {
+     "intento": 2,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN orders o ON o.order_id = oi.order_id\n  JOIN order_items oi2 ON oi2.order_id = oi.order_id\n  JOIN products p ON p.product_id = oi2.product_id\n  JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  WHERE t.product_category_name_english = 'health_beauty'\n),\ncal AS (\n  SELECT pv.seller_id, COUNT(*) AS pedidos, AVG(r.calif) AS calif\n  FROM pv\n  LEFT JOIN (SELECT order_id, AVG(review_score) AS calif FROM order_reviews GROUP BY order_id) r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id\n  HAVING COUNT(*) >= 1\n),\ning AS (\n  SELECT oi.seller_id, SUM(oi.price) AS ingresos\n  FROM order_items oi\n  JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  WHERE oi.product_id IN (SELECT product_id FROM products p JOIN product_category_translation t ON t.product_category_name = p.product_category_name WHERE t.product_category_name_english = 'health_beauty')\n  GROUP BY oi.seller_id\n)\nSELECT cal.seller_id, cal.pedidos, ROUND(cal.calif, 2) AS calificacion, ROUND(ing.ingresos, 2) AS ingresos\nFROM cal\nJOIN ing ON ing.seller_id = cal.seller_id\nORDER BY cal.calif ASC",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_02_vendedor_peor_calificado_100",
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f6_04_estado_mas_a_plazos"
+     ],
+     "tokens_prompt": 4555,
+     "segundos_generacion": 18.953
+    }
+   ]
+  },
+  {
+   "id": "x13_estado_mayor_gasto_promedio",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "WITH pedidos_estado AS (\n  SELECT v.customer_state, SUM(oi.price + oi.freight_value) AS gasto_total\n  FROM vw_pedidos_validos v\n  JOIN order_items oi ON oi.order_id = v.order_id\n  GROUP BY v.customer_state\n),\npedidos_estado_promedio AS (\n  SELECT customer_state, AVG(gasto_total) AS promedio_gasto\n  FROM pedidos_estado\n  GROUP BY customer_state\n)\nSELECT customer_state, promedio_gasto\nFROM pedidos_estado_promedio\nWHERE customer_state IN (\n  SELECT customer_state\n  FROM vw_pedidos_validos\n  GROUP BY customer_state\n  HAVING COUNT(*) >= 1000\n)\nORDER BY promedio_gasto DESC\nLIMIT 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "SP",
+     5878132.06
+    ]
+   ],
+   "segundos": 41.25,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.816
+    },
+    {
+     "id": "neg_f2_02_estados_peor_calif_retraso_10",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "¿Qué 3 estados de clientes ponen las peores notas a los pedidos que llegan más de 10 días después de lo prometido? (solo estados con 50 o más pedidos válidos así)",
+     "similitud": 0.796
+    },
+    {
+     "id": "neg_f8_04_estados_vendedor_problema_producto",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de vendedor con al menos 300 reseñas de pedidos válidos, ¿cuáles tienen calificación promedio menor que la global y, a la vez, un porcentaje de entregas tardías menor que el global?",
+     "similitud": 0.772
+    }
+   ],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 9025,
+    "tokens_prompt_total": 9745,
+    "tokens_generados_total": 374,
+    "caracteres_prompt_sql_max": 17860,
+    "segundos_llm": 38.19
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pedidos_estado AS (\n  SELECT v.customer_state, SUM(op.price + oi.freight_value) AS gasto_total\n  FROM vw_pedidos_validos v\n  JOIN order_payments op ON op.order_id = v.order_id\n  JOIN order_items oi ON oi.order_id = v.order_id\n  GROUP BY v.customer_state\n),\npedidos_estado_promedio AS (\n  SELECT customer_state, AVG(gasto_total) AS promedio_gasto\n  FROM pedidos_estado\n  GROUP BY customer_state\n)\nSELECT customer_state, promedio_gasto\nFROM pedidos_estado_promedio\nWHERE customer_state IN (\n  SELECT customer_state\n  FROM vw_pedidos_validos\n  GROUP BY customer_state\n  HAVING COUNT(*) >= 1000\n)\nORDER BY promedio_gasto DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'op.price': la tabla/vista 'order_payments' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_articulos_vendidos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'op.price': la tabla/vista 'order_payments' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_articulos_vendidos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de order_payments: order_id, payment_installments, payment_sequential, payment_type, payment_value. La columna price existe en las tablas order_items y en las vistas vw_articulos_vendidos, vw_ventas_pedido. Ruta por tablas base para llegar a price desde order_payments: order_payments → order_items (por order_id).",
+     "ejemplos_usados": [
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f2_02_estados_peor_calif_retraso_10",
+      "neg_f8_04_estados_vendedor_problema_producto"
+     ],
+     "tokens_prompt": 4325,
+     "segundos_generacion": 20.514
+    },
+    {
+     "intento": 2,
+     "sql": "WITH pedidos_estado AS (\n  SELECT v.customer_state, SUM(oi.price + oi.freight_value) AS gasto_total\n  FROM vw_pedidos_validos v\n  JOIN order_items oi ON oi.order_id = v.order_id\n  GROUP BY v.customer_state\n),\npedidos_estado_promedio AS (\n  SELECT customer_state, AVG(gasto_total) AS promedio_gasto\n  FROM pedidos_estado\n  GROUP BY customer_state\n)\nSELECT customer_state, promedio_gasto\nFROM pedidos_estado_promedio\nWHERE customer_state IN (\n  SELECT customer_state\n  FROM vw_pedidos_validos\n  GROUP BY customer_state\n  HAVING COUNT(*) >= 1000\n)\nORDER BY promedio_gasto DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f2_02_estados_peor_calif_retraso_10",
+      "neg_f8_04_estados_vendedor_problema_producto"
+     ],
+     "tokens_prompt": 4700,
+     "segundos_generacion": 12.671
+    }
+   ]
+  },
+  {
+   "id": "x14_ingresos_vendedores_sp_fuera_sp",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN seller_id IN (SELECT seller_id FROM cal) THEN oi.price ELSE 0 END) / SUM(oi.price), 2) AS pct_ingresos,\n  (SELECT COUNT(*) FROM cal) AS vendedores\nFROM (\n  SELECT oi.seller_id, oi.price\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN sellers s ON s.seller_id = oi.seller_id\n  WHERE s.seller_state = 'SP' AND v.customer_state != 'SP'\n) AS ing\nJOIN (\n  SELECT pv.seller_id\n  FROM (\n    SELECT DISTINCT oi.seller_id, v.order_id\n    FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n    JOIN sellers s ON s.seller_id = oi.seller_id WHERE s.seller_state = 'SP'\n  ) AS pv\n  LEFT JOIN (\n    SELECT order_id, AVG(review_score) AS calif\n    FROM order_reviews GROUP BY order_id\n  ) AS r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 30 AND AVG(r.calif) < 4\n) AS cal ON cal.seller_id = ing.seller_id",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 38.92,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Qué porcentaje de los ingresos de pedidos válidos generan los vendedores con al menos 10 pedidos y calificación promedio menor a 3?",
+     "similitud": 0.761
+    },
+    {
+     "id": "neg_f4_03_vendedores_sp_calif_menor_4",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "¿Cuántos vendedores con sede en SP y 30 o más pedidos válidos tienen una nota media por pedido inferior a 4?",
+     "similitud": 0.754
+    },
+    {
+     "id": "neg_f4_01_top5_vendedores_pct_tarde",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con 50 o más pedidos válidos ya recibidos por el cliente, ¿qué 5 vendedores incumplen más seguido el plazo prometido y en qué proporción?",
+     "similitud": 0.749
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 8771,
+    "tokens_prompt_total": 8771,
+    "tokens_generados_total": 571,
+    "caracteres_prompt_sql_max": 17331,
+    "segundos_llm": 38.91
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN seller_id IN (SELECT seller_id FROM cal) THEN freight_value ELSE 0 END) / SUM(freight_value), 2) AS pct_ingresos,\n  (SELECT COUNT(*) FROM cal) AS vendedores\nFROM (\n  SELECT oi.seller_id, oi.freight_value\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN sellers s ON s.seller_id = oi.seller_id\n  WHERE s.seller_state = 'SP' AND v.customer_state != 'SP'\n) AS ing\nJOIN (\n  SELECT pv.seller_id\n  FROM (\n    SELECT DISTINCT oi.seller_id, v.order_id\n    FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n    JOIN sellers s ON s.seller_id = oi.seller_id WHERE s.seller_state = 'SP'\n  ) AS pv\n  LEFT JOIN (\n    SELECT order_id, AVG(review_score) AS calif\n    FROM order_reviews GROUP BY order_id\n  ) AS r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 30 AND AVG(r.calif) < 4\n) AS cal ON cal.seller_id = ing.seller_id",
+     "tipo": "ejecucion",
+     "error": "La consulta referencia tabla(s)/vista(s) que no existen en el esquema: cal. Revisa los nombres exactos del esquema.",
+     "pista_siguiente": "La consulta referencia tabla(s)/vista(s) que no existen en el esquema: cal. Revisa los nombres exactos del esquema. Reparación con el esquema real: cal no existe. Tablas y vistas reales: customers, geolocation, order_items, order_payments, order_reviews, orders, product_category_translation, products, sellers, vw_articulos_vendidos, vw_clientes_recurrentes, vw_entregas_retrasos, vw_ingresos_por_categoria, vw_ingresos_por_vendedor, vw_pedidos_entregados, vw_pedidos_validos, vw_retraso_por_rango, vw_totales_pedido, vw_ventas_pedido.",
+     "ejemplos_usados": [
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f4_03_vendedores_sp_calif_menor_4",
+      "neg_f4_01_top5_vendedores_pct_tarde"
+     ],
+     "tokens_prompt": 4153,
+     "segundos_generacion": 21.312
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN seller_id IN (SELECT seller_id FROM cal) THEN oi.price ELSE 0 END) / SUM(oi.price), 2) AS pct_ingresos,\n  (SELECT COUNT(*) FROM cal) AS vendedores\nFROM (\n  SELECT oi.seller_id, oi.price\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n  JOIN sellers s ON s.seller_id = oi.seller_id\n  WHERE s.seller_state = 'SP' AND v.customer_state != 'SP'\n) AS ing\nJOIN (\n  SELECT pv.seller_id\n  FROM (\n    SELECT DISTINCT oi.seller_id, v.order_id\n    FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n    JOIN sellers s ON s.seller_id = oi.seller_id WHERE s.seller_state = 'SP'\n  ) AS pv\n  LEFT JOIN (\n    SELECT order_id, AVG(review_score) AS calif\n    FROM order_reviews GROUP BY order_id\n  ) AS r ON r.order_id = pv.order_id\n  GROUP BY pv.seller_id HAVING COUNT(*) >= 30 AND AVG(r.calif) < 4\n) AS cal ON cal.seller_id = ing.seller_id",
+     "tipo": "ejecucion",
+     "error": "La consulta referencia tabla(s)/vista(s) que no existen en el esquema: cal. Revisa los nombres exactos del esquema.",
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_07_pct_ingresos_vendedores_calif_baja",
+      "neg_f4_03_vendedores_sp_calif_menor_4",
+      "neg_f4_01_top5_vendedores_pct_tarde"
+     ],
+     "tokens_prompt": 4618,
+     "segundos_generacion": 17.594
+    }
+   ]
+  },
+  {
+   "id": "x15_calificacion_pedidos_boleto",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT ROUND(AVG(rv.review_score), 2) AS calificacion_promedio\nFROM vw_pedidos_validos v\nJOIN order_reviews rv ON rv.order_id = v.order_id\nJOIN order_payments op ON op.order_id = v.order_id\nWHERE op.payment_type = 'boleto' AND v.order_delivered_customer_date IS NOT NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     4.16
+    ]
+   ],
+   "segundos": 23.16,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f6_07_calif_por_rango_cuotas",
+     "familia": "6 · Pagos",
+     "pregunta": "Agrupando los pedidos válidos por el mayor número de cuotas de sus pagos (1, de 2 a 5, de 6 a 10 y más de 10), ¿cuál es la calificación promedio de cada grupo?",
+     "similitud": 0.763
+    },
+    {
+     "id": "neg_f2_03_dias_retraso_por_calificacion",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En los pedidos válidos entregados con reseña, ¿cuántos días de diferencia promedio entre la entrega real y la estimada tienen los pedidos calificados con 1 estrella y los calificados con 5?",
+     "similitud": 0.757
+    },
+    {
+     "id": "neg_f8_04_estados_vendedor_problema_producto",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de vendedor con al menos 300 reseñas de pedidos válidos, ¿cuáles tienen calificación promedio menor que la global y, a la vez, un porcentaje de entregas tardías menor que el global?",
+     "similitud": 0.754
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4365,
+    "tokens_prompt_total": 4985,
+    "tokens_generados_total": 156,
+    "caracteres_prompt_sql_max": 16463,
+    "segundos_llm": 22.52
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(AVG(rv.review_score), 2) AS calificacion_promedio\nFROM vw_pedidos_validos v\nJOIN order_reviews rv ON rv.order_id = v.order_id\nJOIN order_payments op ON op.order_id = v.order_id\nWHERE op.payment_type = 'boleto' AND v.order_delivered_customer_date IS NOT NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f6_07_calif_por_rango_cuotas",
+      "neg_f2_03_dias_retraso_por_calificacion",
+      "neg_f8_04_estados_vendedor_problema_producto"
+     ],
+     "tokens_prompt": 4365,
+     "segundos_generacion": 17.69
+    }
+   ]
+  },
+  {
+   "id": "x16_pct_productos_sin_categoria",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,\n  ROUND(100.0 * COUNT(*), 2) AS pct_sin_categoria\nFROM products p\nLEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE p.product_category_name IS NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "sin_categoria",
+     61000.0
+    ]
+   ],
+   "segundos": 17.33,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f5_02_categorias_flete_mas_liviano",
+     "familia": "5 · Flete",
+     "pregunta": "¿En qué 3 categorías (nombre en inglés) el envío resulta más barato comparado con lo que cuestan los productos? Solo categorías que facturaron R$ 10,000 o más en pedidos válidos.",
+     "similitud": 0.702
+    },
+    {
+     "id": "neg_f8_06_mes_2017_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+     "similitud": 0.698
+    },
+    {
+     "id": "neg_f2_07_mes_2018_mas_tardios",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En 2018, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de pedidos válidos entregados después de la fecha estimada, y cuál fue la calificación promedio de los pedidos de ese mes?",
+     "similitud": 0.681
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4043,
+    "tokens_prompt_total": 4638,
+    "tokens_generados_total": 115,
+    "caracteres_prompt_sql_max": 15360,
+    "segundos_llm": 17.32
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,\n  ROUND(100.0 * COUNT(*), 2) AS pct_sin_categoria\nFROM products p\nLEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE p.product_category_name IS NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f5_02_categorias_flete_mas_liviano",
+      "neg_f8_06_mes_2017_mas_1_estrella",
+      "neg_f2_07_mes_2018_mas_tardios"
+     ],
+     "tokens_prompt": 4043,
+     "segundos_generacion": 13.476
+    }
+   ]
+  },
+  {
+   "id": "x17_top2_ciudades_vendedores",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n)\nSELECT seller_id, COUNT(*) AS pedidos\nFROM pv\nGROUP BY seller_id\nHAVING COUNT(*) >= 1\nORDER BY pedidos DESC\nLIMIT 2",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "6560211a19b47992c3666cc44a7e94c0",
+     1847
+    ],
+    [
+     "4a3ca9315b744ce9f8e9374361493884",
+     1804
+    ]
+   ],
+   "segundos": 24.41,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f4_04_top3_vendedores_cancelados",
+     "familia": "4 · Vendedores problemáticos",
+     "pregunta": "Entre los vendedores con al menos 20 pedidos (de cualquier estatus), ¿cuáles son los 3 con mayor porcentaje de pedidos cancelados y cuál es ese porcentaje?",
+     "similitud": 0.761
+    },
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.731
+    },
+    {
+     "id": "neg_f8_04_estados_vendedor_problema_producto",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de vendedor con al menos 300 reseñas de pedidos válidos, ¿cuáles tienen calificación promedio menor que la global y, a la vez, un porcentaje de entregas tardías menor que el global?",
+     "similitud": 0.725
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4288,
+    "tokens_prompt_total": 4945,
+    "tokens_generados_total": 153,
+    "caracteres_prompt_sql_max": 16256,
+    "segundos_llm": 21.83
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH pv AS (\n  SELECT DISTINCT oi.seller_id, v.order_id\n  FROM order_items oi JOIN vw_pedidos_validos v ON v.order_id = oi.order_id\n)\nSELECT seller_id, COUNT(*) AS pedidos\nFROM pv\nGROUP BY seller_id\nHAVING COUNT(*) >= 1\nORDER BY pedidos DESC\nLIMIT 2",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f4_04_top3_vendedores_cancelados",
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f8_04_estados_vendedor_problema_producto"
+     ],
+     "tokens_prompt": 4288,
+     "segundos_generacion": 17.006
+    }
+   ]
+  },
+  {
+   "id": "x18_peso_promedio_furniture_decor",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT ROUND(AVG(p.product_weight_g), 2) AS peso_promedio\nFROM order_items oi\nJOIN products p ON p.product_id = oi.product_id\nJOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nJOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE t.product_category_name_english = 'furniture_decor'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     2649.19
+    ]
+   ],
+   "segundos": 20.15,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f5_06_furniture_decor_estado_flete",
+     "familia": "5 · Flete",
+     "pregunta": "Dentro de furniture_decor, ¿a qué estado (de quien compra) le cuesta más el envío en proporción al valor de los artículos, entre estados con 100 o más artículos vendidos en pedidos válidos?",
+     "similitud": 0.794
+    },
+    {
+     "id": "neg_f5_05_flete_por_pedido_top3_estados",
+     "familia": "5 · Flete",
+     "pregunta": "Para los 3 estados con más pedidos válidos, ¿cuánto se paga de envío por pedido en promedio, sumando el flete de todos los artículos de cada pedido?",
+     "similitud": 0.755
+    },
+    {
+     "id": "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En la categoría bed_bath_table, ¿qué porcentaje de las reseñas de pedidos válidos entregados es de 1 estrella cuando el pedido llegó tarde, y cuál cuando llegó a tiempo?",
+     "similitud": 0.744
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4149,
+    "tokens_prompt_total": 4773,
+    "tokens_generados_total": 139,
+    "caracteres_prompt_sql_max": 15830,
+    "segundos_llm": 19.35
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(AVG(p.product_weight_g), 2) AS peso_promedio\nFROM order_items oi\nJOIN products p ON p.product_id = oi.product_id\nJOIN vw_pedidos_validos v ON v.order_id = oi.order_id\nJOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE t.product_category_name_english = 'furniture_decor'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f5_06_furniture_decor_estado_flete",
+      "neg_f5_05_flete_por_pedido_top3_estados",
+      "neg_f8_07_bed_bath_1_estrella_tarde_vs_tiempo"
+     ],
+     "tokens_prompt": 4149,
+     "segundos_generacion": 15.15
+    }
+   ]
+  },
+  {
+   "id": "x19_anio_mas_ingresos",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  strftime('%Y', o.order_purchase_timestamp) AS anio,\n  ROUND(SUM(oi.price), 2) AS ingresos\nFROM vw_pedidos_validos o\nJOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY anio\nORDER BY SUM(oi.price) DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "2018",
+     7341182.41
+    ]
+   ],
+   "segundos": 18.58,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f2_07_mes_2018_mas_tardios",
+     "familia": "2 · Retraso vs reseñas",
+     "pregunta": "En 2018, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de pedidos válidos entregados después de la fecha estimada, y cuál fue la calificación promedio de los pedidos de ese mes?",
+     "similitud": 0.728
+    },
+    {
+     "id": "neg_f5_04_flete_mismo_estado_vs_otro",
+     "familia": "5 · Flete",
+     "pregunta": "¿Sale proporcionalmente más caro el envío cuando el vendedor despacha a otro estado que cuando vende dentro de su propio estado? Compara flete total entre precio total en ambos casos (pedidos válidos).",
+     "similitud": 0.723
+    },
+    {
+     "id": "neg_f8_02_estado_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "Entre los estados de los compradores con 500 o más reseñas de pedidos válidos, ¿dónde es más frecuente la nota mínima (1 estrella), en porcentaje?",
+     "similitud": 0.721
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 4024,
+    "tokens_prompt_total": 4662,
+    "tokens_generados_total": 117,
+    "caracteres_prompt_sql_max": 15303,
+    "segundos_llm": 17.21
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  strftime('%Y', o.order_purchase_timestamp) AS anio,\n  ROUND(SUM(oi.price), 2) AS ingresos\nFROM vw_pedidos_validos o\nJOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.order_status NOT IN ('canceled', 'unavailable')\nGROUP BY anio\nORDER BY SUM(oi.price) DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f2_07_mes_2018_mas_tardios",
+      "neg_f5_04_flete_mismo_estado_vs_otro",
+      "neg_f8_02_estado_mas_1_estrella"
+     ],
+     "tokens_prompt": 4024,
+     "segundos_generacion": 13.735
+    }
+   ]
+  },
+  {
+   "id": "x20_pct_clientes_resena_1_estrella",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN rv.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\nWHERE rv.review_id IS NOT NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     10.75
+    ]
+   ],
+   "segundos": 18.68,
+   "ejemplos_usados": [
+    {
+     "id": "neg_f8_05_pct_1_estrella_con_comentario",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "De las reseñas de 1 estrella de pedidos válidos, ¿qué porcentaje incluye un comentario escrito?",
+     "similitud": 0.808
+    },
+    {
+     "id": "neg_f6_04_estado_mas_a_plazos",
+     "familia": "6 · Pagos",
+     "pregunta": "Entre los estados del cliente con al menos 1,000 pedidos válidos, ¿en cuál es mayor el porcentaje de pedidos pagados en más de una cuota (tomando el mayor número de cuotas de cada pedido)?",
+     "similitud": 0.795
+    },
+    {
+     "id": "neg_f8_06_mes_2017_mas_1_estrella",
+     "familia": "8 · Insatisfacción",
+     "pregunta": "En 2017, ¿en qué mes de compra (AAAA-MM) fue mayor el porcentaje de reseñas de 1 estrella en pedidos válidos?",
+     "similitud": 0.763
+    }
+   ],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3961,
+    "tokens_prompt_total": 4578,
+    "tokens_generados_total": 140,
+    "caracteres_prompt_sql_max": 15053,
+    "segundos_llm": 16.85
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN rv.review_score = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_1_estrella\nFROM order_reviews rv JOIN vw_pedidos_validos v ON v.order_id = rv.order_id\nWHERE rv.review_id IS NOT NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [
+      "neg_f8_05_pct_1_estrella_con_comentario",
+      "neg_f6_04_estado_mas_a_plazos",
+      "neg_f8_06_mes_2017_mas_1_estrella"
+     ],
+     "tokens_prompt": 3961,
+     "segundos_generacion": 12.403
+    }
+   ]
+  }
+ ]
+}

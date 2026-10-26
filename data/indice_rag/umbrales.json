@@ -1,0 +1,42 @@
+{
+  "descripcion": "Calibra el RAG (D-44) SIN usar preguntas de evaluación.",
+  "hash_banco": "d23933a98b87fe8a",
+  "modelo_embeddings": "nomic-embed-text",
+  "embeddings": {
+    "consultas_positivas": 35,
+    "precision_familia_top1": 0.686,
+    "precision_familia_top3_mayoria": 0.714,
+    "similitud_top1_positivas": {
+      "media": 0.732,
+      "min": 0.641,
+      "p5": 0.664
+    },
+    "umbral": 0.664,
+    "ajenas_bajo_umbral": "12/12",
+    "similitud_top1_ajenas": {
+      "media": 0.612,
+      "max": 0.643
+    },
+    "genericas_dominio_sobre_umbral (se inyectaria)": "39/42",
+    "_ajenas_bajo": 12
+  },
+  "tfidf": {
+    "consultas_positivas": 35,
+    "precision_familia_top1": 0.543,
+    "precision_familia_top3_mayoria": 0.629,
+    "similitud_top1_positivas": {
+      "media": 0.174,
+      "min": 0.043,
+      "p5": 0.0768
+    },
+    "umbral": 0.0768,
+    "ajenas_bajo_umbral": "8/12",
+    "similitud_top1_ajenas": {
+      "media": 0.1,
+      "max": 0.532
+    },
+    "genericas_dominio_sobre_umbral (se inyectaria)": "41/42",
+    "_ajenas_bajo": 8
+  },
+  "motor_elegido": "embeddings"
+}

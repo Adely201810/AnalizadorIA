@@ -21,6 +21,7 @@ import streamlit as st
 
 from llm.bitacora import BitacoraEsquema
 from llm.juez import JuezLLM, resolver_con_juez, texto_revision
+from llm.modo_contexto import MODO_POR_DEFECTO, MODOS
 from llm.ollama_client import ContextoInsuficienteError, OllamaClient, OllamaError
 from llm.text_to_sql import (
     MENSAJE_ERROR_CHAT_GENERICO,
@@ -32,6 +33,7 @@ from llm.text_to_sql import (
 
 GROUND_TRUTH_PATH = Path(__file__).resolve().parent / "eval" / "ground_truth_olist.json"
 CASOS_JUEZ_PATH = Path(__file__).resolve().parent / "eval" / "casos_juez.json"
+ETIQUETAS_MODO = {"base": "Base", "fewshot": "Few-shot", "rag": "RAG", "harness": "Harness"}
 
 st.set_page_config(page_title="Olist — Asistente de datos", page_icon="📊", layout="centered")
 
@@ -93,6 +95,13 @@ with st.sidebar:
     st.markdown("### ⚙️ Configuración")
     st.write(f"**Modelo:** `{client.model}`")
     st.write(f"**Ollama:** `{client.host}`")
+    # Mejoras del profesor (D-42): por defecto, el modo de TEXT2SQL_MODO_CONTEXTO ("base" = el chat de siempre).
+    modo_sel = st.radio(
+        "Modo de contexto", MODOS, index=MODOS.index(MODO_POR_DEFECTO),
+        format_func=lambda m: ETIQUETAS_MODO[m], key="modo_contexto",
+        help="Base: sin ejemplos del banco. Few-shot: ejemplos fijos ya resueltos. RAG: los ejemplos más parecidos "
+             "a tu pregunta. Harness: RAG + hasta 5 intentos con verificación (sin conocer la respuesta).",
+    )
 
     if st.button("🔄 Nueva conversación", width='stretch'):
         _iniciar_conversacion()
@@ -161,6 +170,18 @@ def _render_detalle(mensaje: dict):
             _render_tabla(mensaje["sql"], mensaje.get("columnas"), mensaje.get("filas"))
         if mensaje.get("revision_sql"):
             st.caption(texto_revision(mensaje["revision_sql"]))
+        if mensaje.get("modo"):
+            st.markdown(f"**Modo de contexto:** {ETIQUETAS_MODO.get(mensaje['modo'], mensaje['modo'])} · "
+                        f"intentos: {mensaje.get('intentos')}")
+            ejemplos = mensaje.get("ejemplos_usados") or []
+            if ejemplos:
+                st.markdown("**Ejemplos del banco inyectados en el prompt:**")
+                st.dataframe(pd.DataFrame([{
+                    "similitud": "fijo" if e["similitud"] is None else f"{e['similitud']:.3f}",
+                    "familia": e["familia"], "pregunta ya resuelta": e["pregunta"], "id": e["id"],
+                } for e in ejemplos]), width='stretch', hide_index=True)
+            elif mensaje["modo"] in ("rag", "harness"):
+                st.caption("Ningún ejemplo del banco superó el umbral de similitud: no se inyectó ninguno.")
         if mensaje.get("error_tecnico"):
             st.markdown("**Error técnico:**")
             st.code(mensaje["error_tecnico"], language="text")
@@ -246,7 +267,7 @@ def _procesar_pregunta(pregunta: str):
 
         with st.spinner("Pensando..."):
             resultado: Text2SQLResult = answer_question(
-                pregunta, client=client, bitacora=get_bitacora(), juez_sensatez=get_juez(),
+                pregunta, client=client, bitacora=get_bitacora(), juez_sensatez=get_juez(), modo=modo_sel,
             )
 
         if resultado.error:
@@ -270,7 +291,9 @@ def _procesar_pregunta(pregunta: str):
                 "revision_sql": resultado.revision_sensatez,
             }
 
-        datos_json = exportar_resultado_json(resultado, pregunta, client.model)
+        mensaje.update({"modo": resultado.modo, "ejemplos_usados": resultado.ejemplos_usados,
+                        "intentos": resultado.intentos})
+        datos_json = exportar_resultado_json(resultado, pregunta, client.model, temperatura=client.temperature)
         mensaje["json_export"] = json.dumps(datos_json, ensure_ascii=False, indent=2, default=str).encode("utf-8")
         mensaje["json_nombre"] = f"pregunta_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 

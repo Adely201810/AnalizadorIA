@@ -48,7 +48,7 @@ from typing import Callable
 _logger = logging.getLogger(__name__)
 
 from db.olist_database import DATABASE_URL
-from llm import contexto_e3
+from llm import contexto_e3, modo_contexto
 from llm.bitacora import BitacoraEsquema, detalles_de_error
 from llm.juez import JuezLLM
 from llm.ollama_client import OllamaClient, OllamaError
@@ -297,6 +297,10 @@ class Text2SQLResult:
     # "seguridad" (el SQL del modelo no era una lectura permitida), "negativa_modelo"
     # (el modelo respondió con texto en vez de SQL) o "infra" (Ollama no respondió).
     tipo_error: str | None = None
+    # Mejoras del profesor (D-42): modo de contexto (base/fewshot/rag/harness) y ejemplos del banco inyectados
+    # en el prompt, con su similitud ({id, familia, pregunta, similitud}).
+    modo: str | None = None
+    ejemplos_usados: list[dict] = field(default_factory=list)
 
 
 # Clasificación de cada intento (Fase 2). "ok" = el SQL corrió y devolvió filas;
@@ -409,6 +413,9 @@ def generar_sql(
     extra = contexto_e3.contexto_usuario(pregunta)  # Etapa 3: E1 / E5
     if extra:
         prompt += f"\n\n{extra}"
+    bloque, _ = modo_contexto.bloque_para(pregunta, prompt_base=prompt, system=system_prompt)  # D-42 (base: nada)
+    if bloque:
+        prompt += f"\n\n{bloque}"
     if notas:
         # Va en el prompt de USUARIO: si fuera en el system, cada cambio de la
         # bitácora invalidaría la caché del prefijo del esquema (docs/FASE_04.md).
@@ -845,6 +852,46 @@ def _answer_open_question(
 def answer_question(
     pregunta: str,
     client: OllamaClient | None = None,
+    n_intentos: int | None = None,
+    usar_plantillas: bool = True,
+    verificador: Verificador | None = None,
+    bitacora: BitacoraEsquema | None = None,
+    juez_sensatez: JuezLLM | None = None,
+    usar_clasificador: bool | None = None,
+    modo: str | None = None,
+) -> Text2SQLResult:
+    """Ver `_answer_question`. `modo` (D-42): base | fewshot | rag | harness; None = TEXT2SQL_MODO_CONTEXTO
+    (por defecto "base", el pipeline de siempre). En "harness", si no se pasan, `n_intentos` es
+    llm.harness.N_INTENTOS_HARNESS y `verificador` es el verificador sin oráculo de llm/harness.py."""
+    modo = modo or modo_contexto.modo_actual()
+    client = client or OllamaClient()
+    if n_intentos is None:
+        if modo == "harness":
+            from llm.harness import N_INTENTOS_HARNESS
+
+            n_intentos = N_INTENTOS_HARNESS
+        else:
+            n_intentos = N_INTENTOS_POR_DEFECTO
+    if modo == "harness" and verificador is None:
+        from llm.harness import verificador_sin_oraculo
+
+        verificador = verificador_sin_oraculo(client, pregunta)
+    with modo_contexto.usar_modo(modo):
+        resultado = _answer_question(pregunta, client, n_intentos, usar_plantillas, verificador, bitacora,
+                                     juez_sensatez, usar_clasificador)
+        resultado.modo = modo
+        if modo != "base":
+            from llm.schema_context import get_schema_context as _esquema
+
+            system = SQL_SYSTEM_PROMPT_TEMPLATE.format(schema=_esquema())
+            _, resultado.ejemplos_usados = modo_contexto.bloque_para(pregunta, prompt_base=f"Pregunta: {pregunta}",
+                                                                     system=system)
+    return resultado
+
+
+def _answer_question(
+    pregunta: str,
+    client: OllamaClient | None = None,
     n_intentos: int = N_INTENTOS_POR_DEFECTO,
     usar_plantillas: bool = True,
     verificador: Verificador | None = None,
@@ -930,7 +977,7 @@ def answer_question(
     return resultado
 
 
-def exportar_resultado_json(resultado: Text2SQLResult, pregunta: str, modelo: str) -> dict:
+def exportar_resultado_json(resultado: Text2SQLResult, pregunta: str, modelo: str, temperatura: float | None = None) -> dict:
     """Arma el dict exportable (mismo esquema que dashboard/export_json.py) a
     partir de un `Text2SQLResult` YA calculado -- no vuelve a llamar al modelo.
 
@@ -977,5 +1024,10 @@ def exportar_resultado_json(resultado: Text2SQLResult, pregunta: str, modelo: st
         "revision_sensatez_sql": resultado.revision_sensatez,
         "fuente": "llm_local",
         "modelo": modelo,
+        # D-42: trazabilidad del modo de contexto.
+        "modo": resultado.modo,
+        "ejemplos_usados": resultado.ejemplos_usados,
+        "temperatura": temperatura,
+        "intentos": resultado.intentos,
         "generado_en": datetime.now().isoformat(timespec="seconds"),
     }

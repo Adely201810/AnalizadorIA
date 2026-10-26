@@ -1,0 +1,1007 @@
+INICIO 2026-10-25 18:09:11
+[qwen2_5-coder base casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=3380 27.6s
+[qwen2_5-coder base casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=7658 53.8s
+[qwen2_5-coder base casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=3544 47.2s
+[qwen2_5-coder base casos_juez r1]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=7212 50.2s
+[qwen2_5-coder base casos_juez r1]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=7413 36.0s
+[qwen2_5-coder base casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=7703 55.7s
+== qwen2_5-coder__base__casos_juez__r1.json: 1/6 en 270.4 s
+[qwen2_5-coder base casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=3380 8.1s
+[qwen2_5-coder base casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=7662 54.0s
+[qwen2_5-coder base casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=7656 51.2s
+[qwen2_5-coder base casos_juez r2]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=7211 38.0s
+[qwen2_5-coder base casos_juez r2]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=7264 42.6s
+[qwen2_5-coder base casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=7798 56.9s
+== qwen2_5-coder__base__casos_juez__r2.json: 1/6 en 250.9 s
+[qwen2_5-coder base casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=3380 8.0s
+[qwen2_5-coder base casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=7663 54.2s
+[qwen2_5-coder base casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=3544 40.2s
+[qwen2_5-coder base casos_juez r3]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=7222 39.9s
+[qwen2_5-coder base casos_juez r3]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=7275 35.1s
+[qwen2_5-coder base casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=1 tok_sql=3566 58.4s
+== qwen2_5-coder__base__casos_juez__r3.json: 1/6 en 235.9 s
+[qwen2_5-coder fewshot casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4069 17.2s
+[qwen2_5-coder fewshot casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9077 64.5s
+[qwen2_5-coder fewshot casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4233 41.6s
+[qwen2_5-coder fewshot casos_juez r1]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=8620 48.5s
+[qwen2_5-coder fewshot casos_juez r1]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=8981 63.4s
+[qwen2_5-coder fewshot casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=8907 62.3s
+== qwen2_5-coder__fewshot__casos_juez__r1.json: 1/6 en 297.5 s
+[qwen2_5-coder fewshot casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4069 16.0s
+[qwen2_5-coder fewshot casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9058 64.1s
+[qwen2_5-coder fewshot casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=8831 59.6s
+[qwen2_5-coder fewshot casos_juez r2]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=8631 51.2s
+[qwen2_5-coder fewshot casos_juez r2]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=8926 63.6s
+[qwen2_5-coder fewshot casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9254 67.2s
+== qwen2_5-coder__fewshot__casos_juez__r2.json: 1/6 en 321.7 s
+[qwen2_5-coder fewshot casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4069 15.9s
+[qwen2_5-coder fewshot casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9117 65.0s
+[qwen2_5-coder fewshot casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=8820 67.3s
+[qwen2_5-coder fewshot casos_juez r3]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=8629 43.8s
+[qwen2_5-coder fewshot casos_juez r3]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=8722 56.7s
+[qwen2_5-coder fewshot casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=8907 55.9s
+== qwen2_5-coder__fewshot__casos_juez__r3.json: 1/6 en 304.6 s
+[qwen2_5-coder rag casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4039 18.3s
+[qwen2_5-coder rag casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9262 61.1s
+[qwen2_5-coder rag casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4623 48.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta="Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor." | respuesta_descartada='Las tres categorías de productos con ingresos de al menos R$ 5,000 y donde el flete pesa más sobre el precio son:\n\n1. **Signaling and Security** con un flete del 30.26%.\n2. **Food and Drink** con un flete del 29.69%.\n3. **Christmas Supplies** con un flete del 36.66%.\n\nEstas categorías representan el 93.62% de los ingresos totales de las categorías que cumplen con el criterio de ingresos mínimos.' | filas=[('christmas_supplies', 8787.83, 36.66), ('signaling_and_security', 21509.23, 30.26), ('food_drink', 15119.48, 29.69)]
+[qwen2_5-coder rag casos_juez r1]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4189 33.3s
+[qwen2_5-coder rag casos_juez r1]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4240 33.1s
+[qwen2_5-coder rag casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9608 63.9s
+== qwen2_5-coder__rag__casos_juez__r1.json: 3/6 en 257.7 s
+[qwen2_5-coder rag casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4039 14.3s
+[qwen2_5-coder rag casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9211 62.5s
+[qwen2_5-coder rag casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4623 43.0s
+[qwen2_5-coder rag casos_juez r2]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4189 30.0s
+[qwen2_5-coder rag casos_juez r2]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=9060 44.7s
+[qwen2_5-coder rag casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9577 61.1s
+== qwen2_5-coder__rag__casos_juez__r2.json: 2/6 en 255.6 s
+[qwen2_5-coder rag casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4039 14.3s
+[qwen2_5-coder rag casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9263 58.8s
+[qwen2_5-coder rag casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4623 42.2s
+[qwen2_5-coder rag casos_juez r3]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4189 29.7s
+[qwen2_5-coder rag casos_juez r3]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=9103 46.6s
+[qwen2_5-coder rag casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9577 61.1s
+== qwen2_5-coder__rag__casos_juez__r3.json: 2/6 en 252.7 s
+[qwen2_5-coder harness casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4039 19.0s
+[qwen2_5-coder harness casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=5 tok_sql=23950 124.9s
+[qwen2_5-coder harness casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4623 60.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta="Entre las categorías de producto (nombre en inglés; los productos sin categoría cuentan como 'sin_categoria') con ingresos de al menos R$ 5,000 (suma de price en pedidos válidos (sin contar cancelados ni no disponibles)), ¿cuáles son las 3 en las que el flete pesa más sobre el precio, medido como flete total entre precio total de la categoría (en porcentaje), y cuál es ese porcentaje en cada una? Ordénalas de mayor a menor." | respuesta_descartada='Las tres categorías de productos con ingresos de al menos R$ 5,000 y donde el flete pesa más sobre el precio son:\n\n1. **Signaling and Security** con un flete del 30.26%.\n2. **Food and Drink** con un flete del 29.69%.\n3. **Christmas Supplies** con un flete del 36.66%.\n\nEstas categorías representan el 93.62% de los ingresos totales de las categorías que cumplen con el criterio de ingresos mínimos.' | filas=[('christmas_supplies', 8787.83, 36.66), ('signaling_and_security', 21509.23, 30.26), ('food_drink', 15119.48, 29.69)]
+[qwen2_5-coder harness casos_juez r1]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4189 40.8s
+[qwen2_5-coder harness casos_juez r1]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4240 40.2s
+[qwen2_5-coder harness casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=5 tok_sql=24482 148.2s
+== qwen2_5-coder__harness__casos_juez__r1.json: 3/6 en 433.2 s
+[qwen2_5-coder harness casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4039 20.1s
+[qwen2_5-coder harness casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=5 tok_sql=23749 148.9s
+[qwen2_5-coder harness casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=5 tok_sql=24703 144.7s
+[qwen2_5-coder harness casos_juez r2]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4189 39.2s
+[qwen2_5-coder harness casos_juez r2]  5 n06_categoria_mas_a_plazos             ✘ int=3 tok_sql=13942 95.0s
+[qwen2_5-coder harness casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=5 tok_sql=24289 140.1s
+== qwen2_5-coder__harness__casos_juez__r2.json: 2/6 en 588.0 s
+[qwen2_5-coder harness casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4039 20.1s
+[qwen2_5-coder harness casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=5 tok_sql=23954 132.3s
+[qwen2_5-coder harness casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=5 tok_sql=24603 140.4s
+[qwen2_5-coder harness casos_juez r3]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4189 38.9s
+[qwen2_5-coder harness casos_juez r3]  5 n06_categoria_mas_a_plazos             ✘ int=5 tok_sql=23692 106.4s
+[qwen2_5-coder harness casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=5 tok_sql=24286 139.9s
+== qwen2_5-coder__harness__casos_juez__r3.json: 2/6 en 578.1 s
+| Modelo | Conjunto | Modo | Aciertos (por repetición) | Media | Mínimo | ¿Mejora D-23 vs Base? | Tokens de prompt SQL por pregunta | s/pregunta | Intentos medios | % preguntas con ejemplos |
+|---|---|---|---|---|---|---|---|---|---|---|
+| qwen2.5-coder | casos_juez | base | 1, 1, 1 (de 6) | 1 | 1 | — | 6140.6 | 42.07 | 1.67 | 0 |
+| qwen2.5-coder | casos_juez | fewshot | 1, 1, 1 (de 6) | 1 | 1 | no | 7828.9 | 51.32 | 1.78 | 100 |
+| qwen2.5-coder | casos_juez | rag | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 6525.2 | 42.56 | 1.44 | 100 |
+| qwen2.5-coder | casos_juez | harness | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 14733.2 | 88.85 | 3.11 | 100 |
+[qwen2_5-coder base desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=3375 27.4s
+[qwen2_5-coder base desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=2 tok_sql=6973 19.3s
+[qwen2_5-coder base desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=3384 19.6s
+[qwen2_5-coder base desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=7383 38.4s
+[qwen2_5-coder base desarrollo r1]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=3389 17.8s
+[qwen2_5-coder base desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=6865 13.1s
+[qwen2_5-coder base desarrollo r1]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3378 13.1s
+[qwen2_5-coder base desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=7277 30.6s
+[qwen2_5-coder base desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=7187 27.6s
+[qwen2_5-coder base desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=3401 19.4s
+[qwen2_5-coder base desarrollo r1] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=3365 7.4s
+[qwen2_5-coder base desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=3388 12.2s
+[qwen2_5-coder base desarrollo r1] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=3380 10.2s
+[qwen2_5-coder base desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=3369 9.4s
+[qwen2_5-coder base desarrollo r1] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=3390 16.2s
+[qwen2_5-coder base desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✘ int=2 tok_sql=6883 20.1s
+[qwen2_5-coder base desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=6981 12.0s
+[qwen2_5-coder base desarrollo r1] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=3391 11.5s
+[qwen2_5-coder base desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3382 10.2s
+[qwen2_5-coder base desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=7132 28.5s
+[qwen2_5-coder base desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=3377 9.6s
+[qwen2_5-coder base desarrollo r1] 22 x12_vendedores_health_beauty           ✔ int=1 tok_sql=3386 12.9s
+[qwen2_5-coder base desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=7034 23.9s
+[qwen2_5-coder base desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=2 tok_sql=7113 25.3s
+[qwen2_5-coder base desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✘ int=2 tok_sql=7048 25.0s
+[qwen2_5-coder base desarrollo r1] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=3367 8.9s
+[qwen2_5-coder base desarrollo r1] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=6985 21.2s
+[qwen2_5-coder base desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✘ int=1 tok_sql=3390 11.3s
+[qwen2_5-coder base desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=2 tok_sql=7000 19.9s
+[qwen2_5-coder base desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=2 tok_sql=7140 25.9s
+== qwen2_5-coder__base__desarrollo__r1.json: 14/30 en 595.7 s
+[qwen2_5-coder base desarrollo r2]  1 n01_pct_clientes_recurrentes           ✔ int=1 tok_sql=3375 13.5s
+[qwen2_5-coder base desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=2 tok_sql=6945 12.2s
+[qwen2_5-coder base desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=3384 20.1s
+[qwen2_5-coder base desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=7054 22.5s
+[qwen2_5-coder base desarrollo r2]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=3389 17.7s
+[qwen2_5-coder base desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=6863 12.8s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?' | respuesta_descartada='El mes con más ingresos por ventas de pedidos válidos fue 2017-11, con un total de R$1,172.191,68.' | filas=[('2017-11', 1172191.68)]
+[qwen2_5-coder base desarrollo r2]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3378 13.1s
+[qwen2_5-coder base desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=7171 27.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué 5 categorías de producto (con nombre de categoría) tienen mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos (sin contar pedidos cancelados o no disponibles)?' | respuesta_descartada='Las 5 categorías de producto con mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos, son:\n\n1. cool_stuff: 3543 clientes únicos / 3559 pedidos válidos = 99.7%\n2. pet_shop: 1667 clientes únicos / 1688 pedidos válidos = 98.9%\n3. consoles_games: 1014 clientes únicos / 1018 pedidos válidos = 99.6%\n\nEstas categorías destacan por tener una alta proporción de clientes que realizan compras únicas, lo que podría indicar que son productos que atraen a clientes que buscan opciones alternativas a los productos más populares.' | filas=[('pet_shop', 1667, 1688), ('cool_stuff', 3543, 3559), ('consoles_games', 1014, 1018)]
+[qwen2_5-coder base desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=7181 39.2s
+[qwen2_5-coder base desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=7143 31.7s
+[qwen2_5-coder base desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=3365 7.4s
+[qwen2_5-coder base desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=3388 11.9s
+[qwen2_5-coder base desarrollo r2] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=3380 10.6s
+[qwen2_5-coder base desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=3369 9.3s
+[qwen2_5-coder base desarrollo r2] 15 x05_vendedor_mas_ingresos              ✘ int=1 tok_sql=3390 14.3s
+[qwen2_5-coder base desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✔ int=2 tok_sql=6875 18.8s
+[qwen2_5-coder base desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=6981 20.1s
+[qwen2_5-coder base desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=2 tok_sql=7111 24.5s
+[qwen2_5-coder base desarrollo r2] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3382 10.3s
+[qwen2_5-coder base desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=3405 17.5s
+[qwen2_5-coder base desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=3377 9.3s
+[qwen2_5-coder base desarrollo r2] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=6987 19.5s
+[qwen2_5-coder base desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=7046 17.8s
+[qwen2_5-coder base desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✔ int=1 tok_sql=3392 13.5s
+[qwen2_5-coder base desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✘ int=2 tok_sql=7047 25.2s
+[qwen2_5-coder base desarrollo r2] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=3367 9.1s
+[qwen2_5-coder base desarrollo r2] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=6980 20.5s
+[qwen2_5-coder base desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✘ int=1 tok_sql=3390 10.5s
+[qwen2_5-coder base desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=2 tok_sql=7000 20.3s
+[qwen2_5-coder base desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=2 tok_sql=7137 19.1s
+== qwen2_5-coder__base__desarrollo__r2.json: 15/30 en 567.4 s
+[qwen2_5-coder base desarrollo r3]  1 n01_pct_clientes_recurrentes           ✔ int=1 tok_sql=3375 15.3s
+[qwen2_5-coder base desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=2 tok_sql=6955 24.5s
+[qwen2_5-coder base desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=3384 20.2s
+[qwen2_5-coder base desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=7425 34.9s
+[qwen2_5-coder base desarrollo r3]  5 n05_estado_mayor_peso_flete            ✔ int=2 tok_sql=7017 23.4s
+[qwen2_5-coder base desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=6863 19.4s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?' | respuesta_descartada='El mes con más ingresos por ventas de pedidos válidos fue 2017-11, con un total de R$1,003.862,14.' | filas=[('2017-11', 1003862.14)]
+[qwen2_5-coder base desarrollo r3]  7 n07_mes_mayores_ingresos               ✔ int=1 tok_sql=3378 13.1s
+[qwen2_5-coder base desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=7186 40.6s
+[qwen2_5-coder base desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=7090 153.9s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='Entre los estados con al menos 10 vendedores activos (vendedores ubicados en el estado con ventas en pedidos válidos), ¿cuál tiene más clientes únicos por vendedor y cuántos clientes por vendedor son?' | respuesta_descartada='El estado con más clientes únicos por vendedor y con 1769 vendedores activos es São Paulo (SP). En promedio, cada vendedor en SP tiene 37,34 clientes únicos (66,761 clientes divididos entre 1,769 vendedores).' | filas=[('SP', 66761, 1769)]
+[qwen2_5-coder base desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=3401 20.6s
+[qwen2_5-coder base desarrollo r3] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=3365 7.1s
+[qwen2_5-coder base desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=3388 12.1s
+[qwen2_5-coder base desarrollo r3] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=3380 10.3s
+[qwen2_5-coder base desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=3369 9.4s
+[qwen2_5-coder base desarrollo r3] 15 x05_vendedor_mas_ingresos              ✘ int=1 tok_sql=3390 14.3s
+[qwen2_5-coder base desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✘ int=2 tok_sql=6876 19.8s
+[qwen2_5-coder base desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=6981 12.0s
+[qwen2_5-coder base desarrollo r3] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=3391 11.4s
+[qwen2_5-coder base desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3382 10.2s
+[qwen2_5-coder base desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✘ int=2 tok_sql=7141 31.7s
+[qwen2_5-coder base desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=3377 9.2s
+[qwen2_5-coder base desarrollo r3] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=6987 19.5s
+[qwen2_5-coder base desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=7034 16.2s
+[qwen2_5-coder base desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✔ int=1 tok_sql=3392 13.5s
+[qwen2_5-coder base desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✘ int=2 tok_sql=7035 22.4s
+[qwen2_5-coder base desarrollo r3] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=3367 8.9s
+[qwen2_5-coder base desarrollo r3] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=6982 21.6s
+[qwen2_5-coder base desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✘ int=1 tok_sql=3390 10.5s
+[qwen2_5-coder base desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=3395 12.9s
+[qwen2_5-coder base desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=2 tok_sql=7140 25.9s
+== qwen2_5-coder__base__desarrollo__r3.json: 15/30 en 713.5 s
+[qwen2_5-coder rag desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4127 27.9s
+[qwen2_5-coder rag desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4254 28.2s
+[qwen2_5-coder rag desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8660 69.5s
+[qwen2_5-coder rag desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4518 78.8s
+[qwen2_5-coder rag desarrollo r1]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4009 26.6s
+[qwen2_5-coder rag desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4042 27.5s
+[qwen2_5-coder rag desarrollo r1]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4016 23.7s
+[qwen2_5-coder rag desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8197 42.5s
+[qwen2_5-coder rag desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8750 44.3s
+[qwen2_5-coder rag desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8573 44.9s
+[qwen2_5-coder rag desarrollo r1] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4107 17.8s
+[qwen2_5-coder rag desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4114 23.1s
+[qwen2_5-coder rag desarrollo r1] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=4000 19.4s
+[qwen2_5-coder rag desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4051 22.1s
+[qwen2_5-coder rag desarrollo r1] 15 x05_vendedor_mas_ingresos              ✘ int=2 tok_sql=8908 50.7s
+[qwen2_5-coder rag desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4078 22.6s
+[qwen2_5-coder rag desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✔ int=1 tok_sql=4309 30.7s
+[qwen2_5-coder rag desarrollo r1] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4071 22.4s
+[qwen2_5-coder rag desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4020 19.6s
+[qwen2_5-coder rag desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4025 34.6s
+[qwen2_5-coder rag desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4150 20.6s
+[qwen2_5-coder rag desarrollo r1] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=8693 35.9s
+[qwen2_5-coder rag desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9097 64.4s
+[qwen2_5-coder rag desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4169 34.2s
+[qwen2_5-coder rag desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4383 26.5s
+[qwen2_5-coder rag desarrollo r1] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4066 20.2s
+[qwen2_5-coder rag desarrollo r1] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4311 30.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de aproximadamente 2,650 gramos.' | filas=[(2649.1939021450953,)]
+[qwen2_5-coder rag desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4160 23.6s
+[qwen2_5-coder rag desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4043 22.8s
+[qwen2_5-coder rag desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3980 22.5s
+== qwen2_5-coder__rag__desarrollo__r1.json: 13/30 en 1025.6 s
+[qwen2_5-coder rag desarrollo r2]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4127 49.1s
+[qwen2_5-coder rag desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4254 25.6s
+[qwen2_5-coder rag desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=1 tok_sql=4068 26.1s
+[qwen2_5-coder rag desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4518 62.2s
+[qwen2_5-coder rag desarrollo r2]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4009 23.1s
+[qwen2_5-coder rag desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=8397 34.4s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?' | respuesta_descartada='El mes con más ingresos por ventas de pedidos válidos fue 2017-11, con un total de R$1,003.862,14.' | filas=[('2017-11', 1003862.14)]
+[qwen2_5-coder rag desarrollo r2]  7 n07_mes_mayores_ingresos               ✔ int=2 tok_sql=8320 28.6s
+[qwen2_5-coder rag desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3933 26.0s
+[qwen2_5-coder rag desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8920 49.7s
+[qwen2_5-coder rag desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8720 39.8s
+[qwen2_5-coder rag desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4107 15.6s
+[qwen2_5-coder rag desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4114 20.5s
+[qwen2_5-coder rag desarrollo r2] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4000 18.3s
+[qwen2_5-coder rag desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4051 20.0s
+[qwen2_5-coder rag desarrollo r2] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4295 39.0s
+[qwen2_5-coder rag desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4078 18.6s
+[qwen2_5-coder rag desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✔ int=1 tok_sql=4309 25.8s
+[qwen2_5-coder rag desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4071 19.2s
+[qwen2_5-coder rag desarrollo r2] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4020 17.5s
+[qwen2_5-coder rag desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✘ int=2 tok_sql=8420 33.3s
+[qwen2_5-coder rag desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4150 18.5s
+[qwen2_5-coder rag desarrollo r2] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4138 19.0s
+[qwen2_5-coder rag desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✔ int=1 tok_sql=4350 30.6s
+[qwen2_5-coder rag desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4169 31.2s
+[qwen2_5-coder rag desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4383 24.3s
+[qwen2_5-coder rag desarrollo r2] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4066 18.0s
+[qwen2_5-coder rag desarrollo r2] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4311 25.5s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de aproximadamente 2,650 gramos.' | filas=[(2649.1939021450953,)]
+[qwen2_5-coder rag desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4160 21.4s
+[qwen2_5-coder rag desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4043 20.2s
+[qwen2_5-coder rag desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3980 21.1s
+== qwen2_5-coder__rag__desarrollo__r2.json: 14/30 en 870.1 s
+[qwen2_5-coder rag desarrollo r3]  1 n01_pct_clientes_recurrentes           ✘ int=2 tok_sql=8624 46.4s
+[qwen2_5-coder rag desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4254 26.2s
+[qwen2_5-coder rag desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=4068 40.6s
+[qwen2_5-coder rag desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=9598 56.1s
+[qwen2_5-coder rag desarrollo r3]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4009 23.4s
+[qwen2_5-coder rag desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=8377 29.2s
+[qwen2_5-coder rag desarrollo r3]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4016 21.8s
+[qwen2_5-coder rag desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3933 25.8s
+[qwen2_5-coder rag desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8911 56.8s
+[qwen2_5-coder rag desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=4187 27.3s
+[qwen2_5-coder rag desarrollo r3] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4107 15.7s
+[qwen2_5-coder rag desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4114 21.0s
+[qwen2_5-coder rag desarrollo r3] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=4000 17.3s
+[qwen2_5-coder rag desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4051 20.1s
+[qwen2_5-coder rag desarrollo r3] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4295 28.8s
+[qwen2_5-coder rag desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4078 22.4s
+[qwen2_5-coder rag desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✔ int=1 tok_sql=4309 27.2s
+[qwen2_5-coder rag desarrollo r3] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4071 19.6s
+[qwen2_5-coder rag desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4020 17.4s
+[qwen2_5-coder rag desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4025 32.5s
+[qwen2_5-coder rag desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4150 19.1s
+[qwen2_5-coder rag desarrollo r3] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4138 19.0s
+[qwen2_5-coder rag desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9097 62.3s
+[qwen2_5-coder rag desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4169 30.8s
+[qwen2_5-coder rag desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4383 24.4s
+[qwen2_5-coder rag desarrollo r3] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4066 18.0s
+[qwen2_5-coder rag desarrollo r3] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4311 28.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de 2,65 kg.' | filas=[(2649.1939021450953,)]
+[qwen2_5-coder rag desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4160 21.2s
+[qwen2_5-coder rag desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4043 20.4s
+[qwen2_5-coder rag desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3980 20.4s
+== qwen2_5-coder__rag__desarrollo__r3.json: 14/30 en 887.1 s
+[qwen2_5-coder harness desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4127 28.9s
+[qwen2_5-coder harness desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4254 31.5s
+[qwen2_5-coder harness desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✔ int=3 tok_sql=13122 102.4s
+[qwen2_5-coder harness desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4518 53.1s
+[qwen2_5-coder harness desarrollo r1]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4009 30.1s
+[qwen2_5-coder harness desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=8344 49.7s
+[qwen2_5-coder harness desarrollo r1]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4016 27.2s
+[qwen2_5-coder harness desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8197 48.0s
+[qwen2_5-coder harness desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=5 tok_sql=22530 104.2s
+[qwen2_5-coder harness desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=5 tok_sql=22041 134.1s
+[qwen2_5-coder harness desarrollo r1] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4107 20.1s
+[qwen2_5-coder harness desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4114 27.3s
+[qwen2_5-coder harness desarrollo r1] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=4000 22.6s
+[qwen2_5-coder harness desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4051 27.4s
+[qwen2_5-coder harness desarrollo r1] 15 x05_vendedor_mas_ingresos              ✘ int=5 tok_sql=22747 98.6s
+[qwen2_5-coder harness desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4078 25.5s
+[qwen2_5-coder harness desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✔ int=1 tok_sql=4309 35.8s
+[qwen2_5-coder harness desarrollo r1] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4071 26.1s
+[qwen2_5-coder harness desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4020 25.0s
+[qwen2_5-coder harness desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4025 38.2s
+[qwen2_5-coder harness desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4150 23.3s
+[qwen2_5-coder harness desarrollo r1] 22 x12_vendedores_health_beauty           ✘ int=5 tok_sql=22358 62.8s
+[qwen2_5-coder harness desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=5 tok_sql=23338 130.2s
+[qwen2_5-coder harness desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4169 38.3s
+[qwen2_5-coder harness desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4383 30.5s
+[qwen2_5-coder harness desarrollo r1] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4066 23.4s
+[qwen2_5-coder harness desarrollo r1] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=8794 51.8s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de aproximadamente 2,650 gramos.' | filas=[(2649.1939021450953,)]
+[qwen2_5-coder harness desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4160 27.5s
+[qwen2_5-coder harness desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4043 27.8s
+[qwen2_5-coder harness desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=5 tok_sql=20472 78.8s
+== qwen2_5-coder__harness__desarrollo__r1.json: 15/30 en 1498.2 s
+[qwen2_5-coder harness desarrollo r2]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4127 53.1s
+[qwen2_5-coder harness desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4254 32.5s
+[qwen2_5-coder harness desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8381 51.7s
+[qwen2_5-coder harness desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=9371 91.3s
+[qwen2_5-coder harness desarrollo r2]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4009 28.0s
+[qwen2_5-coder harness desarrollo r2]  6 n06_metodo_pago_mas_usado              ✔ int=5 tok_sql=21362 85.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?' | respuesta_descartada='El mes con más ingresos por ventas de pedidos válidos fue 2017-11, con un total de R$1,003.862,14.' | filas=[('2017-11', 1003862.14)]
+[qwen2_5-coder harness desarrollo r2]  7 n07_mes_mayores_ingresos               ✔ int=2 tok_sql=8320 32.7s
+[qwen2_5-coder harness desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3933 31.1s
+[qwen2_5-coder harness desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=5 tok_sql=23362 89.2s
+[qwen2_5-coder harness desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=5 tok_sql=22319 72.0s
+[qwen2_5-coder harness desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4107 18.8s
+[qwen2_5-coder harness desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4114 23.7s
+[qwen2_5-coder harness desarrollo r2] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4000 23.6s
+[qwen2_5-coder harness desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4051 25.5s
+[qwen2_5-coder harness desarrollo r2] 15 x05_vendedor_mas_ingresos              ✔ int=5 tok_sql=22779 148.0s
+[qwen2_5-coder harness desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4078 22.3s
+[qwen2_5-coder harness desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✔ int=1 tok_sql=4309 31.1s
+[qwen2_5-coder harness desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4071 23.2s
+[qwen2_5-coder harness desarrollo r2] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4020 23.3s
+[qwen2_5-coder harness desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✘ int=5 tok_sql=21440 73.1s
+[qwen2_5-coder harness desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4150 21.7s
+[qwen2_5-coder harness desarrollo r2] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4138 22.7s
+[qwen2_5-coder harness desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✔ int=1 tok_sql=4350 33.8s
+[qwen2_5-coder harness desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4169 35.6s
+[qwen2_5-coder harness desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4383 28.3s
+[qwen2_5-coder harness desarrollo r2] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4066 21.8s
+[qwen2_5-coder harness desarrollo r2] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4311 29.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de aproximadamente 2,650 gramos.' | filas=[(2649.1939021450953,)]
+[qwen2_5-coder harness desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4160 25.6s
+[qwen2_5-coder harness desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4043 24.1s
+[qwen2_5-coder harness desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3980 24.9s
+== qwen2_5-coder__harness__desarrollo__r2.json: 15/30 en 1292.7 s
+[qwen2_5-coder harness desarrollo r3]  1 n01_pct_clientes_recurrentes           ✘ int=2 tok_sql=8624 48.5s
+[qwen2_5-coder harness desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4254 29.6s
+[qwen2_5-coder harness desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=4068 43.5s
+[qwen2_5-coder harness desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=5 tok_sql=24838 98.8s
+[qwen2_5-coder harness desarrollo r3]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4009 27.8s
+[qwen2_5-coder harness desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=5 tok_sql=21382 51.5s
+[qwen2_5-coder harness desarrollo r3]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4016 26.2s
+[qwen2_5-coder harness desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3933 30.9s
+[qwen2_5-coder harness desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=5 tok_sql=23338 119.4s
+[qwen2_5-coder harness desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=4187 33.9s
+[qwen2_5-coder harness desarrollo r3] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4107 18.8s
+[qwen2_5-coder harness desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4114 25.5s
+[qwen2_5-coder harness desarrollo r3] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=4000 21.2s
+[qwen2_5-coder harness desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4051 25.6s
+[qwen2_5-coder harness desarrollo r3] 15 x05_vendedor_mas_ingresos              ✔ int=5 tok_sql=22403 106.0s
+[qwen2_5-coder harness desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4078 26.2s
+[qwen2_5-coder harness desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✔ int=1 tok_sql=4309 31.7s
+[qwen2_5-coder harness desarrollo r3] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4071 23.5s
+[qwen2_5-coder harness desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4020 23.3s
+[qwen2_5-coder harness desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4025 35.7s
+[qwen2_5-coder harness desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4150 22.5s
+[qwen2_5-coder harness desarrollo r3] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4138 22.8s
+[qwen2_5-coder harness desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=5 tok_sql=23338 119.2s
+[qwen2_5-coder harness desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4169 35.2s
+[qwen2_5-coder harness desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4383 28.6s
+[qwen2_5-coder harness desarrollo r3] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4066 21.8s
+[qwen2_5-coder harness desarrollo r3] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4311 30.9s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de 2,65 kg.' | filas=[(2649.1939021450953,)]
+[qwen2_5-coder harness desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4160 25.5s
+[qwen2_5-coder harness desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4043 25.9s
+[qwen2_5-coder harness desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=5 tok_sql=20472 74.2s
+== qwen2_5-coder__harness__desarrollo__r3.json: 14/30 en 1299.7 s
+| Modelo | Conjunto | Modo | Aciertos (por repetición) | Media | Mínimo | ¿Mejora D-23 vs Base? | Tokens de prompt SQL por pregunta | s/pregunta | Intentos medios | % preguntas con ejemplos |
+|---|---|---|---|---|---|---|---|---|---|---|
+| qwen2.5-coder | casos_juez | base | 1, 1, 1 (de 6) | 1 | 1 | — | 6140.6 | 42.07 | 1.67 | 0 |
+| qwen2.5-coder | casos_juez | fewshot | 1, 1, 1 (de 6) | 1 | 1 | no | 7828.9 | 51.32 | 1.78 | 100 |
+| qwen2.5-coder | casos_juez | rag | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 6525.2 | 42.56 | 1.44 | 100 |
+| qwen2.5-coder | casos_juez | harness | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 14733.2 | 88.85 | 3.11 | 100 |
+| qwen2.5-coder | desarrollo | base | 14, 15, 15 (de 30) | 14.67 | 14 | — | 5135.6 | 19.24 | 1.48 | 0 |
+| qwen2.5-coder | desarrollo | rag | 13, 14, 14 (de 30) | 13.67 | 13 | no | 4999.0 | 29.32 | 1.19 | 100 |
+| qwen2.5-coder | desarrollo | harness | 15, 15, 14 (de 30) | 14.67 | 14 | no | 8020.3 | 43.91 | 1.86 | 100 |
+[qwen2_5-coder fewshot desarrollo r1]  1 n01_pct_clientes_recurrentes           ✔ int=1 tok_sql=4064 33.5s
+[qwen2_5-coder fewshot desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4068 23.9s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los ingresos (sin contar pedidos cancelados o no disponibles) concentran las 5 categorías de producto que más ingresos generan?' | respuesta_descartada='Las 5 categorías de producto que más ingresos generan concentran el 42.23% de los ingresos totales (sin contar pedidos cancelados o no disponibles).\n\nEste porcentaje se obtiene sumando los porcentajes individuales de cada categoría: 9.31% + 8.88% + 7.68% + 7.26% + 6.7% = 42.23%.' | filas=[('health_beauty', 9.31), ('watches_gifts', 8.88), ('bed_bath_table', 7.68), ('sports_leisure', 7.26), ('computers_accessories', 6.7)]
+[qwen2_5-coder fewshot desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✘ int=1 tok_sql=4073 28.2s
+[qwen2_5-coder fewshot desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=8591 45.2s
+[qwen2_5-coder fewshot desarrollo r1]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4078 23.2s
+[qwen2_5-coder fewshot desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=8240 19.1s
+[qwen2_5-coder fewshot desarrollo r1]  7 n07_mes_mayores_ingresos               ✔ int=1 tok_sql=4067 19.2s
+[qwen2_5-coder fewshot desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=4088 25.7s
+[qwen2_5-coder fewshot desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8849 48.1s
+[qwen2_5-coder fewshot desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=4090 30.9s
+[qwen2_5-coder fewshot desarrollo r1] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4054 14.0s
+[qwen2_5-coder fewshot desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4077 18.5s
+[qwen2_5-coder fewshot desarrollo r1] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4069 17.6s
+[qwen2_5-coder fewshot desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=4058 16.2s
+[qwen2_5-coder fewshot desarrollo r1] 15 x05_vendedor_mas_ingresos              ✘ int=1 tok_sql=4079 22.2s
+[qwen2_5-coder fewshot desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4065 18.4s
+[qwen2_5-coder fewshot desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=8467 22.3s
+[qwen2_5-coder fewshot desarrollo r1] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4080 17.3s
+[qwen2_5-coder fewshot desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4071 16.9s
+[qwen2_5-coder fewshot desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4094 23.3s
+[qwen2_5-coder fewshot desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4066 16.4s
+[qwen2_5-coder fewshot desarrollo r1] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4075 17.0s
+[qwen2_5-coder fewshot desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=1 tok_sql=4092 21.3s
+[qwen2_5-coder fewshot desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✔ int=1 tok_sql=4081 20.0s
+[qwen2_5-coder fewshot desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4084 19.0s
+[qwen2_5-coder fewshot desarrollo r1] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4056 16.8s
+[qwen2_5-coder fewshot desarrollo r1] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4074 22.7s
+[qwen2_5-coder fewshot desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✘ int=1 tok_sql=4079 17.7s
+[qwen2_5-coder fewshot desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4084 19.2s
+[qwen2_5-coder fewshot desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=4082 22.0s
+== qwen2_5-coder__fewshot__desarrollo__r1.json: 14/30 en 721.5 s
+[qwen2_5-coder fewshot desarrollo r2]  1 n01_pct_clientes_recurrentes           ✔ int=1 tok_sql=4064 20.0s
+[qwen2_5-coder fewshot desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4068 23.9s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los ingresos (sin contar pedidos cancelados o no disponibles) concentran las 5 categorías de producto que más ingresos generan?' | respuesta_descartada='Las 5 categorías de producto que más ingresos generan concentran el 48.82% de los ingresos totales del negocio.' | filas=[('health_beauty', 9.33), ('watches_gifts', 8.93), ('bed_bath_table', 7.68), ('sports_leisure', 7.32), ('computers_accessories', 6.76)]
+[qwen2_5-coder fewshot desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=1 tok_sql=4073 24.6s
+[qwen2_5-coder fewshot desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4128 32.6s
+[qwen2_5-coder fewshot desarrollo r2]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4078 20.9s
+[qwen2_5-coder fewshot desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4068 18.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?' | respuesta_descartada='El mes con más ingresos por ventas de pedidos válidos fue 2017-11, con un total de R$1,003.862,14.' | filas=[('2017-11', 1003862.14)]
+[qwen2_5-coder fewshot desarrollo r2]  7 n07_mes_mayores_ingresos               ✔ int=1 tok_sql=4067 19.3s
+[qwen2_5-coder fewshot desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8546 32.3s
+[qwen2_5-coder fewshot desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8583 56.2s
+[qwen2_5-coder fewshot desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=4090 27.7s
+[qwen2_5-coder fewshot desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4054 14.0s
+[qwen2_5-coder fewshot desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4077 18.5s
+[qwen2_5-coder fewshot desarrollo r2] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4069 18.5s
+[qwen2_5-coder fewshot desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=4058 16.2s
+[qwen2_5-coder fewshot desarrollo r2] 15 x05_vendedor_mas_ingresos              ✘ int=1 tok_sql=4079 20.9s
+[qwen2_5-coder fewshot desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4065 18.2s
+[qwen2_5-coder fewshot desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=8467 22.2s
+[qwen2_5-coder fewshot desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4080 18.7s
+[qwen2_5-coder fewshot desarrollo r2] 19 x09_mes_mas_cancelados                 ✘ int=1 tok_sql=4071 16.9s
+[qwen2_5-coder fewshot desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4094 22.5s
+[qwen2_5-coder fewshot desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4066 16.3s
+[qwen2_5-coder fewshot desarrollo r2] 22 x12_vendedores_health_beauty           ✔ int=1 tok_sql=4075 19.3s
+[qwen2_5-coder fewshot desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=8576 26.6s
+[qwen2_5-coder fewshot desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✔ int=1 tok_sql=4081 25.2s
+[qwen2_5-coder fewshot desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4084 19.2s
+[qwen2_5-coder fewshot desarrollo r2] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4056 16.7s
+[qwen2_5-coder fewshot desarrollo r2] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4074 22.5s
+[qwen2_5-coder fewshot desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✘ int=1 tok_sql=4079 17.0s
+[qwen2_5-coder fewshot desarrollo r2] 29 x19_anio_mas_ingresos                  ✘ int=1 tok_sql=4084 20.2s
+[qwen2_5-coder fewshot desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=4082 21.2s
+== qwen2_5-coder__fewshot__desarrollo__r2.json: 13/30 en 711.9 s
+[qwen2_5-coder fewshot desarrollo r3]  1 n01_pct_clientes_recurrentes           ✔ int=1 tok_sql=4064 19.9s
+[qwen2_5-coder fewshot desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4068 23.2s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los ingresos (sin contar pedidos cancelados o no disponibles) concentran las 5 categorías de producto que más ingresos generan?' | respuesta_descartada='Las 5 categorías de producto que más ingresos generan concentran el 46.84% de los ingresos totales (sin contar pedidos cancelados o no disponibles).\n\nEste porcentaje se obtiene sumando los porcentajes individuales de las categorías mencionadas: 9.33% + 8.93% + 7.68% + 7.32% + 6.76% = 46.84%.' | filas=[('health_beauty', 9.33), ('watches_gifts', 8.93), ('bed_bath_table', 7.68), ('sports_leisure', 7.32), ('computers_accessories', 6.76)]
+[qwen2_5-coder fewshot desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✘ int=1 tok_sql=4073 26.6s
+[qwen2_5-coder fewshot desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=8811 102.7s
+[qwen2_5-coder fewshot desarrollo r3]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4078 22.7s
+[qwen2_5-coder fewshot desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4068 18.9s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué mes (formato AAAA-MM) tuvo más ingresos por ventas de pedidos válidos y cuánto sumaron?' | respuesta_descartada='El mes con más ingresos por ventas de pedidos válidos fue 2017-11, con un total de R$1,003.862,14.' | filas=[('2017-11', 1003862.14)]
+[qwen2_5-coder fewshot desarrollo r3]  7 n07_mes_mayores_ingresos               ✔ int=2 tok_sql=8431 28.5s
+[qwen2_5-coder fewshot desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8565 44.7s
+[qwen2_5-coder fewshot desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8603 37.4s
+[qwen2_5-coder fewshot desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8522 39.3s
+[qwen2_5-coder fewshot desarrollo r3] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4054 14.0s
+[qwen2_5-coder fewshot desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4077 18.6s
+[qwen2_5-coder fewshot desarrollo r3] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4069 18.0s
+[qwen2_5-coder fewshot desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=4058 16.2s
+[qwen2_5-coder fewshot desarrollo r3] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4079 22.5s
+[qwen2_5-coder fewshot desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4065 18.4s
+[qwen2_5-coder fewshot desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=8467 22.3s
+[qwen2_5-coder fewshot desarrollo r3] 18 x08_dias_entrega_rj                    ✔ int=2 tok_sql=8503 28.1s
+[qwen2_5-coder fewshot desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4071 16.8s
+[qwen2_5-coder fewshot desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✔ int=1 tok_sql=4094 22.7s
+[qwen2_5-coder fewshot desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4066 16.8s
+[qwen2_5-coder fewshot desarrollo r3] 22 x12_vendedores_health_beauty           ✔ int=1 tok_sql=4075 21.3s
+[qwen2_5-coder fewshot desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=1 tok_sql=4092 22.3s
+[qwen2_5-coder fewshot desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✔ int=1 tok_sql=4081 20.0s
+[qwen2_5-coder fewshot desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=4084 19.2s
+[qwen2_5-coder fewshot desarrollo r3] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=4056 16.7s
+[qwen2_5-coder fewshot desarrollo r3] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4074 22.7s
+[qwen2_5-coder fewshot desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✘ int=1 tok_sql=4079 17.1s
+[qwen2_5-coder fewshot desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4084 19.2s
+[qwen2_5-coder fewshot desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=4082 22.1s
+== qwen2_5-coder__fewshot__desarrollo__r3.json: 16/30 en 804.3 s
+| Modelo | Conjunto | Modo | Aciertos (por repetición) | Media | Mínimo | ¿Mejora D-23 vs Base? | Tokens de prompt SQL por pregunta | s/pregunta | Intentos medios | % preguntas con ejemplos |
+|---|---|---|---|---|---|---|---|---|---|---|
+| qwen2.5-coder | casos_juez | base | 1, 1, 1 (de 6) | 1 | 1 | — | 6140.6 | 42.07 | 1.67 | 0 |
+| qwen2.5-coder | casos_juez | fewshot | 1, 1, 1 (de 6) | 1 | 1 | no | 7828.9 | 51.32 | 1.78 | 100 |
+| qwen2.5-coder | casos_juez | rag | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 6525.2 | 42.56 | 1.44 | 100 |
+| qwen2.5-coder | casos_juez | harness | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 14733.2 | 88.85 | 3.11 | 100 |
+| qwen2.5-coder | desarrollo | base | 14, 15, 15 (de 30) | 14.67 | 14 | — | 5135.6 | 19.24 | 1.48 | 0 |
+| qwen2.5-coder | desarrollo | fewshot | 14, 13, 16 (de 30) | 14.33 | 13 | no | 4820.3 | 23.34 | 1.17 | 100 |
+| qwen2.5-coder | desarrollo | rag | 13, 14, 14 (de 30) | 13.67 | 13 | no | 4999.0 | 29.32 | 1.19 | 100 |
+| qwen2.5-coder | desarrollo | harness | 15, 15, 14 (de 30) | 14.67 | 14 | no | 8020.3 | 43.91 | 1.86 | 100 |
+[llama3_1 base casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=3378 65.8s
+[llama3_1 base casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=7564 46.3s
+[llama3_1 base casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=7401 27.6s
+[llama3_1 base casos_juez r1]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=7115 13.1s
+[llama3_1 base casos_juez r1]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=7549 30.4s
+[llama3_1 base casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=7821 37.2s
+== llama3_1__base__casos_juez__r1.json: 1/6 en 220.4 s
+[llama3_1 base casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=3378 6.6s
+[llama3_1 base casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=7560 33.2s
+[llama3_1 base casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=7815 36.1s
+[llama3_1 base casos_juez r2]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=7157 16.0s
+[llama3_1 base casos_juez r2]  5 n06_categoria_mas_a_plazos             ✔ int=2 tok_sql=7431 34.8s
+[llama3_1 base casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=7532 33.2s
+== llama3_1__base__casos_juez__r2.json: 2/6 en 159.9 s
+[llama3_1 base casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=3378 6.4s
+[llama3_1 base casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=7700 35.2s
+[llama3_1 base casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=7536 31.2s
+[llama3_1 base casos_juez r3]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=7279 20.4s
+[llama3_1 base casos_juez r3]  5 n06_categoria_mas_a_plazos             ✘ int=1 tok_sql=3507 15.5s
+[llama3_1 base casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=7696 35.5s
+== llama3_1__base__casos_juez__r3.json: 1/6 en 144.1 s
+[llama3_1 fewshot casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4053 15.3s
+[llama3_1 fewshot casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9045 45.4s
+[llama3_1 fewshot casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=8828 42.4s
+[llama3_1 fewshot casos_juez r1]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=8617 26.8s
+[llama3_1 fewshot casos_juez r1]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=9035 44.0s
+[llama3_1 fewshot casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=8883 42.9s
+== llama3_1__fewshot__casos_juez__r1.json: 1/6 en 216.8 s
+[llama3_1 fewshot casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4053 15.2s
+[llama3_1 fewshot casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=8910 43.4s
+[llama3_1 fewshot casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=8921 42.0s
+[llama3_1 fewshot casos_juez r2]  4 n05_categorias_peso_flete              ✘ int=2 tok_sql=8649 29.0s
+[llama3_1 fewshot casos_juez r2]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=8761 41.9s
+[llama3_1 fewshot casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9133 47.1s
+== llama3_1__fewshot__casos_juez__r2.json: 1/6 en 218.6 s
+[llama3_1 fewshot casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4053 15.2s
+[llama3_1 fewshot casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=8909 43.3s
+[llama3_1 fewshot casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=8824 42.4s
+[llama3_1 fewshot casos_juez r3]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4135 24.6s
+[llama3_1 fewshot casos_juez r3]  5 n06_categoria_mas_a_plazos             ✘ int=2 tok_sql=8816 43.9s
+[llama3_1 fewshot casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9025 45.4s
+== llama3_1__fewshot__casos_juez__r3.json: 2/6 en 214.8 s
+[llama3_1 rag casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4024 18.7s
+[llama3_1 rag casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9082 47.0s
+[llama3_1 rag casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=2 tok_sql=9733 53.1s
+[llama3_1 rag casos_juez r1]  4 n05_categorias_peso_flete              ✘ int=1 tok_sql=4168 27.6s
+[llama3_1 rag casos_juez r1]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4222 31.0s
+[llama3_1 rag casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9519 51.8s
+== llama3_1__rag__casos_juez__r1.json: 2/6 en 229.2 s
+[llama3_1 rag casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4024 14.9s
+[llama3_1 rag casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9081 44.7s
+[llama3_1 rag casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4600 42.5s
+[llama3_1 rag casos_juez r2]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4168 24.1s
+[llama3_1 rag casos_juez r2]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4222 28.7s
+[llama3_1 rag casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9520 49.5s
+== llama3_1__rag__casos_juez__r2.json: 3/6 en 204.4 s
+[llama3_1 rag casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4024 14.9s
+[llama3_1 rag casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=2 tok_sql=9216 46.8s
+[llama3_1 rag casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4600 42.6s
+[llama3_1 rag casos_juez r3]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4168 26.7s
+[llama3_1 rag casos_juez r3]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4222 28.7s
+[llama3_1 rag casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=2 tok_sql=9519 49.5s
+== llama3_1__rag__casos_juez__r3.json: 3/6 en 209.1 s
+[llama3_1 harness casos_juez r1]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4024 18.6s
+[llama3_1 harness casos_juez r1]  2 n02_quiebre_retraso_calificacion       ✘ int=5 tok_sql=23302 83.6s
+[llama3_1 harness casos_juez r1]  3 n04_vendedores_a_revisar               ✘ int=5 tok_sql=24868 96.5s
+[llama3_1 harness casos_juez r1]  4 n05_categorias_peso_flete              ✔ int=2 tok_sql=8563 42.5s
+[llama3_1 harness casos_juez r1]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4222 34.5s
+[llama3_1 harness casos_juez r1]  6 n08_categorias_problema_producto       ✘ int=5 tok_sql=24600 87.8s
+== llama3_1__harness__casos_juez__r1.json: 3/6 en 363.4 s
+[llama3_1 harness casos_juez r2]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4024 18.5s
+[llama3_1 harness casos_juez r2]  2 n02_quiebre_retraso_calificacion       ✘ int=5 tok_sql=23295 82.6s
+[llama3_1 harness casos_juez r2]  3 n04_vendedores_a_revisar               ✘ int=5 tok_sql=24576 126.3s
+[llama3_1 harness casos_juez r2]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4168 29.9s
+[llama3_1 harness casos_juez r2]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4222 34.3s
+[llama3_1 harness casos_juez r2]  6 n08_categorias_problema_producto       ✘ int=5 tok_sql=24604 87.8s
+== llama3_1__harness__casos_juez__r2.json: 3/6 en 379.5 s
+[llama3_1 harness casos_juez r3]  1 c01_total_pedidos                      ✔ int=1 tok_sql=4024 18.2s
+[llama3_1 harness casos_juez r3]  2 n02_quiebre_retraso_calificacion       ✘ int=5 tok_sql=23436 87.1s
+[llama3_1 harness casos_juez r3]  3 n04_vendedores_a_revisar               ✘ int=1 tok_sql=4600 48.8s
+[llama3_1 harness casos_juez r3]  4 n05_categorias_peso_flete              ✔ int=1 tok_sql=4168 31.8s
+[llama3_1 harness casos_juez r3]  5 n06_categoria_mas_a_plazos             ✔ int=1 tok_sql=4222 32.5s
+[llama3_1 harness casos_juez r3]  6 n08_categorias_problema_producto       ✘ int=5 tok_sql=24600 95.7s
+== llama3_1__harness__casos_juez__r3.json: 3/6 en 314.1 s
+| Modelo | Conjunto | Modo | Aciertos (por repetición) | Media | Mínimo | ¿Mejora D-23 vs Base? | Tokens de prompt SQL por pregunta | s/pregunta | Intentos medios | % preguntas con ejemplos |
+|---|---|---|---|---|---|---|---|---|---|---|
+| llama3.1 | casos_juez | base | 1, 2, 1 (de 6) | 1.33 | 1 | — | 6599.8 | 29.14 | 1.78 | 0 |
+| llama3.1 | casos_juez | fewshot | 1, 1, 2 (de 6) | 1.33 | 1 | no | 7813.9 | 36.12 | 1.78 | 100 |
+| llama3.1 | casos_juez | rag | 2, 3, 3 (de 6) | 2.67 | 2 | sí | 6228.4 | 35.7 | 1.39 | 100 |
+| llama3.1 | casos_juez | harness | 3, 3, 3 (de 6) | 3 | 3 | sí | 13306.6 | 58.72 | 2.83 | 100 |
+| qwen2.5-coder | casos_juez | base | 1, 1, 1 (de 6) | 1 | 1 | — | 6140.6 | 42.07 | 1.67 | 0 |
+| qwen2.5-coder | casos_juez | fewshot | 1, 1, 1 (de 6) | 1 | 1 | no | 7828.9 | 51.32 | 1.78 | 100 |
+| qwen2.5-coder | casos_juez | rag | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 6525.2 | 42.56 | 1.44 | 100 |
+| qwen2.5-coder | casos_juez | harness | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 14733.2 | 88.85 | 3.11 | 100 |
+| qwen2.5-coder | desarrollo | base | 14, 15, 15 (de 30) | 14.67 | 14 | — | 5135.6 | 19.24 | 1.48 | 0 |
+| qwen2.5-coder | desarrollo | fewshot | 14, 13, 16 (de 30) | 14.33 | 13 | no | 4820.3 | 23.34 | 1.17 | 100 |
+| qwen2.5-coder | desarrollo | rag | 13, 14, 14 (de 30) | 13.67 | 13 | no | 4999.0 | 29.32 | 1.19 | 100 |
+| qwen2.5-coder | desarrollo | harness | 15, 15, 14 (de 30) | 14.67 | 14 | no | 8020.3 | 43.91 | 1.86 | 100 |
+[llama3_1 base desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=2 tok_sql=7142 36.1s
+[llama3_1 base desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=3377 10.2s
+[llama3_1 base desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=7308 80.3s
+[llama3_1 base desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=7474 33.8s
+[llama3_1 base desarrollo r1]  5 n05_estado_mayor_peso_flete            ✔ int=2 tok_sql=7003 17.7s
+[llama3_1 base desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=3377 9.8s
+[llama3_1 base desarrollo r1]  7 n07_mes_mayores_ingresos               ✔ int=1 tok_sql=3376 9.6s
+[llama3_1 base desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=7160 26.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué 5 categorías de producto (con nombre de categoría) tienen mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos (sin contar pedidos cancelados o no disponibles)?' | respuesta_descartada='Las 5 categorías de producto con mayor proporción de clientes que les compraron una sola vez son: consolas de juegos, electrónicos, (una categoría sin nombre específico), artículos frescos y electrodomésticos pequeños. Esto se debe a que en estas categorías, más del 99% de los clientes solo compraron una vez.' | filas=[('consoles_games', 99.62), ('electronics', 99.61), (None, 99.59), ('cool_stuff', 99.56), ('small_appliances', 99.52)]
+[llama3_1 base desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=3401 16.0s
+[llama3_1 base desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=7104 17.0s
+[llama3_1 base desarrollo r1] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=3363 6.4s
+[llama3_1 base desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=3387 11.8s
+[llama3_1 base desarrollo r1] 13 x03_flete_promedio_por_articulo        ✔ int=1 tok_sql=3378 9.1s
+[llama3_1 base desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=3367 7.8s
+[llama3_1 base desarrollo r1] 15 x05_vendedor_mas_ingresos              ✔ int=2 tok_sql=6992 19.0s
+[llama3_1 base desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=3374 9.3s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es la calificación promedio (promediando la de cada pedido) de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que contienen al menos un producto de la categoría bed_bath_table?' | respuesta_descartada='La calificación promedio de los pedidos válidos que contienen al menos un producto de la categoría bed_bath_table es de 3,9209. Esto se debe a que la calificación promedio de los pedidos que cumplen con estos criterios es de 3,9209.' | filas=[(3.9209831588529815,)]
+[llama3_1 base desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=3398 13.3s
+[llama3_1 base desarrollo r1] 18 x08_dias_entrega_rj                    ✘ int=1 tok_sql=3389 10.7s
+[llama3_1 base desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3380 8.1s
+[llama3_1 base desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=7139 22.5s
+[llama3_1 base desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=3375 8.7s
+[llama3_1 base desarrollo r1] 22 x12_vendedores_health_beauty           ✔ int=1 tok_sql=3385 11.8s
+[llama3_1 base desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=7031 18.9s
+[llama3_1 base desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=2 tok_sql=6883 10.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es la calificación promedio de las reseñas de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que se pagaron, al menos en parte, con boleto?' | respuesta_descartada='La calificación promedio de las reseñas de los pedidos que se pagaron, al menos en parte, con boleto es de 4,11. Esto se debe a que la calificación promedio es de 4.116604334238434.' | filas=[(4.116604334238434,)]
+[llama3_1 base desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=3393 9.3s
+[llama3_1 base desarrollo r1] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=3366 7.4s
+[llama3_1 base desarrollo r1] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=6987 17.6s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de aproximadamente 2.649 gramos. Esto se respalda por un peso promedio de 2.649 gramos.' | filas=[(2649.1939021450953,)]
+[llama3_1 base desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=3389 10.0s
+[llama3_1 base desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=3393 10.1s
+[llama3_1 base desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3391 10.3s
+== llama3_1__base__desarrollo__r1.json: 16/30 en 534.1 s
+[llama3_1 base desarrollo r2]  1 n01_pct_clientes_recurrentes           ✔ int=1 tok_sql=3373 12.7s
+[llama3_1 base desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=3377 11.0s
+[llama3_1 base desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=7195 18.4s
+[llama3_1 base desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=7310 23.9s
+[llama3_1 base desarrollo r2]  5 n05_estado_mayor_peso_flete            ✘ int=2 tok_sql=7001 19.0s
+[llama3_1 base desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=3377 9.7s
+[llama3_1 base desarrollo r2]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3376 10.1s
+[llama3_1 base desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3395 16.7s
+[llama3_1 base desarrollo r2]  9 n09_categorias_mas_compra_unica        ✔ int=1 tok_sql=3401 17.9s
+[llama3_1 base desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=7232 18.7s
+[llama3_1 base desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=3363 6.6s
+[llama3_1 base desarrollo r2] 12 x02_pct_entregas_con_retraso           ✘ int=1 tok_sql=3387 9.8s
+[llama3_1 base desarrollo r2] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=3378 9.6s
+[llama3_1 base desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=3367 7.9s
+[llama3_1 base desarrollo r2] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=3388 11.0s
+[llama3_1 base desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=3374 10.2s
+[llama3_1 base desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=3398 10.9s
+[llama3_1 base desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=3389 10.0s
+[llama3_1 base desarrollo r2] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3380 7.7s
+[llama3_1 base desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=7138 22.4s
+[llama3_1 base desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=3375 8.6s
+[llama3_1 base desarrollo r2] 22 x12_vendedores_health_beauty           ✔ int=2 tok_sql=7067 17.6s
+[llama3_1 base desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=7060 23.4s
+[llama3_1 base desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=3390 10.6s
+[llama3_1 base desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=3393 10.0s
+[llama3_1 base desarrollo r2] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=3366 7.8s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuáles son las 2 ciudades de vendedores con más pedidos válidos (sin contar pedidos cancelados o no disponibles), de mayor a menor?' | respuesta_descartada='Las dos ciudades de vendedores con más pedidos válidos son Sao Paulo y Ibitinga, con 27.817 y 7.740 pedidos respectivamente.' | filas=[('sao paulo', 27817), ('ibitinga', 7740)]
+[llama3_1 base desarrollo r2] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=6972 15.9s
+[llama3_1 base desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=3389 10.5s
+[llama3_1 base desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=3393 10.0s
+[llama3_1 base desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3391 14.1s
+== llama3_1__base__desarrollo__r2.json: 15/30 en 438.3 s
+[llama3_1 base desarrollo r3]  1 n01_pct_clientes_recurrentes           ✘ int=2 tok_sql=6836 9.1s
+[llama3_1 base desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=3377 9.7s
+[llama3_1 base desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=7124 17.2s
+[llama3_1 base desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=7178 25.2s
+[llama3_1 base desarrollo r3]  5 n05_estado_mayor_peso_flete            ✘ int=2 tok_sql=7002 13.0s
+[llama3_1 base desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=6859 9.5s
+[llama3_1 base desarrollo r3]  7 n07_mes_mayores_ingresos               ✔ int=1 tok_sql=3376 9.4s
+[llama3_1 base desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3395 15.3s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué 5 categorías de producto (con nombre de categoría) tienen mayor proporción de clientes que les compraron una sola vez, entre las categorías con al menos 500 pedidos válidos (sin contar pedidos cancelados o no disponibles)?' | respuesta_descartada='Las 5 categorías de producto con mayor proporción de clientes que les compraron una sola vez son cool_stuff, luggage_accessories, toys, baby y consoles_games. Esto significa que en estas categorías, más del 90% de los clientes solo compraron una vez. La categoría cool_stuff tiene la mayor proporción, con un 95.26% de clientes que solo compraron una vez.' | filas=[('cool_stuff', 95.26), ('luggage_accessories', 94.12), ('toys', 93.41), ('baby', 93.36), ('consoles_games', 93.17)]
+[llama3_1 base desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=3401 15.9s
+[llama3_1 base desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=7118 18.4s
+[llama3_1 base desarrollo r3] 11 x01_pedidos_cancelados                 ✘ int=1 tok_sql=3363 6.2s
+[llama3_1 base desarrollo r3] 12 x02_pct_entregas_con_retraso           ✘ int=1 tok_sql=3387 11.4s
+[llama3_1 base desarrollo r3] 13 x03_flete_promedio_por_articulo        ✘ int=2 tok_sql=6954 15.7s
+[llama3_1 base desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✔ int=1 tok_sql=3367 7.8s
+[llama3_1 base desarrollo r3] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=3388 11.4s
+[llama3_1 base desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=3374 10.3s
+[llama3_1 base desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=3398 11.3s
+[llama3_1 base desarrollo r3] 18 x08_dias_entrega_rj                    ✘ int=1 tok_sql=3389 11.2s
+[llama3_1 base desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3380 8.2s
+[llama3_1 base desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=7152 23.4s
+[llama3_1 base desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=3375 8.9s
+[llama3_1 base desarrollo r3] 22 x12_vendedores_health_beauty           ✔ int=1 tok_sql=3385 12.0s
+[llama3_1 base desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=1 tok_sql=3399 15.3s
+[llama3_1 base desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✔ int=1 tok_sql=3390 11.0s
+[llama3_1 base desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✔ int=1 tok_sql=3393 9.6s
+[llama3_1 base desarrollo r3] 26 x16_pct_productos_sin_categoria        ✔ int=1 tok_sql=3366 7.4s
+[llama3_1 base desarrollo r3] 27 x17_top2_ciudades_vendedores           ✔ int=2 tok_sql=6987 17.4s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es el peso promedio, en gramos, de los artículos vendidos en pedidos válidos (sin contar pedidos cancelados o no disponibles) de la categoría furniture_decor?' | respuesta_descartada='El peso promedio de los artículos vendidos en pedidos válidos de la categoría furniture_decor es de aproximadamente 2.649 gramos. Esto se basa en un peso promedio de 2.649 gramos.' | filas=[(2649.1939021450953,)]
+[llama3_1 base desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=3389 10.0s
+[llama3_1 base desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=3393 9.9s
+[llama3_1 base desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=2 tok_sql=6968 79.7s
+== llama3_1__base__desarrollo__r3.json: 13/30 en 485.9 s
+[llama3_1 rag desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=2 tok_sql=8650 45.0s
+[llama3_1 rag desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4235 26.6s
+[llama3_1 rag desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=4049 25.6s
+[llama3_1 rag desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4495 40.6s
+[llama3_1 rag desarrollo r1]  5 n05_estado_mayor_peso_flete            ✔ int=1 tok_sql=3982 21.2s
+[llama3_1 rag desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=8341 31.0s
+[llama3_1 rag desarrollo r1]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3995 20.7s
+[llama3_1 rag desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3912 23.2s
+[llama3_1 rag desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8463 38.0s
+[llama3_1 rag desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8773 35.7s
+[llama3_1 rag desarrollo r1] 11 x01_pedidos_cancelados                 ✘ int=1 tok_sql=4095 18.1s
+[llama3_1 rag desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4098 21.4s
+[llama3_1 rag desarrollo r1] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=3987 20.4s
+[llama3_1 rag desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4034 20.8s
+[llama3_1 rag desarrollo r1] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4279 29.5s
+[llama3_1 rag desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4065 21.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es la calificación promedio (promediando la de cada pedido) de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que contienen al menos un producto de la categoría bed_bath_table?' | respuesta_descartada='La calificación promedio de los pedidos válidos que contienen al menos un producto de la categoría bed_bath_table es 0,00. Esto se debe a que no hay calificaciones registradas para estos pedidos.' | filas=[(None,)]
+[llama3_1 rag desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=4295 25.1s
+[llama3_1 rag desarrollo r1] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4056 20.7s
+[llama3_1 rag desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3999 19.3s
+[llama3_1 rag desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✘ int=2 tok_sql=8411 34.4s
+[llama3_1 rag desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4131 20.7s
+[llama3_1 rag desarrollo r1] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4120 26.2s
+[llama3_1 rag desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9025 40.6s
+[llama3_1 rag desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4153 32.3s
+[llama3_1 rag desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4365 24.9s
+[llama3_1 rag desarrollo r1] 26 x16_pct_productos_sin_categoria        ✘ int=2 tok_sql=8293 23.9s
+[llama3_1 rag desarrollo r1] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4288 26.5s
+[llama3_1 rag desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4149 22.3s
+[llama3_1 rag desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4024 20.7s
+[llama3_1 rag desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3961 19.3s
+== llama3_1__rag__desarrollo__r1.json: 10/30 en 841.0 s
+[llama3_1 rag desarrollo r2]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4108 22.1s
+[llama3_1 rag desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4235 24.0s
+[llama3_1 rag desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8502 31.8s
+[llama3_1 rag desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=9463 53.2s
+[llama3_1 rag desarrollo r2]  5 n05_estado_mayor_peso_flete            ✔ int=1 tok_sql=3982 18.7s
+[llama3_1 rag desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4027 27.7s
+[llama3_1 rag desarrollo r2]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3995 17.5s
+[llama3_1 rag desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3912 19.2s
+[llama3_1 rag desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=4085 28.9s
+[llama3_1 rag desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8777 34.1s
+[llama3_1 rag desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4095 16.1s
+[llama3_1 rag desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4098 19.4s
+[llama3_1 rag desarrollo r2] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=3987 17.8s
+[llama3_1 rag desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4034 19.0s
+[llama3_1 rag desarrollo r2] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4279 25.3s
+[llama3_1 rag desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4065 20.6s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es la calificación promedio (promediando la de cada pedido) de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que contienen al menos un producto de la categoría bed_bath_table?' | respuesta_descartada='La calificación promedio de los pedidos válidos que contienen al menos un producto de la categoría bed_bath_table es de 0,00. Esto se debe a que no hay pedidos válidos con esta categoría que tengan calificaciones registradas.' | filas=[(None,)]
+[llama3_1 rag desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=4295 23.5s
+[llama3_1 rag desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4056 21.3s
+[llama3_1 rag desarrollo r2] 19 x09_mes_mas_cancelados                 ✘ int=1 tok_sql=3999 17.5s
+[llama3_1 rag desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✘ int=2 tok_sql=8421 38.8s
+[llama3_1 rag desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4131 18.6s
+[llama3_1 rag desarrollo r2] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=8590 36.8s
+[llama3_1 rag desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9107 34.0s
+[llama3_1 rag desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4153 38.2s
+[llama3_1 rag desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4365 23.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los productos del catálogo no tiene una categoría asignada?' | respuesta_descartada='Alrededor del 61% de los productos del catálogo no tiene una categoría asignada. Esto se respalda en que el resultado de la consulta es 61,000.0%.' | filas=[(61000.0,)]
+[llama3_1 rag desarrollo r2] 26 x16_pct_productos_sin_categoria        ✘ int=1 tok_sql=4043 16.0s
+[llama3_1 rag desarrollo r2] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4288 24.6s
+[llama3_1 rag desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4149 20.6s
+[llama3_1 rag desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=2 tok_sql=8355 27.0s
+[llama3_1 rag desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3961 16.9s
+== llama3_1__rag__desarrollo__r2.json: 10/30 en 797.4 s
+[llama3_1 rag desarrollo r3]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4108 20.6s
+[llama3_1 rag desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4235 23.3s
+[llama3_1 rag desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8506 38.9s
+[llama3_1 rag desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=9389 47.5s
+[llama3_1 rag desarrollo r3]  5 n05_estado_mayor_peso_flete            ✔ int=1 tok_sql=3982 18.6s
+[llama3_1 rag desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=2 tok_sql=8391 27.5s
+[llama3_1 rag desarrollo r3]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3995 17.2s
+[llama3_1 rag desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3912 21.4s
+[llama3_1 rag desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=2 tok_sql=8903 41.5s
+[llama3_1 rag desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=4167 25.9s
+[llama3_1 rag desarrollo r3] 11 x01_pedidos_cancelados                 ✘ int=1 tok_sql=4095 16.3s
+[llama3_1 rag desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4098 19.2s
+[llama3_1 rag desarrollo r3] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=3987 17.9s
+[llama3_1 rag desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4034 18.9s
+[llama3_1 rag desarrollo r3] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4279 25.6s
+[llama3_1 rag desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4065 21.1s
+[llama3_1 rag desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=8912 36.1s
+[llama3_1 rag desarrollo r3] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4056 18.6s
+[llama3_1 rag desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3999 17.3s
+[llama3_1 rag desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=8464 40.8s
+[llama3_1 rag desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4131 19.2s
+[llama3_1 rag desarrollo r3] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=8675 60.5s
+[llama3_1 rag desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9025 41.3s
+[llama3_1 rag desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=2 tok_sql=8771 38.9s
+[llama3_1 rag desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4365 23.2s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los productos del catálogo no tiene una categoría asignada?' | respuesta_descartada='Alrededor del 61% de los productos del catálogo no tienen una categoría asignada. Esto se respalda por el hecho de que hay 61,000 productos en esta situación.' | filas=[('sin_categoria', 61000.0)]
+[llama3_1 rag desarrollo r3] 26 x16_pct_productos_sin_categoria        ✘ int=1 tok_sql=4043 17.3s
+[llama3_1 rag desarrollo r3] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4288 24.4s
+[llama3_1 rag desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4149 20.1s
+[llama3_1 rag desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4024 18.6s
+[llama3_1 rag desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3961 18.7s
+== llama3_1__rag__desarrollo__r3.json: 11/30 en 841.5 s
+[llama3_1 harness desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=2 tok_sql=8650 45.1s
+[llama3_1 harness desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4235 28.9s
+[llama3_1 harness desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✔ int=1 tok_sql=4049 28.2s
+[llama3_1 harness desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4495 43.8s
+[llama3_1 harness desarrollo r1]  5 n05_estado_mayor_peso_flete            ✔ int=1 tok_sql=3982 23.1s
+[llama3_1 harness desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=5 tok_sql=21283 59.8s
+[llama3_1 harness desarrollo r1]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3995 23.2s
+[llama3_1 harness desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3912 26.6s
+[llama3_1 harness desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=5 tok_sql=21894 76.1s
+[llama3_1 harness desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=4 tok_sql=17954 125.3s
+[llama3_1 harness desarrollo r1] 11 x01_pedidos_cancelados                 ✘ int=1 tok_sql=4095 19.9s
+[llama3_1 harness desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4098 22.9s
+[llama3_1 harness desarrollo r1] 13 x03_flete_promedio_por_articulo        ✘ int=5 tok_sql=20638 61.8s
+[llama3_1 harness desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4034 22.8s
+[llama3_1 harness desarrollo r1] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4279 31.6s
+[llama3_1 harness desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✘ int=2 tok_sql=8327 37.1s
+[llama3_1 harness desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=5 tok_sql=22294 63.8s
+[llama3_1 harness desarrollo r1] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4056 22.6s
+[llama3_1 harness desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3999 21.9s
+[llama3_1 harness desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✘ int=5 tok_sql=21485 75.7s
+[llama3_1 harness desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4131 21.9s
+[llama3_1 harness desarrollo r1] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=8499 43.1s
+[llama3_1 harness desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9025 42.7s
+[llama3_1 harness desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=2 tok_sql=8598 58.6s
+[llama3_1 harness desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4365 26.6s
+[llama3_1 harness desarrollo r1] 26 x16_pct_productos_sin_categoria        ✘ int=5 tok_sql=21043 35.5s
+[llama3_1 harness desarrollo r1] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4288 28.3s
+[llama3_1 harness desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4149 24.3s
+[llama3_1 harness desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4024 23.6s
+[llama3_1 harness desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=2 tok_sql=8107 37.0s
+== llama3_1__harness__desarrollo__r1.json: 10/30 en 1247.3 s
+[llama3_1 harness desarrollo r2]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4108 26.9s
+[llama3_1 harness desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4235 28.3s
+[llama3_1 harness desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=5 tok_sql=21978 63.7s
+[llama3_1 harness desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=5 tok_sql=24367 98.6s
+[llama3_1 harness desarrollo r2]  5 n05_estado_mayor_peso_flete            ✔ int=1 tok_sql=3982 22.8s
+[llama3_1 harness desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4027 33.7s
+[llama3_1 harness desarrollo r2]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3995 21.6s
+[llama3_1 harness desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8075 41.1s
+[llama3_1 harness desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=4085 33.6s
+[llama3_1 harness desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=5 tok_sql=22607 59.3s
+[llama3_1 harness desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4095 19.6s
+[llama3_1 harness desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4098 23.1s
+[llama3_1 harness desarrollo r2] 13 x03_flete_promedio_por_articulo        ✔ int=2 tok_sql=8117 33.2s
+[llama3_1 harness desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4034 22.7s
+[llama3_1 harness desarrollo r2] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4279 29.9s
+[llama3_1 harness desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4065 25.9s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuál es la calificación promedio (promediando la de cada pedido) de los pedidos válidos (sin contar pedidos cancelados o no disponibles) que contienen al menos un producto de la categoría bed_bath_table?' | respuesta_descartada='La calificación promedio de los pedidos válidos que contienen al menos un producto de la categoría bed_bath_table es de 0,00. Esto se debe a que no hay pedidos válidos con productos de esta categoría que tengan una calificación registrada.' | filas=[(None,)]
+[llama3_1 harness desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=5 tok_sql=22436 67.7s
+[llama3_1 harness desarrollo r2] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4056 24.9s
+[llama3_1 harness desarrollo r2] 19 x09_mes_mas_cancelados                 ✘ int=1 tok_sql=3999 22.8s
+[llama3_1 harness desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✘ int=2 tok_sql=8421 44.7s
+[llama3_1 harness desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4131 22.3s
+[llama3_1 harness desarrollo r2] 22 x12_vendedores_health_beauty           ✘ int=3 tok_sql=12960 54.8s
+[llama3_1 harness desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✘ int=3 tok_sql=13817 56.9s
+[llama3_1 harness desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=5 tok_sql=22569 166.4s
+[llama3_1 harness desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4365 27.2s
+[llama3_1 harness desarrollo r2] 26 x16_pct_productos_sin_categoria        ✔ int=2 tok_sql=8184 25.0s
+[llama3_1 harness desarrollo r2] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4288 28.7s
+[llama3_1 harness desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4149 24.2s
+[llama3_1 harness desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=2 tok_sql=8355 32.6s
+[llama3_1 harness desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=3 tok_sql=12250 50.4s
+== llama3_1__harness__desarrollo__r2.json: 12/30 en 1277.8 s
+[llama3_1 harness desarrollo r3]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4108 25.2s
+[llama3_1 harness desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✔ int=1 tok_sql=4235 27.0s
+[llama3_1 harness desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8506 44.4s
+[llama3_1 harness desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=5 tok_sql=24067 90.0s
+[llama3_1 harness desarrollo r3]  5 n05_estado_mayor_peso_flete            ✔ int=1 tok_sql=3982 22.6s
+[llama3_1 harness desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=5 tok_sql=21483 47.9s
+[llama3_1 harness desarrollo r3]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=3995 21.3s
+[llama3_1 harness desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=1 tok_sql=3912 26.2s
+[llama3_1 harness desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=5 tok_sql=22621 86.9s
+[llama3_1 harness desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=1 tok_sql=4167 31.8s
+[llama3_1 harness desarrollo r3] 11 x01_pedidos_cancelados                 ✘ int=1 tok_sql=4095 19.9s
+[llama3_1 harness desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4098 22.8s
+[llama3_1 harness desarrollo r3] 13 x03_flete_promedio_por_articulo        ✔ int=2 tok_sql=8119 32.8s
+[llama3_1 harness desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4034 23.3s
+[llama3_1 harness desarrollo r3] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4279 30.0s
+[llama3_1 harness desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✔ int=1 tok_sql=4065 24.9s
+[llama3_1 harness desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=2 tok_sql=8912 40.7s
+[llama3_1 harness desarrollo r3] 18 x08_dias_entrega_rj                    ✔ int=1 tok_sql=4056 22.6s
+[llama3_1 harness desarrollo r3] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=3999 21.9s
+[llama3_1 harness desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=8464 46.1s
+[llama3_1 harness desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4131 22.6s
+[llama3_1 harness desarrollo r3] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=8675 52.6s
+[llama3_1 harness desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=9025 46.2s
+[llama3_1 harness desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=5 tok_sql=22551 89.3s
+[llama3_1 harness desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4365 27.0s
+[llama3_1 harness desarrollo r3] 26 x16_pct_productos_sin_categoria        ✘ int=5 tok_sql=20866 59.2s
+[llama3_1 harness desarrollo r3] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4288 28.9s
+[llama3_1 harness desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4149 23.9s
+[llama3_1 harness desarrollo r3] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4024 23.7s
+[llama3_1 harness desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=3961 23.1s
+== llama3_1__harness__desarrollo__r3.json: 12/30 en 1149.9 s
+[llama3_1 fewshot desarrollo r1]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4048 20.5s
+[llama3_1 fewshot desarrollo r1]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4052 19.6s
+[llama3_1 fewshot desarrollo r1]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8799 34.3s
+[llama3_1 fewshot desarrollo r1]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4109 38.1s
+[llama3_1 fewshot desarrollo r1]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4062 20.9s
+[llama3_1 fewshot desarrollo r1]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4052 19.1s
+[llama3_1 fewshot desarrollo r1]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4051 19.4s
+[llama3_1 fewshot desarrollo r1]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8486 28.6s
+[llama3_1 fewshot desarrollo r1]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=4076 24.9s
+[llama3_1 fewshot desarrollo r1] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8780 37.4s
+[llama3_1 fewshot desarrollo r1] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4038 15.3s
+[llama3_1 fewshot desarrollo r1] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4062 19.0s
+[llama3_1 fewshot desarrollo r1] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4053 18.9s
+[llama3_1 fewshot desarrollo r1] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4042 19.8s
+[llama3_1 fewshot desarrollo r1] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4063 22.2s
+[llama3_1 fewshot desarrollo r1] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4049 19.8s
+[llama3_1 fewshot desarrollo r1] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=4073 19.0s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuántos días tarda en promedio, desde la compra hasta la entrega al cliente, un pedido válido (sin contar pedidos cancelados o no disponibles) entregado a clientes del estado RJ?' | respuesta_descartada='Los pedidos válidos entregados a clientes del estado RJ tardan, en promedio, -11.05 días en llegar desde la compra hasta la entrega. Esto se debe a que la entrega se está haciendo antes de la fecha estimada de entrega en aproximadamente 11 días.' | filas=[(-11.05,)]
+[llama3_1 fewshot desarrollo r1] 18 x08_dias_entrega_rj                    ✘ int=1 tok_sql=4064 20.3s
+[llama3_1 fewshot desarrollo r1] 19 x09_mes_mas_cancelados                 ✔ int=1 tok_sql=4055 16.8s
+[llama3_1 fewshot desarrollo r1] 20 x10_categoria_precio_promedio_mas_alto ✔ int=2 tok_sql=8626 44.3s
+[llama3_1 fewshot desarrollo r1] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4050 18.0s
+[llama3_1 fewshot desarrollo r1] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4060 18.8s
+[llama3_1 fewshot desarrollo r1] 23 x13_estado_mayor_gasto_promedio        ✘ int=1 tok_sql=4074 21.8s
+[llama3_1 fewshot desarrollo r1] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=2 tok_sql=8566 27.1s
+[llama3_1 fewshot desarrollo r1] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4068 18.6s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los productos del catálogo no tiene una categoría asignada?' | respuesta_descartada='Alrededor del 61% de los productos del catálogo no tiene una categoría asignada. Esto se respalda por el resultado de 61,000.0%.' | filas=[(61000.0,)]
+[llama3_1 fewshot desarrollo r1] 26 x16_pct_productos_sin_categoria        ✘ int=1 tok_sql=4041 15.9s
+[llama3_1 fewshot desarrollo r1] 27 x17_top2_ciudades_vendedores           ✔ int=1 tok_sql=4058 21.2s
+[llama3_1 fewshot desarrollo r1] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4064 19.3s
+[llama3_1 fewshot desarrollo r1] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4068 19.0s
+[llama3_1 fewshot desarrollo r1] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=4066 18.8s
+== llama3_1__fewshot__desarrollo__r1.json: 9/30 en 722.1 s
+[llama3_1 fewshot desarrollo r2]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4048 18.3s
+[llama3_1 fewshot desarrollo r2]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4052 20.9s
+[llama3_1 fewshot desarrollo r2]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8804 45.6s
+[llama3_1 fewshot desarrollo r2]  4 n04_vendedores_problematicos           ✘ int=2 tok_sql=8614 41.2s
+[llama3_1 fewshot desarrollo r2]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4062 19.5s
+[llama3_1 fewshot desarrollo r2]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4052 19.0s
+[llama3_1 fewshot desarrollo r2]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4051 19.3s
+[llama3_1 fewshot desarrollo r2]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8581 35.6s
+[llama3_1 fewshot desarrollo r2]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=4076 25.2s
+[llama3_1 fewshot desarrollo r2] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8743 45.7s
+[llama3_1 fewshot desarrollo r2] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4038 15.4s
+[llama3_1 fewshot desarrollo r2] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4062 18.8s
+[llama3_1 fewshot desarrollo r2] 13 x03_flete_promedio_por_articulo        ✘ int=1 tok_sql=4053 18.4s
+[llama3_1 fewshot desarrollo r2] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4042 19.9s
+[llama3_1 fewshot desarrollo r2] 15 x05_vendedor_mas_ingresos              ✔ int=1 tok_sql=4063 22.4s
+[llama3_1 fewshot desarrollo r2] 16 x06_pct_pedidos_varios_articulos       ✘ int=1 tok_sql=4049 20.0s
+[llama3_1 fewshot desarrollo r2] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=4073 18.9s
+[llama3_1 fewshot desarrollo r2] 18 x08_dias_entrega_rj                    ✘ int=2 tok_sql=8468 30.8s
+[llama3_1 fewshot desarrollo r2] 19 x09_mes_mas_cancelados                 ✘ int=1 tok_sql=4055 17.2s
+[llama3_1 fewshot desarrollo r2] 20 x10_categoria_precio_promedio_mas_alto ✘ int=1 tok_sql=4077 24.5s
+[llama3_1 fewshot desarrollo r2] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4050 18.0s
+[llama3_1 fewshot desarrollo r2] 22 x12_vendedores_health_beauty           ✘ int=1 tok_sql=4060 18.2s
+[llama3_1 fewshot desarrollo r2] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=8514 33.1s
+[llama3_1 fewshot desarrollo r2] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4065 21.9s
+[llama3_1 fewshot desarrollo r2] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4068 18.9s
+[llama3_1 fewshot desarrollo r2] 26 x16_pct_productos_sin_categoria        ✘ int=1 tok_sql=4041 17.5s
+[llama3_1 fewshot desarrollo r2] 27 x17_top2_ciudades_vendedores           ✘ int=1 tok_sql=4058 21.6s
+[llama3_1 fewshot desarrollo r2] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4064 19.2s
+[llama3_1 fewshot desarrollo r2] 29 x19_anio_mas_ingresos                  ✔ int=1 tok_sql=4068 19.1s
+[llama3_1 fewshot desarrollo r2] 30 x20_pct_clientes_resena_1_estrella     ✘ int=2 tok_sql=8532 33.5s
+== llama3_1__fewshot__desarrollo__r2.json: 6/30 en 763.0 s
+[llama3_1 fewshot desarrollo r3]  1 n01_pct_clientes_recurrentes           ✘ int=1 tok_sql=4048 18.1s
+[llama3_1 fewshot desarrollo r3]  2 n02_calificacion_retraso_vs_a_tiempo   ✘ int=1 tok_sql=4052 20.3s
+[llama3_1 fewshot desarrollo r3]  3 n03_pct_ingresos_top5_categorias       ✘ int=2 tok_sql=8667 36.7s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='Entre los vendedores con al menos 30 pedidos válidos (sin contar pedidos cancelados o no disponibles), ¿cuántos están en el 25 % con más ingresos y además tienen una calificación promedio menor a 3.5 (promediando la calificación de cada pedido) o más del 15 % de sus pedidos entregados con retraso respecto de la fecha estimada?' | respuesta_descartada='Hay 40 vendedores que cumplen con los criterios establecidos. El top 25% de ingresos se comparte entre varios vendedores, y no hay un solo líder en ingresos.' | filas=[('0b35c634521043bf4b47e21547b99ab5',), ('18a349e75d307f4b4cc646a691ed4216',), ('1ca7077d890b907f89be8c954a02686a',), ('2709af9587499e95e803a6498a5a56e9',), ('2a1348e9addc1af5aaa619b1a3679d6b',), ('2a261b5b644fa05f4f2700eb93544f2c',), ('2eb70248d66e0e3ef83659f71b244378',), ('49067458c68f7701fd334ce326accbe0',), ('5058e8c1e82653974541e83690655b4a',), ('54965bbe3e4f07ae045b90b0b8541f52',), ('602044f2c16190c2c6e45eb35c2e21cb',), ('66dc1b1632bd6a3e508510c5b3492107',), ('710e3548e02bc1d2831dfc4f1b5b14d4',), ('712e6ed8aa4aa1fa65dab41fed5737e4',), ('7c67e1448b00f6e969d365cea6b010ab',), ('82e0a475a88cc9595229d8029273f045',), ('835f0f7810c76831d6c7d24c7a646d4d',), ('8444e55c1f13cd5c179851e5ca5ebd00',), ('850913d59ce317156b00f3705f1c3edb',), ('88460e8ebdecbfecb5f9601833981930',)]
+[llama3_1 fewshot desarrollo r3]  4 n04_vendedores_problematicos           ✘ int=1 tok_sql=4109 34.0s
+[llama3_1 fewshot desarrollo r3]  5 n05_estado_mayor_peso_flete            ✘ int=1 tok_sql=4062 21.0s
+[llama3_1 fewshot desarrollo r3]  6 n06_metodo_pago_mas_usado              ✘ int=1 tok_sql=4052 19.1s
+[llama3_1 fewshot desarrollo r3]  7 n07_mes_mayores_ingresos               ✘ int=1 tok_sql=4051 19.2s
+[llama3_1 fewshot desarrollo r3]  8 n08_categoria_mas_resenas_1_estrella   ✘ int=2 tok_sql=8561 34.6s
+[llama3_1 fewshot desarrollo r3]  9 n09_categorias_mas_compra_unica        ✘ int=1 tok_sql=4076 24.7s
+[llama3_1 fewshot desarrollo r3] 10 n10_estado_mas_clientes_por_vendedor   ✘ int=2 tok_sql=8676 35.6s
+[llama3_1 fewshot desarrollo r3] 11 x01_pedidos_cancelados                 ✔ int=1 tok_sql=4038 15.2s
+[llama3_1 fewshot desarrollo r3] 12 x02_pct_entregas_con_retraso           ✔ int=1 tok_sql=4062 19.0s
+[llama3_1 fewshot desarrollo r3] 13 x03_flete_promedio_por_articulo        ✘ int=2 tok_sql=8388 27.3s
+[llama3_1 fewshot desarrollo r3] 14 x04_pct_resenas_5_estrellas            ✘ int=1 tok_sql=4042 19.9s
+[llama3_1 fewshot desarrollo r3] 15 x05_vendedor_mas_ingresos              ✘ int=1 tok_sql=4063 21.4s
+[llama3_1 fewshot desarrollo r3] 16 x06_pct_pedidos_varios_articulos       ✘ int=2 tok_sql=8425 27.8s
+[llama3_1 fewshot desarrollo r3] 17 x07_calificacion_pedidos_bed_bath_tabl ✘ int=1 tok_sql=4073 19.2s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Cuántos días tarda en promedio, desde la compra hasta la entrega al cliente, un pedido válido (sin contar pedidos cancelados o no disponibles) entregado a clientes del estado RJ?' | respuesta_descartada='Los pedidos válidos entregados a clientes del estado RJ tardan en promedio -11.05 días en llegar desde la compra hasta la entrega. Esto se debe a que la entrega se ha realizado, en promedio, 11 días antes de la fecha estimada de entrega.' | filas=[(-11.05,)]
+[llama3_1 fewshot desarrollo r3] 18 x08_dias_entrega_rj                    ✘ int=2 tok_sql=8469 30.5s
+[llama3_1 fewshot desarrollo r3] 19 x09_mes_mas_cancelados                 ✘ int=1 tok_sql=4055 17.1s
+[llama3_1 fewshot desarrollo r3] 20 x10_categoria_precio_promedio_mas_alto ✘ int=2 tok_sql=8561 34.6s
+[llama3_1 fewshot desarrollo r3] 21 x11_clientes_unicos_sp                 ✔ int=1 tok_sql=4050 19.3s
+[llama3_1 fewshot desarrollo r3] 22 x12_vendedores_health_beauty           ✘ int=2 tok_sql=8279 28.0s
+[llama3_1 fewshot desarrollo r3] 23 x13_estado_mayor_gasto_promedio        ✘ int=2 tok_sql=8377 28.7s
+[llama3_1 fewshot desarrollo r3] 24 x14_ingresos_vendedores_sp_fuera_sp    ✘ int=1 tok_sql=4065 21.3s
+[llama3_1 fewshot desarrollo r3] 25 x15_calificacion_pedidos_boleto        ✘ int=1 tok_sql=4068 19.1s
+MENSAJE_RESUMEN_NO_CONFIABLE disparado | pregunta='¿Qué porcentaje de los productos del catálogo no tiene una categoría asignada?' | respuesta_descartada='Alrededor del 61% de los productos del catálogo no tiene una categoría asignada. Esto se debe a que hay 61,000 productos sin categoría.' | filas=[(61000.0,)]
+[llama3_1 fewshot desarrollo r3] 26 x16_pct_productos_sin_categoria        ✘ int=1 tok_sql=4041 15.9s
+[llama3_1 fewshot desarrollo r3] 27 x17_top2_ciudades_vendedores           ✔ int=1 tok_sql=4058 21.1s
+[llama3_1 fewshot desarrollo r3] 28 x18_peso_promedio_furniture_decor      ✔ int=1 tok_sql=4064 19.1s
+[llama3_1 fewshot desarrollo r3] 29 x19_anio_mas_ingresos                  ✘ int=2 tok_sql=8396 22.6s
+[llama3_1 fewshot desarrollo r3] 30 x20_pct_clientes_resena_1_estrella     ✘ int=1 tok_sql=4066 24.5s
+== llama3_1__fewshot__desarrollo__r3.json: 5/30 en 760.1 s
+| Modelo | Conjunto | Modo | Aciertos (por repetición) | Media | Mínimo | ¿Mejora D-23 vs Base? | Tokens de prompt SQL por pregunta | s/pregunta | Intentos medios | % preguntas con ejemplos |
+|---|---|---|---|---|---|---|---|---|---|---|
+| llama3.1 | casos_juez | base | 1, 2, 1 (de 6) | 1.33 | 1 | — | 6599.8 | 29.14 | 1.78 | 0 |
+| llama3.1 | casos_juez | fewshot | 1, 1, 2 (de 6) | 1.33 | 1 | no | 7813.9 | 36.12 | 1.78 | 100 |
+| llama3.1 | casos_juez | rag | 2, 3, 3 (de 6) | 2.67 | 2 | sí | 6228.4 | 35.7 | 1.39 | 100 |
+| llama3.1 | casos_juez | harness | 3, 3, 3 (de 6) | 3 | 3 | sí | 13306.6 | 58.72 | 2.83 | 100 |
+| llama3.1 | desarrollo | base | 16, 15, 13 (de 30) | 14.67 | 13 | — | 4574.9 | 14.69 | 1.32 | 0 |
+| llama3.1 | desarrollo | fewshot | 9, 6, 5 (de 30) | 6.67 | 5 | no | 5159.2 | 23.44 | 1.24 | 100 |
+| llama3.1 | desarrollo | rag | 10, 10, 11 (de 30) | 10.33 | 10 | no | 5281.0 | 26.05 | 1.26 | 100 |
+| llama3.1 | desarrollo | harness | 10, 12, 12 (de 30) | 11.33 | 10 | no | 8592.7 | 39.33 | 2 | 100 |
+| qwen2.5-coder | casos_juez | base | 1, 1, 1 (de 6) | 1 | 1 | — | 6140.6 | 42.07 | 1.67 | 0 |
+| qwen2.5-coder | casos_juez | fewshot | 1, 1, 1 (de 6) | 1 | 1 | no | 7828.9 | 51.32 | 1.78 | 100 |
+| qwen2.5-coder | casos_juez | rag | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 6525.2 | 42.56 | 1.44 | 100 |
+| qwen2.5-coder | casos_juez | harness | 3, 2, 2 (de 6) | 2.33 | 2 | sí | 14733.2 | 88.85 | 3.11 | 100 |
+| qwen2.5-coder | desarrollo | base | 14, 15, 15 (de 30) | 14.67 | 14 | — | 5135.6 | 19.24 | 1.48 | 0 |
+| qwen2.5-coder | desarrollo | fewshot | 14, 13, 16 (de 30) | 14.33 | 13 | no | 4820.3 | 23.34 | 1.17 | 100 |
+| qwen2.5-coder | desarrollo | rag | 13, 14, 14 (de 30) | 13.67 | 13 | no | 4999.0 | 29.32 | 1.19 | 100 |
+| qwen2.5-coder | desarrollo | harness | 15, 15, 14 (de 30) | 14.67 | 14 | no | 8020.3 | 43.91 | 1.86 | 100 |
+FIN 2026-10-26 01:51:49

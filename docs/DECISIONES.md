@@ -285,3 +285,86 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
   - PRUEBA_2 no se tocó, así que no hay confirmación fuera de DESARROLLO.
 - **Tiempo:** 61 min (12:11 → 13:12), dentro del límite de ~1 h.
 - **Punto 2 de la tarea (qwen2.5-coder:14b):** no se hizo; queda pendiente de la confirmación del usuario.
+
+## D-41 (C) Banco de necesidades negativas y su anti-contaminación (mejoras del profesor, fase A)
+- **Qué:** 35 necesidades negativas, 7 por familia (2 retraso vs reseñas, 4 vendedores, 5 flete, 6 pagos, 8 insatisfacción). Definiciones en `llm/banco_ejemplos/definiciones.py`; banco validado en `data/necesidades_negativas.json`, que genera `python -m llm.banco_ejemplos.construir`. Cada una cambia una dimensión respecto de la necesidad real (otra métrica, dimensión, periodo, filtro o tipo de agregación) y lo explica en `en_que_se_diferencia`.
+- **SQL:** usa tablas base + `vw_pedidos_validos`, que es la vista descrita en el prompt. No usa las vistas de negocio de E4 (existen en la base, pero el modelo no las ve descritas), para que lo aprendido sirva con el esquema visible.
+- **Validación:** cada SQL pasa los mismos validadores del chat y se ejecuta en solo lectura. Se rechazan errores, 0 filas, columnas todas NULL y porcentajes fuera de [0, 100]. `respuesta_nl` se genera con una plantilla rellenada con las filas ejecutadas y se comprueba con el chequeo de "texto confiable" (acepta los números de la pregunta). Ninguna cifra se escribió a mano.
+- **Anti-contaminación** (umbrales fijados ANTES de medir), contra las 56 preguntas que se evalúan (oráculo v4: DESARROLLO 30 y PRUEBA_2 20; y los 6 casos del juez):
+  1. Jaccard de tokens de la pregunta y de cada variante < **0.35**.
+  2. Jaccard de tokens del SQL < **0.70**.
+  3. SQL normalizado distinto.
+  4. El resultado de la negativa **no acierta** ninguna pregunta de evaluación, ni con el árbitro del oráculo ni con el veredicto del juez. Es la garantía más fuerte: copiar el SQL de la negativa no da la respuesta correcta.
+  - La prueba es `tests/test_banco_negativas.py`.
+- **Por qué no se reutilizó el umbral de 0.25 de `test_fewshot_disjunto`:** ese umbral es para ejemplos genéricos que no deben parecerse a nada del oráculo. Aquí el profesor pide ejemplos MUY parecidos a las necesidades reales, así que es esperable compartir vocabulario de la familia. El umbral de 0.35 queda por encima de ese parecido de familia y por debajo de las reformulaciones casi literales. El criterio 4 cubre lo que el texto no capta.
+- **Primera validación (salida real):** los 35 SQL ejecutaron y ninguno acertaba una pregunta de evaluación, pero **13 de 35 fallaron**:
+  - 11 por texto ≥ 0.35, por vocabulario compartido ("categorías con al menos 100 reseñas", "pedidos válidos entregados"). **Se reescribieron con otra redacción, conservando la diferencia de contenido.**
+  - f8_01 tenía el SQL a 0.718 del de n08: era casi la misma consulta. **Se cambió de contenido** (pasó de categorías a vendedores).
+  - En f8_06, el chequeo de texto confiable lee "2017-11" como 2017 y −11. Se cambió la plantilla. **Es una debilidad real de ese chequeo con fechas AAAA-MM** (en el chat también marcaría como no confiable una respuesta correcta con mes ≥ 10). No se tocó el chequeo.
+  - Los umbrales no se movieron. Resultado final: 35/35. Similitud máxima frente a la evaluación: texto, media 0.261 y máximo 0.348; SQL, media 0.422 y máximo 0.640.
+- **Limitación honesta:**
+  - El mismo agente que escribió las negativas conoce las preguntas de evaluación. Los controles limitan las copias, pero las familias se eligieron justamente porque son las que se evalúan: el RAG tendrá ejemplos parecidos a propósito. Es lo que pidió el profesor, y se informa así.
+  - PRUEBA_2 entra en el control de contaminación, pero no se usa para medir.
+- **Alternativas descartadas:** umbral 0.25 (rechazaría casi todas por vocabulario de familia); solo Jaccard (no garantiza que copiar no acierte); similitud por embeddings para la contaminación (se reserva para la recuperación; el control es léxico y por resultado, que es reproducible sin Ollama).
+
+## D-42 (C) Modos de contexto Base / Few-shot / RAG / Harness
+- **Selector:** `TEXT2SQL_MODO_CONTEXTO` (por defecto `base`) o `answer_question(modo=...)`. Implementado en `llm/modo_contexto.py` con un `ContextVar`, para no pasar el modo por cada función del pipeline.
+- **Base = el pipeline actual tal cual:** N = 2, reparación con esquema, texto con umbrales y los 10 ejemplos genéricos que ya trae el esquema compacto, pero **sin ejemplos del banco**. Es la única lectura que cumple "por defecto = comportamiento actual". Prueba: con `base`, el prompt de usuario es exactamente `Pregunta: ...`. La alternativa (quitar también los 10 ejemplos genéricos) cambiaría el comportamiento por defecto y mediría otra cosa.
+- **El bloque del banco va en el prompt de USUARIO** (después de la pregunta). El system prompt sigue idéntico y cacheable, como en E1/E5.
+- **Trazabilidad:** `Text2SQLResult.modo` y `ejemplos_usados` ([{id, familia, pregunta, similitud}]). El JSON exportado incluye `modo`, `ejemplos_usados`, `modelo`, `temperatura` e `intentos`.
+
+## D-43 (C) Few-shot fijo y presupuesto de tokens
+- **Selección:** N fijos, uno por familia en orden round-robin, el primero de cada familia (`TEXT2SQL_FEWSHOT_N`, por defecto 3). Con N = 3 entran las familias 2, 4 y 5; con N = 5, una por familia. La respuesta en lenguaje natural es opcional (`TEXT2SQL_FEWSHOT_RESPUESTA=1`; por defecto no, porque el generador produce SQL, no texto).
+- **Costo medido** con el tokenizador real, sin caché (`eval/medir_presupuesto_ejemplos.py`, `eval/resultados_modos/presupuesto_tokens_*.json`):
+  - qwen: system 3,333 tokens; pregunta más larga 220. Bloque de N = 3 sin respuesta: 689 tokens; cada ejemplo cuesta ~150-280 tokens.
+  - Con reserva de reintento (700) y num_predict (350), **caben 10 ejemplos incluso con respuesta** (7,253 de 7,372 = 90 % de 8192). llama3.1 da cifras casi iguales.
+- **Guarda:** `fewshot.ajustar_a_presupuesto` quita ejemplos del final hasta que system + prompt + bloque + reserva + num_predict quepan en el 90 % de num_ctx. Estima a 3.0 caracteres por token (el real es 3.9 para el esquema), así que es conservadora.
+
+## D-44 (C) RAG: motores, índice, umbral y calibración
+- **Documentos:** pregunta + cada variante. La puntuación de una necesidad es la de su mejor documento.
+- **Motores:** `embeddings` (nomic-embed-text, 274 MB, descargado con permiso del usuario; prefijos `search_document:` / `search_query:`; coseno) y `tfidf` (sin dependencias: normalización de español, raíz ligera, unigramas + bigramas, tf sublineal, coseno). Si los embeddings fallan (Ollama caído), cae a tfidf.
+- **Índice en disco:** `data/indice_rag/<motor>.json`, con el hash del banco y el modelo. Se recarga sin recalcular si coinciden.
+- **Calibración** (`eval/calibrar_rag.py`, **sin preguntas de evaluación**):
+  - Primera versión (DESCARTADA): umbral que separa "positivas" (variantes del banco, leave-one-out) de preguntas genéricas del dominio (los 42 ejemplos genéricos del proyecto). Falló: las genéricas puntuaban casi igual (embeddings 0.716 frente a 0.732) o más (tfidf 0.284 frente a 0.174), porque son preguntas de pagos, reseñas o flete, de las mismas familias. La etiqueta "no debe recuperar" era errónea.
+  - Versión final: **umbral = percentil 5 de la similitud top-1 de las paráfrasis del banco**, comprobado con 12 preguntas ajenas a la base.
+- **Resultados de la calibración:**
+  - **Embeddings:** precisión de familia top-1 0.686 (mayoría top-3 0.714); umbral 0.664; 12/12 ajenas bajo el umbral (máximo 0.643, margen estrecho); 39/42 genéricas del dominio recibirían ejemplos.
+  - **TF-IDF:** top-1 0.543; umbral 0.077; solo 8/12 ajenas bajo el umbral.
+  - **Motor elegido: embeddings** (regla: mayor precisión top-1; empate: más ajenas bajo el umbral). k = 3 (`TEXT2SQL_RAG_K`).
+- **Recuperación con las 10 necesidades reales** (5 casos del juez + n02, n04, n05, n06, n08 de DESARROLLO; solo para la prueba, no para elegir nada): embeddings top-1 de la familia correcta 10/10 (mayoría top-3 9/10); tfidf 8/10 (9/10).
+- **Limitación:** el umbral de embeddings separa preguntas ajenas a la base, no preguntas del dominio que no se parecen a ninguna familia. En la práctica, casi cualquier pregunta sobre Olist recibe ejemplos.
+
+## D-45 (C) Harness sin oráculo
+- **`modo=harness`** = RAG + hasta 5 intentos + un verificador sin oráculo entre intentos (`llm/harness.py`), además de lo que el pipeline ya hace: validadores, solo lectura, reintento con el error real, reparación con esquema y texto con umbrales.
+- **El verificador rechaza** si el resultado falla un chequeo de sensatez grave (porcentaje > 100, columna toda NULL, porcentaje con solo enteros) o si el juez-LLM de sensatez dice que el SQL no responde la pregunta. Los negativos no se rechazan, porque pueden ser legítimos (días de adelanto).
+- **No se usa el juez con oráculo** de las etapas anteriores (`resolver_con_juez`): conoce la respuesta correcta y no serviría en el chat. Por eso "juez/iteraciones" se implementa con el juez de sensatez. Limitación conocida: ese juez puede rechazar un SQL correcto y forzar un reintento peor; se mide en la fase F.
+- **Registro por intento:** `harness.registro_por_intento(resultado, ClienteMedido)` da SQL, tipo, error, pista, ejemplos usados, tokens de prompt (`prompt_eval_count`) y segundos de generación. `ClienteMedido` envuelve al cliente sin cambiar el pipeline.
+
+## D-46 (C) Diseño de la comparación de modos (fase F)
+- **Matriz completa corrida:** 4 modos × 2 modelos (qwen2.5-coder 7B, llama3.1 8B) × (6 casos del juez + DESARROLLO 30) × 3 repeticiones = 48 corridas, 7.7 h de cómputo (2026-10-25 18:09 → 2026-10-26 01:51). Nada quedó sin correr. Orden de prioridad: qwen casos → qwen DESARROLLO (Base, RAG, Harness) → qwen Few-shot → llama casos → llama DESARROLLO.
+- **Condiciones iguales para todos:** el pipeline real (`answer_question`), sin plantillas (como los A/B desde la etapa 2), T = 0.3 (la de evaluación, D-28), num_ctx 8192 y **las mismas semillas por repetición** (42, 43, 44) en todos los modos y modelos. La semilla se pasa por `ClienteMedido`, sin cambiar `OllamaClient`.
+- **Intentos:** 2 en Base, Few-shot y RAG (el chat); hasta 5 en Harness.
+- **Veredicto determinista:** árbitro del oráculo en DESARROLLO; `veredicto_caso` en los casos del juez.
+- **Tokens:** suma de `prompt_eval_count` de las llamadas al generador de SQL por pregunta. En Ollama 0.40.5 coincide con el prompt completo (Few-shot suma exactamente los 689 tokens medidos del bloque), así que mide el costo real del contexto.
+- **Embeddings:** 0 caídas al respaldo TF-IDF y 0 excepciones en las 48 corridas.
+- **Perturbación conocida:** durante la primera corrida (qwen, Base, casos, r1) se hizo una pregunta de prueba en la app, que pudo inflar la latencia de 1-2 preguntas.
+
+## D-47 (C) Resultado de la comparación: el chat sigue en Base por defecto
+- **Datos** (media de 3 repeticiones):
+  - Casos del juez, qwen: Base 1.00, Few-shot 1.00, RAG 2.33, Harness 2.33.
+  - Casos del juez, llama3.1: Base 1.33, Few-shot 1.33, RAG 2.67, Harness 3.00.
+  - DESARROLLO, qwen: Base 14.67, Few-shot 14.33, RAG 13.67, Harness 14.67.
+  - DESARROLLO, llama3.1: Base 14.67, Few-shot 6.67, RAG 10.33, Harness 11.33.
+- **D-23:**
+  - RAG y Harness la cumplen en los 6 casos del juez con los dos modelos.
+  - Ningún modo la cumple en DESARROLLO; con llama3.1, Few-shot, RAG y Harness empeoran.
+- **Causa:** los ejemplos ayudan dentro de su familia (llama3.1: preguntas de familia de DESARROLLO 0.33 → 2.0) y estorban fuera de ella (llama3.1: resto 14.33 → 8.33 con RAG), porque el modelo copia filtros y estructura del ejemplo. El umbral del RAG no impide inyectar ejemplos en preguntas de otras familias (D-44).
+- **Decisión:** `TEXT2SQL_MODO_CONTEXTO` sigue en `base`. Few-shot, RAG y Harness quedan en el selector de la app y detrás del flag, para usarlos con preguntas de las familias del dashboard. No se activó nada por defecto.
+- **Reserva:** el banco se escribió conociendo las preguntas evaluadas, así que la ganancia en los casos del juez no es una estimación sobre preguntas nuevas. PRUEBA_2 no se usó.
+- **Alternativas no aplicadas** (propuestas en el informe): RAG selectivo por familia, banco para más familias e instrucción anti-copia. Cualquiera de ellas necesita un conjunto de prueba nuevo para medirse sin sesgo.
+
+## D-48 (C) Falso positivo en `test_heldout.test_bitacora_sin_contenido_de_prueba_2`
+- **Error real** (suite completa, 1 de 134): `AssertionError: Lists differ: ['19'] != []` en p2_03_productos_mas_10kg.
+- **Causa real:** la bitácora persistente del chat (`runtime/bitacora_esquema.json`, ignorada por git) tiene una entrada del 2026-10-17 creada a las 13:57:19, después de la última suite de ese día. La prueba serializaba la entrada completa, y los segundos "19" de la marca de tiempo coinciden con la forma /100 redondeada de 1891 (resultado de p2_03). No es una fuga: es un número de una marca de tiempo.
+- **Arreglo:** la prueba revisa solo los campos de contenido (`clave`, `mensaje`, `ejemplo_pregunta`). De ellos, al prompt solo llega `mensaje` (`BitacoraEsquema.texto_para_prompt`), así que la prueba sigue cubriendo lo que puede filtrarse. No se tocó la bitácora del usuario.
+- **Resultado:** 134/134.

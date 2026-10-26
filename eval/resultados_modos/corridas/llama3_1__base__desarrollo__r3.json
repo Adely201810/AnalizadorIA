@@ -1,0 +1,1201 @@
+{
+ "modelo": "llama3.1:8b-instruct-q4_K_M",
+ "modo": "base",
+ "conjunto": "desarrollo",
+ "repeticion": 3,
+ "seed": 44,
+ "temperatura": 0.3,
+ "num_ctx": 8192,
+ "fecha": "2026-10-25T23:31:49",
+ "aciertos": 13,
+ "preguntas": 30,
+ "segundos_totales": 485.9,
+ "resultados": [
+  {
+   "id": "n01_pct_clientes_recurrentes",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / \n             (SELECT COUNT(DISTINCT customer_unique_id) \n              FROM vw_pedidos_validos), 2) AS porcentaje\nFROM vw_pedidos_validos\nWHERE num_pedidos > 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 9.1,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 6836,
+    "tokens_prompt_total": 6836,
+    "tokens_generados_total": 107,
+    "caracteres_prompt_sql_max": 13463,
+    "segundos_llm": 9.09
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / COUNT(DISTINCT customer_unique_id) FROM vw_pedidos_validos WHERE num_pedidos > 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: near \"FROM\": syntax error",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: near \"FROM\": syntax error",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3373,
+     "segundos_generacion": 3.946
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT customer_unique_id) / \n             (SELECT COUNT(DISTINCT customer_unique_id) \n              FROM vw_pedidos_validos), 2) AS porcentaje\nFROM vw_pedidos_validos\nWHERE num_pedidos > 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: num_pedidos",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3463,
+     "segundos_generacion": 5.146
+    }
+   ]
+  },
+  {
+   "id": "n02_calificacion_retraso_vs_a_tiempo",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  AVG(rv.review_score) AS calificacion_promedio_retraso,\n  AVG(rv.review_score) AS calificacion_promedio_atiempo\nFROM \n  vw_entregas_retrasos vr\n  LEFT JOIN order_reviews rv ON vr.order_id = rv.order_id\nWHERE \n  vr.entrega_con_retraso = 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     2.566549798727438,
+     2.566549798727438
+    ]
+   ],
+   "segundos": 9.67,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3377,
+    "tokens_prompt_total": 4007,
+    "tokens_generados_total": 115,
+    "caracteres_prompt_sql_max": 13103,
+    "segundos_llm": 8.52
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  AVG(rv.review_score) AS calificacion_promedio_retraso,\n  AVG(rv.review_score) AS calificacion_promedio_atiempo\nFROM \n  vw_entregas_retrasos vr\n  LEFT JOIN order_reviews rv ON vr.order_id = rv.order_id\nWHERE \n  vr.entrega_con_retraso = 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3377,
+     "segundos_generacion": 4.853
+    }
+   ]
+  },
+  {
+   "id": "n03_pct_ingresos_top5_categorias",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name = c.categoria_ingles THEN oi.price ELSE 0 END) / SUM(oi.price), 2) AS pct_ingresos\nFROM \n  vw_ingresos_por_categoria c\n  LEFT JOIN products p ON p.product_id = c.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  LEFT JOIN order_items oi ON oi.product_id = p.product_id\nWHERE \n  oi.order_id IN (SELECT order_id FROM orders WHERE order_status NOT IN ('canceled', 'unavailable'))\nORDER BY \n  pct_ingresos DESC\nLIMIT 5",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 17.23,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7124,
+    "tokens_prompt_total": 7124,
+    "tokens_generados_total": 269,
+    "caracteres_prompt_sql_max": 14523,
+    "segundos_llm": 17.23
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name = c.product_category_name THEN oi.price ELSE 0 END) / SUM(oi.price), 2) AS pct_ingresos\nFROM \n  vw_ingresos_por_categoria c\n  LEFT JOIN order_items oi ON oi.product_id = c.product_id\n  LEFT JOIN orders o ON o.order_id = oi.order_id\nWHERE \n  o.order_status NOT IN ('canceled', 'unavailable')\nORDER BY \n  pct_ingresos DESC\nLIMIT 5",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'c.product_category_name': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 'c.product_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'c.product_category_name': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_category_name'. Esa columna sí existe en: product_category_translation, products. 'c.product_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de vw_ingresos_por_categoria: categoria_ingles, flete_total, ingresos, pedidos, ratio_flete_ingresos. La columna product_category_name existe en las tablas product_category_translation, products. La columna product_id existe en las tablas order_items, products y en las vistas vw_articulos_vendidos.",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3382,
+     "segundos_generacion": 6.276
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  ROUND(100.0 * SUM(CASE WHEN t.product_category_name = c.categoria_ingles THEN oi.price ELSE 0 END) / SUM(oi.price), 2) AS pct_ingresos\nFROM \n  vw_ingresos_por_categoria c\n  LEFT JOIN products p ON p.product_id = c.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\n  LEFT JOIN order_items oi ON oi.product_id = p.product_id\nWHERE \n  oi.order_id IN (SELECT order_id FROM orders WHERE order_status NOT IN ('canceled', 'unavailable'))\nORDER BY \n  pct_ingresos DESC\nLIMIT 5",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'c.product_id': la tabla/vista 'vw_ingresos_por_categoria' no tiene la columna 'product_id'. Esa columna sí existe en: order_items, products, vw_articulos_vendidos. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3742,
+     "segundos_generacion": 10.958
+    }
+   ]
+  },
+  {
+   "id": "n04_vendedores_problematicos",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM (\n  SELECT seller_id, \n  SUM(CASE WHEN order_status IN ('canceled', 'unavailable') THEN 0 ELSE 1 END) AS pedidos_validos, \n  SUM(CASE WHEN order_status IN ('canceled', 'unavailable') THEN 0 ELSE price END) AS ingresos, \n  AVG(review_score) AS calificacion_promedio, \n  COUNT(CASE WHEN order_delivered_customer_date IS NOT NULL AND julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) > 0 THEN 1 END) / COUNT(vw_pedidos_validos.order_id) AS pct_retraso \n  FROM vw_pedidos_validos \n  JOIN order_items ON vw_pedidos_validos.order_id = oi.order_id \n  JOIN order_payments ON vw_pedidos_validos.order_id = op.order_id \n  JOIN order_reviews ON vw_pedidos_validos.order_id = rv.order_id \n  GROUP BY seller_id\n) AS subquery \nWHERE pedidos_validos >= 30 \nAND ingresos >= (SELECT 0.25 * SUM(price) FROM vw_pedidos_validos WHERE pedidos_validos >= 30) \nAND (calificacion_promedio < 3.5 OR pct_retraso > 0.15)",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 25.23,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7178,
+    "tokens_prompt_total": 7178,
+    "tokens_generados_total": 547,
+    "caracteres_prompt_sql_max": 14432,
+    "segundos_llm": 25.22
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM (\n  SELECT seller_id, \n  SUM(CASE WHEN order_status IN ('canceled', 'unavailable') THEN 0 ELSE 1 END) AS pedidos_validos, \n  SUM(CASE WHEN order_status IN ('canceled', 'unavailable') THEN 0 ELSE price END) AS ingresos, \n  AVG(review_score) AS calificacion_promedio, \n  COUNT(CASE WHEN order_delivered_customer_date IS NOT NULL AND julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) > 0 THEN 1 END) / COUNT(order_id) AS pct_retraso \n  FROM vw_pedidos_validos \n  JOIN order_items ON order_id = oi.order_id \n  JOIN order_payments ON order_id = op.order_id \n  JOIN order_reviews ON order_id = rv.order_id \n  GROUP BY seller_id\n) AS subquery \nWHERE pedidos_validos >= 30 \nAND ingresos >= (SELECT 0.25 * SUM(price) FROM vw_pedidos_validos WHERE pedidos_validos >= 30) \nAND (calificacion_promedio < 3.5 OR pct_retraso > 0.15)",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: ambiguous column name: order_id",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: ambiguous column name: order_id",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3434,
+     "segundos_generacion": 10.904
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM (\n  SELECT seller_id, \n  SUM(CASE WHEN order_status IN ('canceled', 'unavailable') THEN 0 ELSE 1 END) AS pedidos_validos, \n  SUM(CASE WHEN order_status IN ('canceled', 'unavailable') THEN 0 ELSE price END) AS ingresos, \n  AVG(review_score) AS calificacion_promedio, \n  COUNT(CASE WHEN order_delivered_customer_date IS NOT NULL AND julianday(order_delivered_customer_date) - julianday(order_estimated_delivery_date) > 0 THEN 1 END) / COUNT(vw_pedidos_validos.order_id) AS pct_retraso \n  FROM vw_pedidos_validos \n  JOIN order_items ON vw_pedidos_validos.order_id = oi.order_id \n  JOIN order_payments ON vw_pedidos_validos.order_id = op.order_id \n  JOIN order_reviews ON vw_pedidos_validos.order_id = rv.order_id \n  GROUP BY seller_id\n) AS subquery \nWHERE pedidos_validos >= 30 \nAND ingresos >= (SELECT 0.25 * SUM(price) FROM vw_pedidos_validos WHERE pedidos_validos >= 30) \nAND (calificacion_promedio < 3.5 OR pct_retraso > 0.15)",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: oi.order_id",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3744,
+     "segundos_generacion": 14.319
+    }
+   ]
+  },
+  {
+   "id": "n05_estado_mayor_peso_flete",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT \n  seller_state, \n  ROUND(100.0 * SUM(freight_value) / SUM(price), 2) AS pct_flete_ingresos\nFROM vw_ingresos_por_vendedor\nJOIN order_items ON order_items.seller_id = vw_ingresos_por_vendedor.seller_id\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY seller_state\nORDER BY pct_flete_ingresos DESC",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 12.96,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7002,
+    "tokens_prompt_total": 7002,
+    "tokens_generados_total": 175,
+    "caracteres_prompt_sql_max": 13989,
+    "segundos_llm": 12.95
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  seller_state, \n  ROUND(100.0 * SUM(freight_value) / SUM(price), 2) AS pct_flete_ingresos\nFROM vw_ingresos_por_vendedor\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY seller_state\nORDER BY pct_flete_ingresos DESC",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: price",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: price Reparación con el esquema real: columnas reales de vw_ingresos_por_vendedor: flete_total, ingresos, pedidos, ratio_flete_ingresos, seller_id, seller_state. La columna price existe en las tablas order_items y en las vistas vw_articulos_vendidos, vw_ventas_pedido. Ruta por tablas base para llegar a price desde vw_ingresos_por_vendedor: vw_ingresos_por_vendedor → order_items (por seller_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3387,
+     "segundos_generacion": 4.897
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  seller_state, \n  ROUND(100.0 * SUM(freight_value) / SUM(price), 2) AS pct_flete_ingresos\nFROM vw_ingresos_por_vendedor\nJOIN order_items ON order_items.seller_id = vw_ingresos_por_vendedor.seller_id\nWHERE order_status NOT IN ('canceled', 'unavailable')\nGROUP BY seller_state\nORDER BY pct_flete_ingresos DESC",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: order_status",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3615,
+     "segundos_generacion": 8.055
+    }
+   ]
+  },
+  {
+   "id": "n06_metodo_pago_mas_usado",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT payment_type, COUNT(order_id) AS cantidad_pedidos\nFROM vw_pedidos_validos\nJOIN order_payments ON order_payments.order_id = vw_pedidos_validos.order_id\nGROUP BY payment_type\nORDER BY cantidad_pedidos DESC\nLIMIT 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 9.48,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 6859,
+    "tokens_prompt_total": 6859,
+    "tokens_generados_total": 116,
+    "caracteres_prompt_sql_max": 13544,
+    "segundos_llm": 9.47
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT payment_type, COUNT(order_id) AS cantidad_pedidos\nFROM vw_pedidos_validos\nJOIN order_payments ON order_payments.order_id = vw_pedidos_validos.order_id\nGROUP BY payment_type\nORDER BY cantidad_pedidos DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: ambiguous column name: order_id",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: ambiguous column name: order_id",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3377,
+     "segundos_generacion": 4.292
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT payment_type, COUNT(order_id) AS cantidad_pedidos\nFROM vw_pedidos_validos\nJOIN order_payments ON order_payments.order_id = vw_pedidos_validos.order_id\nGROUP BY payment_type\nORDER BY cantidad_pedidos DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: ambiguous column name: order_id",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3482,
+     "segundos_generacion": 5.182
+    }
+   ]
+  },
+  {
+   "id": "n07_mes_mayores_ingresos",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  SUM(oi.price) AS ingresos\nFROM vw_pedidos_validos o\nJOIN order_items oi ON o.order_id = oi.order_id\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "2017-11",
+     1003862.14
+    ]
+   ],
+   "segundos": 9.43,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3376,
+    "tokens_prompt_total": 3977,
+    "tokens_generados_total": 103,
+    "caracteres_prompt_sql_max": 13086,
+    "segundos_llm": 8.07
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  SUM(oi.price) AS ingresos\nFROM vw_pedidos_validos o\nJOIN order_items oi ON o.order_id = oi.order_id\nGROUP BY mes\nORDER BY ingresos DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3376,
+     "segundos_generacion": 4.443
+    }
+   ]
+  },
+  {
+   "id": "n08_categoria_mas_resenas_1_estrella",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(CASE WHEN rv.review_score = 1 THEN 1 ELSE NULL END) / COUNT(rv.review_id), 2) AS porcentaje_1_estrella\nFROM \n  order_reviews rv\n  LEFT JOIN order_items oi ON oi.order_id = rv.order_id\n  LEFT JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE \n  rv.review_id IS NOT NULL AND \n  oi.order_id IN (SELECT order_id FROM vw_pedidos_validos) AND \n  t.product_category_name_english IS NOT NULL\nGROUP BY \n  t.product_category_name_english\nORDER BY \n  porcentaje_1_estrella DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "security_and_services",
+     50.0
+    ]
+   ],
+   "segundos": 15.34,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3395,
+    "tokens_prompt_total": 4130,
+    "tokens_generados_total": 217,
+    "caracteres_prompt_sql_max": 13170,
+    "segundos_llm": 12.11
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(CASE WHEN rv.review_score = 1 THEN 1 ELSE NULL END) / COUNT(rv.review_id), 2) AS porcentaje_1_estrella\nFROM \n  order_reviews rv\n  LEFT JOIN order_items oi ON oi.order_id = rv.order_id\n  LEFT JOIN products p ON p.product_id = oi.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nWHERE \n  rv.review_id IS NOT NULL AND \n  oi.order_id IN (SELECT order_id FROM vw_pedidos_validos) AND \n  t.product_category_name_english IS NOT NULL\nGROUP BY \n  t.product_category_name_english\nORDER BY \n  porcentaje_1_estrella DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3395,
+     "segundos_generacion": 8.157
+    }
+   ]
+  },
+  {
+   "id": "n09_categorias_mas_compra_unica",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / COUNT(*), 2) AS proporción\nFROM \n  vw_pedidos_validos p\n  JOIN order_items oi ON p.order_id = oi.order_id\n  JOIN products pr ON oi.product_id = pr.product_id\n  JOIN product_category_translation t ON pr.product_category_name = t.product_category_name\n  JOIN customers c ON p.customer_id = c.customer_id\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(DISTINCT c.customer_unique_id) > 500\nORDER BY \n  proporción DESC\nLIMIT 5",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "cool_stuff",
+     95.26
+    ],
+    [
+     "luggage_accessories",
+     94.12
+    ],
+    [
+     "toys",
+     93.41
+    ],
+    [
+     "baby",
+     93.36
+    ],
+    [
+     "consoles_games",
+     93.17
+    ]
+   ],
+   "segundos": 15.91,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3401,
+    "tokens_prompt_total": 4146,
+    "tokens_generados_total": 241,
+    "caracteres_prompt_sql_max": 13221,
+    "segundos_llm": 12.78
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  ROUND(100.0 * COUNT(DISTINCT c.customer_unique_id) / COUNT(*), 2) AS proporción\nFROM \n  vw_pedidos_validos p\n  JOIN order_items oi ON p.order_id = oi.order_id\n  JOIN products pr ON oi.product_id = pr.product_id\n  JOIN product_category_translation t ON pr.product_category_name = t.product_category_name\n  JOIN customers c ON p.customer_id = c.customer_id\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(DISTINCT c.customer_unique_id) > 500\nORDER BY \n  proporción DESC\nLIMIT 5",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3401,
+     "segundos_generacion": 7.494
+    }
+   ]
+  },
+  {
+   "id": "n10_estado_mas_clientes_por_vendedor",
+   "correcto": false,
+   "motivo": "filas: el modelo devolvió 0, la referencia tiene 1",
+   "sql": "SELECT \n  seller_state, \n  MAX(clientes) AS max_clientes, \n  MAX(clientes) / COUNT(DISTINCT seller_id) AS clientes_por_vendedor\nFROM \n  (SELECT \n     s.seller_state, \n     COUNT(DISTINCT v.customer_unique_id) AS clientes, \n     COUNT(DISTINCT v.order_id) AS vendedores\n   FROM \n     vw_pedidos_validos v\n     JOIN order_items oi ON v.order_id = oi.order_id\n     JOIN sellers s ON oi.seller_id = s.seller_id\n   GROUP BY \n     s.seller_state, oi.seller_id\n   HAVING \n     COUNT(DISTINCT oi.seller_id) >= 10) AS subconsulta\nGROUP BY \n  seller_state\nORDER BY \n  max_clientes DESC\nLIMIT 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 18.42,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7118,
+    "tokens_prompt_total": 7118,
+    "tokens_generados_total": 320,
+    "caracteres_prompt_sql_max": 14442,
+    "segundos_llm": 18.41
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  seller_state, \n  MAX(clientes) AS max_clientes, \n  MAX(clientes) / COUNT(DISTINCT seller_id) AS clientes_por_vendedor\nFROM \n  (SELECT \n     seller_state, \n     COUNT(DISTINCT customer_unique_id) AS clientes, \n     COUNT(DISTINCT seller_id) AS vendedores\n   FROM \n     vw_pedidos_validos\n   GROUP BY \n     seller_state, seller_id\n   HAVING \n     COUNT(DISTINCT seller_id) >= 10) AS subconsulta\nGROUP BY \n  seller_state\nORDER BY \n  max_clientes DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: seller_state",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: seller_state Reparación con el esquema real: columnas reales de vw_pedidos_validos: customer_id, customer_state, customer_unique_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. La columna seller_state existe en las tablas sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_state desde vw_pedidos_validos: vw_pedidos_validos → order_items (por order_id) → sellers (por seller_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3398,
+     "segundos_generacion": 7.004
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  seller_state, \n  MAX(clientes) AS max_clientes, \n  MAX(clientes) / COUNT(DISTINCT seller_id) AS clientes_por_vendedor\nFROM \n  (SELECT \n     s.seller_state, \n     COUNT(DISTINCT v.customer_unique_id) AS clientes, \n     COUNT(DISTINCT v.order_id) AS vendedores\n   FROM \n     vw_pedidos_validos v\n     JOIN order_items oi ON v.order_id = oi.order_id\n     JOIN sellers s ON oi.seller_id = s.seller_id\n   GROUP BY \n     s.seller_state, oi.seller_id\n   HAVING \n     COUNT(DISTINCT oi.seller_id) >= 10) AS subconsulta\nGROUP BY \n  seller_state\nORDER BY \n  max_clientes DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: seller_id",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3720,
+     "segundos_generacion": 11.411
+    }
+   ]
+  },
+  {
+   "id": "x01_pedidos_cancelados",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT COUNT(*) \nFROM vw_pedidos_validos \nWHERE order_status = 'canceled'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     0
+    ]
+   ],
+   "segundos": 6.23,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3363,
+    "tokens_prompt_total": 3896,
+    "tokens_generados_total": 45,
+    "caracteres_prompt_sql_max": 13050,
+    "segundos_llm": 6.23
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(*) \nFROM vw_pedidos_validos \nWHERE order_status = 'canceled'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3363,
+     "segundos_generacion": 3.116
+    }
+   ]
+  },
+  {
+   "id": "x02_pct_entregas_con_retraso",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT oi.order_id) / COUNT(DISTINCT pv.order_id), 2)\nFROM vw_entregas_retrasos ev\nJOIN vw_pedidos_validos pv ON pv.order_id = ev.order_id\nJOIN order_items oi ON oi.order_id = ev.order_id\nWHERE ev.entrega_con_retraso = 1 AND ev.order_delivered_customer_date IS NOT NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     100.0
+    ]
+   ],
+   "segundos": 11.39,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3387,
+    "tokens_prompt_total": 4039,
+    "tokens_generados_total": 151,
+    "caracteres_prompt_sql_max": 13165,
+    "segundos_llm": 9.89
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT oi.order_id) / COUNT(DISTINCT pv.order_id), 2)\nFROM vw_entregas_retrasos ev\nJOIN vw_pedidos_validos pv ON pv.order_id = ev.order_id\nJOIN order_items oi ON oi.order_id = ev.order_id\nWHERE ev.entrega_con_retraso = 1 AND ev.order_delivered_customer_date IS NOT NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3387,
+     "segundos_generacion": 5.55
+    }
+   ]
+  },
+  {
+   "id": "x03_flete_promedio_por_articulo",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT ROUND(AVG(fv.freight_value), 2) AS flete_promedio\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nJOIN orders o ON oi.order_id = o.order_id\nJOIN order_items fv ON o.order_id = fv.order_id",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     19.56
+    ]
+   ],
+   "segundos": 15.67,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 6954,
+    "tokens_prompt_total": 7552,
+    "tokens_generados_total": 140,
+    "caracteres_prompt_sql_max": 13935,
+    "segundos_llm": 14.31
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(AVG(freight_value), 2) AS flete_promedio\nFROM vw_pedidos_validos",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: freight_value",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: freight_value Reparación con el esquema real: columnas reales de vw_pedidos_validos: customer_id, customer_state, customer_unique_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. La columna freight_value existe en las tablas order_items y en las vistas vw_articulos_vendidos, vw_ventas_pedido. Ruta por tablas base para llegar a freight_value desde vw_pedidos_validos: vw_pedidos_validos → order_items (por order_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3378,
+     "segundos_generacion": 3.689
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT ROUND(AVG(fv.freight_value), 2) AS flete_promedio\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nJOIN orders o ON oi.order_id = o.order_id\nJOIN order_items fv ON o.order_id = fv.order_id",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3576,
+     "segundos_generacion": 6.854
+    }
+   ]
+  },
+  {
+   "id": "x04_pct_resenas_5_estrellas",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT ROUND(100.0 * COUNT(CASE WHEN review_score = 5 THEN 1 ELSE NULL END) / COUNT(*), 2) AS porcentaje_5_estrellas\nFROM order_reviews",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     57.78
+    ]
+   ],
+   "segundos": 7.78,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3367,
+    "tokens_prompt_total": 3934,
+    "tokens_generados_total": 94,
+    "caracteres_prompt_sql_max": 13069,
+    "segundos_llm": 7.77
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(100.0 * COUNT(CASE WHEN review_score = 5 THEN 1 ELSE NULL END) / COUNT(*), 2) AS porcentaje_5_estrellas\nFROM order_reviews",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3367,
+     "segundos_generacion": 3.979
+    }
+   ]
+  },
+  {
+   "id": "x05_vendedor_mas_ingresos",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  seller_id, \n  SUM(price) AS ingresos\nFROM \n  vw_pedidos_validos\nJOIN \n  order_items ON vw_pedidos_validos.order_id = order_items.order_id\nGROUP BY \n  seller_id\nORDER BY \n  ingresos DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "4869f7a5dfa277a7dca6462dcf3b52b2",
+     229237.63
+    ]
+   ],
+   "segundos": 11.38,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3388,
+    "tokens_prompt_total": 4019,
+    "tokens_generados_total": 123,
+    "caracteres_prompt_sql_max": 13139,
+    "segundos_llm": 8.98
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  seller_id, \n  SUM(price) AS ingresos\nFROM \n  vw_pedidos_validos\nJOIN \n  order_items ON vw_pedidos_validos.order_id = order_items.order_id\nGROUP BY \n  seller_id\nORDER BY \n  ingresos DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3388,
+     "segundos_generacion": 4.834
+    }
+   ]
+  },
+  {
+   "id": "x06_pct_pedidos_varios_articulos",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT oi.order_id) / COUNT(DISTINCT pv.order_id), 2)\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nWHERE oi.order_id NOT IN (SELECT order_id FROM orders WHERE order_status IN ('canceled', 'unavailable'))",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     100.0
+    ]
+   ],
+   "segundos": 10.3,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3374,
+    "tokens_prompt_total": 3997,
+    "tokens_generados_total": 126,
+    "caracteres_prompt_sql_max": 13107,
+    "segundos_llm": 8.92
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(100.0 * COUNT(DISTINCT oi.order_id) / COUNT(DISTINCT pv.order_id), 2)\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nWHERE oi.order_id NOT IN (SELECT order_id FROM orders WHERE order_status IN ('canceled', 'unavailable'))",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3374,
+     "segundos_generacion": 4.929
+    }
+   ]
+  },
+  {
+   "id": "x07_calificacion_pedidos_bed_bath_table",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nJOIN product_category_translation t ON p.product_category_name = t.product_category_name\nJOIN order_reviews rv ON pv.order_id = rv.order_id\nWHERE t.product_category_name_english = 'bed_bath_table'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     3.8984620919147406
+    ]
+   ],
+   "segundos": 11.26,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3398,
+    "tokens_prompt_total": 4045,
+    "tokens_generados_total": 164,
+    "caracteres_prompt_sql_max": 13198,
+    "segundos_llm": 10.27
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nJOIN product_category_translation t ON p.product_category_name = t.product_category_name\nJOIN order_reviews rv ON pv.order_id = rv.order_id\nWHERE t.product_category_name_english = 'bed_bath_table'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3398,
+     "segundos_generacion": 5.688
+    }
+   ]
+  },
+  {
+   "id": "x08_dias_entrega_rj",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2) AS dias_promedio\nFROM vw_pedidos_validos o\nJOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.customer_state = 'RJ' AND o.order_delivered_customer_date IS NOT NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     15.15
+    ]
+   ],
+   "segundos": 11.24,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3389,
+    "tokens_prompt_total": 4007,
+    "tokens_generados_total": 136,
+    "caracteres_prompt_sql_max": 13173,
+    "segundos_llm": 9.39
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2) AS dias_promedio\nFROM vw_pedidos_validos o\nJOIN order_items oi ON oi.order_id = o.order_id\nWHERE o.customer_state = 'RJ' AND o.order_delivered_customer_date IS NOT NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3389,
+     "segundos_generacion": 5.166
+    }
+   ]
+  },
+  {
+   "id": "x09_mes_mas_cancelados",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  COUNT(*) AS pedidos_cancelados\nFROM \n  orders o\nWHERE \n  o.order_status = 'canceled'\nGROUP BY \n  mes\nORDER BY \n  pedidos_cancelados DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "2018-08",
+     84
+    ]
+   ],
+   "segundos": 8.15,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3380,
+    "tokens_prompt_total": 3985,
+    "tokens_generados_total": 93,
+    "caracteres_prompt_sql_max": 13106,
+    "segundos_llm": 8.15
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  strftime('%Y-%m', o.order_purchase_timestamp) AS mes,\n  COUNT(*) AS pedidos_cancelados\nFROM \n  orders o\nWHERE \n  o.order_status = 'canceled'\nGROUP BY \n  mes\nORDER BY \n  pedidos_cancelados DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3380,
+     "segundos_generacion": 4.78
+    }
+   ]
+  },
+  {
+   "id": "x10_categoria_precio_promedio_mas_alto",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  AVG(oi.price) AS precio_promedio\nFROM \n  order_items oi\n  INNER JOIN orders o ON oi.order_id = o.order_id\n  INNER JOIN vw_pedidos_validos pv ON pv.order_id = o.order_id\n  INNER JOIN products p ON oi.product_id = p.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(*) >= 200\nORDER BY \n  precio_promedio DESC\nLIMIT 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "computers",
+     1098.3405418719212
+    ]
+   ],
+   "segundos": 23.44,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7152,
+    "tokens_prompt_total": 7849,
+    "tokens_generados_total": 300,
+    "caracteres_prompt_sql_max": 14596,
+    "segundos_llm": 21.11
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  AVG(p.price) AS precio_promedio\nFROM \n  order_items oi\n  INNER JOIN products p ON oi.product_id = p.product_id\n  INNER JOIN orders o ON oi.order_id = o.order_id\n  INNER JOIN vw_pedidos_validos pv ON pv.order_id = o.order_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(*) >= 200\nORDER BY \n  precio_promedio DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'p.price': la tabla/vista 'products' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_articulos_vendidos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'p.price': la tabla/vista 'products' no tiene la columna 'price'. Esa columna sí existe en: order_items, vw_articulos_vendidos, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. La columna price existe en las tablas order_items y en las vistas vw_articulos_vendidos, vw_ventas_pedido. Ruta por tablas base para llegar a price desde products: products → order_items (por product_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3402,
+     "segundos_generacion": 6.89
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  t.product_category_name_english AS categoria, \n  AVG(oi.price) AS precio_promedio\nFROM \n  order_items oi\n  INNER JOIN orders o ON oi.order_id = o.order_id\n  INNER JOIN vw_pedidos_validos pv ON pv.order_id = o.order_id\n  INNER JOIN products p ON oi.product_id = p.product_id\n  LEFT JOIN product_category_translation t ON t.product_category_name = p.product_category_name\nGROUP BY \n  t.product_category_name_english\nHAVING \n  COUNT(*) >= 200\nORDER BY \n  precio_promedio DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3750,
+     "segundos_generacion": 10.443
+    }
+   ]
+  },
+  {
+   "id": "x11_clientes_unicos_sp",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT COUNT(DISTINCT customer_unique_id)\nFROM vw_pedidos_validos\nWHERE customer_state = 'SP'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     39749
+    ]
+   ],
+   "segundos": 8.85,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3375,
+    "tokens_prompt_total": 3931,
+    "tokens_generados_total": 86,
+    "caracteres_prompt_sql_max": 13117,
+    "segundos_llm": 7.73
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(DISTINCT customer_unique_id)\nFROM vw_pedidos_validos\nWHERE customer_state = 'SP'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3375,
+     "segundos_generacion": 3.65
+    }
+   ]
+  },
+  {
+   "id": "x12_vendedores_health_beauty",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_pedidos_validos \nJOIN order_items ON vw_pedidos_validos.order_id = order_items.order_id \nJOIN products ON order_items.product_id = products.product_id \nJOIN product_category_translation ON products.product_category_name = product_category_translation.product_category_name \nWHERE product_category_name_english = 'health_beauty' AND order_status NOT IN ('canceled', 'unavailable')",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     489
+    ]
+   ],
+   "segundos": 11.98,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3385,
+    "tokens_prompt_total": 4013,
+    "tokens_generados_total": 148,
+    "caracteres_prompt_sql_max": 13153,
+    "segundos_llm": 9.65
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(DISTINCT seller_id) \nFROM vw_pedidos_validos \nJOIN order_items ON vw_pedidos_validos.order_id = order_items.order_id \nJOIN products ON order_items.product_id = products.product_id \nJOIN product_category_translation ON products.product_category_name = product_category_translation.product_category_name \nWHERE product_category_name_english = 'health_beauty' AND order_status NOT IN ('canceled', 'unavailable')",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3385,
+     "segundos_generacion": 5.482
+    }
+   ]
+  },
+  {
+   "id": "x13_estado_mayor_gasto_promedio",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  customer_state, \n  AVG(gasto_promedio) AS gasto_promedio_max\nFROM (\n  SELECT \n    customer_state, \n    AVG(payment_value + freight_value) AS gasto_promedio\n  FROM (\n    SELECT \n      vpc.order_id, \n      vpc.customer_state, \n      oi.price, \n      oi.freight_value, \n      op.payment_value\n    FROM vw_pedidos_validos vpc\n    JOIN order_items oi ON oi.order_id = vpc.order_id\n    JOIN order_payments op ON op.order_id = vpc.order_id\n    WHERE op.payment_type != 'boleto' AND op.payment_type != 'debit_card'\n  ) AS subquery\n  GROUP BY customer_state\n  HAVING COUNT(order_id) >= 1000\n) AS subquery2\nORDER BY gasto_promedio_max DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "BA",
+     208.25262490610828
+    ]
+   ],
+   "segundos": 15.32,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3399,
+    "tokens_prompt_total": 4149,
+    "tokens_generados_total": 215,
+    "caracteres_prompt_sql_max": 13196,
+    "segundos_llm": 12.2
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  customer_state, \n  AVG(gasto_promedio) AS gasto_promedio_max\nFROM (\n  SELECT \n    customer_state, \n    AVG(payment_value + freight_value) AS gasto_promedio\n  FROM (\n    SELECT \n      vpc.order_id, \n      vpc.customer_state, \n      oi.price, \n      oi.freight_value, \n      op.payment_value\n    FROM vw_pedidos_validos vpc\n    JOIN order_items oi ON oi.order_id = vpc.order_id\n    JOIN order_payments op ON op.order_id = vpc.order_id\n    WHERE op.payment_type != 'boleto' AND op.payment_type != 'debit_card'\n  ) AS subquery\n  GROUP BY customer_state\n  HAVING COUNT(order_id) >= 1000\n) AS subquery2\nORDER BY gasto_promedio_max DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3399,
+     "segundos_generacion": 8.503
+    }
+   ]
+  },
+  {
+   "id": "x14_ingresos_vendedores_sp_fuera_sp",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT SUM(price) AS ingresos\nFROM vw_pedidos_validos p\nJOIN order_items oi ON p.order_id = oi.order_id\nJOIN sellers s ON oi.seller_id = s.seller_id\nWHERE s.seller_state = 'SP'\n  AND p.customer_state != 'SP'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     5101873.16
+    ]
+   ],
+   "segundos": 10.97,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3390,
+    "tokens_prompt_total": 3997,
+    "tokens_generados_total": 121,
+    "caracteres_prompt_sql_max": 13167,
+    "segundos_llm": 8.93
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT SUM(price) AS ingresos\nFROM vw_pedidos_validos p\nJOIN order_items oi ON p.order_id = oi.order_id\nJOIN sellers s ON oi.seller_id = s.seller_id\nWHERE s.seller_state = 'SP'\n  AND p.customer_state != 'SP'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3390,
+     "segundos_generacion": 4.8
+    }
+   ]
+  },
+  {
+   "id": "x15_calificacion_pedidos_boleto",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_pedidos_validos pv\nJOIN order_payments op ON pv.order_id = op.order_id\nJOIN order_reviews rv ON pv.order_id = rv.order_id\nWHERE op.payment_type = 'boleto'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     4.116604334238434
+    ]
+   ],
+   "segundos": 9.57,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3393,
+    "tokens_prompt_total": 4001,
+    "tokens_generados_total": 119,
+    "caracteres_prompt_sql_max": 13161,
+    "segundos_llm": 8.92
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT AVG(rv.review_score) AS calificacion_promedio\nFROM vw_pedidos_validos pv\nJOIN order_payments op ON pv.order_id = op.order_id\nJOIN order_reviews rv ON pv.order_id = rv.order_id\nWHERE op.payment_type = 'boleto'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3393,
+     "segundos_generacion": 4.712
+    }
+   ]
+  },
+  {
+   "id": "x16_pct_productos_sin_categoria",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM products), 2) AS pct_sin_categoria\nFROM products\nWHERE product_category_name IS NULL",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     1.85
+    ]
+   ],
+   "segundos": 7.45,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3366,
+    "tokens_prompt_total": 3923,
+    "tokens_generados_total": 82,
+    "caracteres_prompt_sql_max": 13072,
+    "segundos_llm": 7.44
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM products), 2) AS pct_sin_categoria\nFROM products\nWHERE product_category_name IS NULL",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3366,
+     "segundos_generacion": 3.764
+    }
+   ]
+  },
+  {
+   "id": "x17_top2_ciudades_vendedores",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT \n  s.seller_city, \n  COUNT(DISTINCT oi.order_id) AS pedidos\nFROM \n  vw_pedidos_validos pv\n  JOIN order_items oi ON pv.order_id = oi.order_id\n  JOIN sellers s ON oi.seller_id = s.seller_id\nGROUP BY \n  s.seller_city\nORDER BY \n  pedidos DESC\nLIMIT 2",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "sao paulo",
+     24457
+    ],
+    [
+     "ibitinga",
+     6555
+    ]
+   ],
+   "segundos": 17.41,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 6987,
+    "tokens_prompt_total": 7622,
+    "tokens_generados_total": 187,
+    "caracteres_prompt_sql_max": 14007,
+    "segundos_llm": 15.96
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  seller_city, \n  COUNT(DISTINCT order_id) AS pedidos\nFROM \n  vw_pedidos_validos\nGROUP BY \n  seller_city\nORDER BY \n  pedidos DESC\nLIMIT 2",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: seller_city",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: seller_city Reparación con el esquema real: columnas reales de vw_pedidos_validos: customer_id, customer_state, customer_unique_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. La columna seller_city existe en las tablas sellers y en las vistas vw_articulos_vendidos. Ruta por tablas base para llegar a seller_city desde vw_pedidos_validos: vw_pedidos_validos → order_items (por order_id) → sellers (por seller_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3383,
+     "segundos_generacion": 4.321
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  s.seller_city, \n  COUNT(DISTINCT oi.order_id) AS pedidos\nFROM \n  vw_pedidos_validos pv\n  JOIN order_items oi ON pv.order_id = oi.order_id\n  JOIN sellers s ON oi.seller_id = s.seller_id\nGROUP BY \n  s.seller_city\nORDER BY \n  pedidos DESC\nLIMIT 2",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3604,
+     "segundos_generacion": 7.66
+    }
+   ]
+  },
+  {
+   "id": "x18_peso_promedio_furniture_decor",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0})",
+   "sql": "SELECT AVG(p.product_weight_g) AS peso_promedio\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nJOIN product_category_translation t ON p.product_category_name = t.product_category_name\nWHERE t.product_category_name_english = 'furniture_decor'",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     2649.1939021450953
+    ]
+   ],
+   "segundos": 10.02,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3389,
+    "tokens_prompt_total": 4012,
+    "tokens_generados_total": 129,
+    "caracteres_prompt_sql_max": 13158,
+    "segundos_llm": 9.23
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT AVG(p.product_weight_g) AS peso_promedio\nFROM vw_pedidos_validos pv\nJOIN order_items oi ON pv.order_id = oi.order_id\nJOIN products p ON oi.product_id = p.product_id\nJOIN product_category_translation t ON p.product_category_name = t.product_category_name\nWHERE t.product_category_name_english = 'furniture_decor'",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3389,
+     "segundos_generacion": 5.197
+    }
+   ]
+  },
+  {
+   "id": "x19_anio_mas_ingresos",
+   "correcto": true,
+   "motivo": "coincide (columna referencia -> columna modelo: {0: 0, 1: 1})",
+   "sql": "SELECT \n  strftime('%Y', o.order_purchase_timestamp) AS anio,\n  SUM(oi.price) AS ingresos\nFROM \n  vw_pedidos_validos o\n  JOIN order_items oi ON oi.order_id = o.order_id\nGROUP BY \n  anio\nORDER BY \n  ingresos DESC\nLIMIT 1",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     "2018",
+     7341182.41
+    ]
+   ],
+   "segundos": 9.92,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3393,
+    "tokens_prompt_total": 4016,
+    "tokens_generados_total": 102,
+    "caracteres_prompt_sql_max": 13160,
+    "segundos_llm": 8.57
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  strftime('%Y', o.order_purchase_timestamp) AS anio,\n  SUM(oi.price) AS ingresos\nFROM \n  vw_pedidos_validos o\n  JOIN order_items oi ON oi.order_id = o.order_id\nGROUP BY \n  anio\nORDER BY \n  ingresos DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3393,
+     "segundos_generacion": 5.13
+    }
+   ]
+  },
+  {
+   "id": "x20_pct_clientes_resena_1_estrella",
+   "correcto": false,
+   "motivo": "valores: ninguna asignación de columnas del modelo coincide con la referencia dentro de tolerancia",
+   "sql": "SELECT \n  ROUND(100.0 * COUNT(DISTINCT rv.order_id) / COUNT(DISTINCT oi.order_id), 2) AS pct_reseñas_bajas\nFROM \n  vw_pedidos_validos pv\n  JOIN order_items oi ON oi.order_id = pv.order_id\n  JOIN order_payments op ON op.order_id = oi.order_id\n  JOIN order_reviews rv ON rv.order_id = oi.order_id\nWHERE \n  oi.order_id IN (\n    SELECT \n      oi.order_id\n    FROM \n      order_items oi\n      JOIN order_payments op ON op.order_id = oi.order_id\n    WHERE \n      op.payment_type = 'boleto'\n  )\n  AND \n  rv.review_score = 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     100.0
+    ]
+   ],
+   "segundos": 79.68,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 6968,
+    "tokens_prompt_total": 7670,
+    "tokens_generados_total": 315,
+    "caracteres_prompt_sql_max": 13826,
+    "segundos_llm": 19.43
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n  ROUND(100.0 * COUNT(DISTINCT rv.order_id) / COUNT(DISTINCT oi.order_id), 2) AS pct_reseñas_bajas\nFROM \n  vw_pedidos_validos pv\n  JOIN order_items oi ON oi.order_id = pv.order_id\n  JOIN order_payments op ON op.order_id = oi.order_id\n  JOIN order_reviews rv ON rv.order_id = oi.order_id\nWHERE \n  op.payment_type = 'boleto' AND \n  rv.review_score = 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: la consulta superó el límite de 60 s de ejecución (revisa si hay un JOIN sin condición o un producto cartesiano)",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3391,
+     "segundos_generacion": 6.3
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n  ROUND(100.0 * COUNT(DISTINCT rv.order_id) / COUNT(DISTINCT oi.order_id), 2) AS pct_reseñas_bajas\nFROM \n  vw_pedidos_validos pv\n  JOIN order_items oi ON oi.order_id = pv.order_id\n  JOIN order_payments op ON op.order_id = oi.order_id\n  JOIN order_reviews rv ON rv.order_id = oi.order_id\nWHERE \n  oi.order_id IN (\n    SELECT \n      oi.order_id\n    FROM \n      order_items oi\n      JOIN order_payments op ON op.order_id = oi.order_id\n    WHERE \n      op.payment_type = 'boleto'\n  )\n  AND \n  rv.review_score = 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3577,
+     "segundos_generacion": 9.113
+    }
+   ]
+  }
+ ]
+}
