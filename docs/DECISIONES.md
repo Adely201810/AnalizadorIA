@@ -306,3 +306,36 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
   - El mismo agente que escribió las negativas conoce las preguntas de evaluación. Los controles limitan las copias, pero las familias se eligieron justamente porque son las que se evalúan: el RAG tendrá ejemplos parecidos a propósito. Es lo que pidió el profesor, y se informa así.
   - PRUEBA_2 entra en el control de contaminación, pero no se usa para medir.
 - **Alternativas descartadas:** umbral 0.25 (rechazaría casi todas por vocabulario de familia); solo Jaccard (no garantiza que copiar no acierte); similitud por embeddings para la contaminación (se reserva para la recuperación; el control es léxico y por resultado, que es reproducible sin Ollama).
+
+## D-42 (C) Modos de contexto Base / Few-shot / RAG / Harness
+- **Selector:** `TEXT2SQL_MODO_CONTEXTO` (por defecto `base`) o `answer_question(modo=...)`. Implementado en `llm/modo_contexto.py` con un `ContextVar`, para no pasar el modo por cada función del pipeline.
+- **Base = el pipeline actual tal cual:** N = 2, reparación con esquema, texto con umbrales y los 10 ejemplos genéricos que ya trae el esquema compacto, pero **sin ejemplos del banco**. Es la única lectura que cumple "por defecto = comportamiento actual". Prueba: con `base`, el prompt de usuario es exactamente `Pregunta: ...`. La alternativa (quitar también los 10 ejemplos genéricos) cambiaría el comportamiento por defecto y mediría otra cosa.
+- **El bloque del banco va en el prompt de USUARIO** (después de la pregunta). El system prompt sigue idéntico y cacheable, como en E1/E5.
+- **Trazabilidad:** `Text2SQLResult.modo` y `ejemplos_usados` ([{id, familia, pregunta, similitud}]). El JSON exportado incluye `modo`, `ejemplos_usados`, `modelo`, `temperatura` e `intentos`.
+
+## D-43 (C) Few-shot fijo y presupuesto de tokens
+- **Selección:** N fijos, uno por familia en orden round-robin, el primero de cada familia (`TEXT2SQL_FEWSHOT_N`, por defecto 3). Con N = 3 entran las familias 2, 4 y 5; con N = 5, una por familia. La respuesta en lenguaje natural es opcional (`TEXT2SQL_FEWSHOT_RESPUESTA=1`; por defecto no, porque el generador produce SQL, no texto).
+- **Costo medido** con el tokenizador real, sin caché (`eval/medir_presupuesto_ejemplos.py`, `eval/resultados_modos/presupuesto_tokens_*.json`):
+  - qwen: system 3,333 tokens; pregunta más larga 220. Bloque de N = 3 sin respuesta: 689 tokens; cada ejemplo cuesta ~150-280 tokens.
+  - Con reserva de reintento (700) y num_predict (350), **caben 10 ejemplos incluso con respuesta** (7,253 de 7,372 = 90 % de 8192). llama3.1 da cifras casi iguales.
+- **Guarda:** `fewshot.ajustar_a_presupuesto` quita ejemplos del final hasta que system + prompt + bloque + reserva + num_predict quepan en el 90 % de num_ctx. Estima a 3.0 caracteres por token (el real es 3.9 para el esquema), así que es conservadora.
+
+## D-44 (C) RAG: motores, índice, umbral y calibración
+- **Documentos:** pregunta + cada variante. La puntuación de una necesidad es la de su mejor documento.
+- **Motores:** `embeddings` (nomic-embed-text, 274 MB, descargado con permiso del usuario; prefijos `search_document:` / `search_query:`; coseno) y `tfidf` (sin dependencias: normalización de español, raíz ligera, unigramas + bigramas, tf sublineal, coseno). Si los embeddings fallan (Ollama caído), cae a tfidf.
+- **Índice en disco:** `data/indice_rag/<motor>.json`, con el hash del banco y el modelo. Se recarga sin recalcular si coinciden.
+- **Calibración** (`eval/calibrar_rag.py`, **sin preguntas de evaluación**):
+  - Primera versión (DESCARTADA): umbral que separa "positivas" (variantes del banco, leave-one-out) de preguntas genéricas del dominio (los 42 ejemplos genéricos del proyecto). Falló: las genéricas puntuaban casi igual (embeddings 0.716 frente a 0.732) o más (tfidf 0.284 frente a 0.174), porque son preguntas de pagos, reseñas o flete, de las mismas familias. La etiqueta "no debe recuperar" era errónea.
+  - Versión final: **umbral = percentil 5 de la similitud top-1 de las paráfrasis del banco**, comprobado con 12 preguntas ajenas a la base.
+- **Resultados de la calibración:**
+  - **Embeddings:** precisión de familia top-1 0.686 (mayoría top-3 0.714); umbral 0.664; 12/12 ajenas bajo el umbral (máximo 0.643, margen estrecho); 39/42 genéricas del dominio recibirían ejemplos.
+  - **TF-IDF:** top-1 0.543; umbral 0.077; solo 8/12 ajenas bajo el umbral.
+  - **Motor elegido: embeddings** (regla: mayor precisión top-1; empate: más ajenas bajo el umbral). k = 3 (`TEXT2SQL_RAG_K`).
+- **Recuperación con las 10 necesidades reales** (5 casos del juez + n02, n04, n05, n06, n08 de DESARROLLO; solo para la prueba, no para elegir nada): embeddings top-1 de la familia correcta 10/10 (mayoría top-3 9/10); tfidf 8/10 (9/10).
+- **Limitación:** el umbral de embeddings separa preguntas ajenas a la base, no preguntas del dominio que no se parecen a ninguna familia. En la práctica, casi cualquier pregunta sobre Olist recibe ejemplos.
+
+## D-45 (C) Harness sin oráculo
+- **`modo=harness`** = RAG + hasta 5 intentos + un verificador sin oráculo entre intentos (`llm/harness.py`), además de lo que el pipeline ya hace: validadores, solo lectura, reintento con el error real, reparación con esquema y texto con umbrales.
+- **El verificador rechaza** si el resultado falla un chequeo de sensatez grave (porcentaje > 100, columna toda NULL, porcentaje con solo enteros) o si el juez-LLM de sensatez dice que el SQL no responde la pregunta. Los negativos no se rechazan, porque pueden ser legítimos (días de adelanto).
+- **No se usa el juez con oráculo** de las etapas anteriores (`resolver_con_juez`): conoce la respuesta correcta y no serviría en el chat. Por eso "juez/iteraciones" se implementa con el juez de sensatez. Limitación conocida: ese juez puede rechazar un SQL correcto y forzar un reintento peor; se mide en la fase F.
+- **Registro por intento:** `harness.registro_por_intento(resultado, ClienteMedido)` da SQL, tipo, error, pista, ejemplos usados, tokens de prompt (`prompt_eval_count`) y segundos de generación. `ClienteMedido` envuelve al cliente sin cambiar el pipeline.
