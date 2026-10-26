@@ -339,3 +339,32 @@ Cada entrada: decisión, alternativas, motivo, cómo revertirla. **U** = decidid
 - **El verificador rechaza** si el resultado falla un chequeo de sensatez grave (porcentaje > 100, columna toda NULL, porcentaje con solo enteros) o si el juez-LLM de sensatez dice que el SQL no responde la pregunta. Los negativos no se rechazan, porque pueden ser legítimos (días de adelanto).
 - **No se usa el juez con oráculo** de las etapas anteriores (`resolver_con_juez`): conoce la respuesta correcta y no serviría en el chat. Por eso "juez/iteraciones" se implementa con el juez de sensatez. Limitación conocida: ese juez puede rechazar un SQL correcto y forzar un reintento peor; se mide en la fase F.
 - **Registro por intento:** `harness.registro_por_intento(resultado, ClienteMedido)` da SQL, tipo, error, pista, ejemplos usados, tokens de prompt (`prompt_eval_count`) y segundos de generación. `ClienteMedido` envuelve al cliente sin cambiar el pipeline.
+
+## D-46 (C) Diseño de la comparación de modos (fase F)
+- **Matriz completa corrida:** 4 modos × 2 modelos (qwen2.5-coder 7B, llama3.1 8B) × (6 casos del juez + DESARROLLO 30) × 3 repeticiones = 48 corridas, 7.7 h de cómputo (2026-10-25 18:09 → 2026-10-26 01:51). Nada quedó sin correr. Orden de prioridad: qwen casos → qwen DESARROLLO (Base, RAG, Harness) → qwen Few-shot → llama casos → llama DESARROLLO.
+- **Condiciones iguales para todos:** el pipeline real (`answer_question`), sin plantillas (como los A/B desde la etapa 2), T = 0.3 (la de evaluación, D-28), num_ctx 8192 y **las mismas semillas por repetición** (42, 43, 44) en todos los modos y modelos. La semilla se pasa por `ClienteMedido`, sin cambiar `OllamaClient`.
+- **Intentos:** 2 en Base, Few-shot y RAG (el chat); hasta 5 en Harness.
+- **Veredicto determinista:** árbitro del oráculo en DESARROLLO; `veredicto_caso` en los casos del juez.
+- **Tokens:** suma de `prompt_eval_count` de las llamadas al generador de SQL por pregunta. En Ollama 0.40.5 coincide con el prompt completo (Few-shot suma exactamente los 689 tokens medidos del bloque), así que mide el costo real del contexto.
+- **Embeddings:** 0 caídas al respaldo TF-IDF y 0 excepciones en las 48 corridas.
+- **Perturbación conocida:** durante la primera corrida (qwen, Base, casos, r1) se hizo una pregunta de prueba en la app, que pudo inflar la latencia de 1-2 preguntas.
+
+## D-47 (C) Resultado de la comparación: el chat sigue en Base por defecto
+- **Datos** (media de 3 repeticiones):
+  - Casos del juez, qwen: Base 1.00, Few-shot 1.00, RAG 2.33, Harness 2.33.
+  - Casos del juez, llama3.1: Base 1.33, Few-shot 1.33, RAG 2.67, Harness 3.00.
+  - DESARROLLO, qwen: Base 14.67, Few-shot 14.33, RAG 13.67, Harness 14.67.
+  - DESARROLLO, llama3.1: Base 14.67, Few-shot 6.67, RAG 10.33, Harness 11.33.
+- **D-23:**
+  - RAG y Harness la cumplen en los 6 casos del juez con los dos modelos.
+  - Ningún modo la cumple en DESARROLLO; con llama3.1, Few-shot, RAG y Harness empeoran.
+- **Causa:** los ejemplos ayudan dentro de su familia (llama3.1: preguntas de familia de DESARROLLO 0.33 → 2.0) y estorban fuera de ella (llama3.1: resto 14.33 → 8.33 con RAG), porque el modelo copia filtros y estructura del ejemplo. El umbral del RAG no impide inyectar ejemplos en preguntas de otras familias (D-44).
+- **Decisión:** `TEXT2SQL_MODO_CONTEXTO` sigue en `base`. Few-shot, RAG y Harness quedan en el selector de la app y detrás del flag, para usarlos con preguntas de las familias del dashboard. No se activó nada por defecto.
+- **Reserva:** el banco se escribió conociendo las preguntas evaluadas, así que la ganancia en los casos del juez no es una estimación sobre preguntas nuevas. PRUEBA_2 no se usó.
+- **Alternativas no aplicadas** (propuestas en el informe): RAG selectivo por familia, banco para más familias e instrucción anti-copia. Cualquiera de ellas necesita un conjunto de prueba nuevo para medirse sin sesgo.
+
+## D-48 (C) Falso positivo en `test_heldout.test_bitacora_sin_contenido_de_prueba_2`
+- **Error real** (suite completa, 1 de 134): `AssertionError: Lists differ: ['19'] != []` en p2_03_productos_mas_10kg.
+- **Causa real:** la bitácora persistente del chat (`runtime/bitacora_esquema.json`, ignorada por git) tiene una entrada del 2026-10-17 creada a las 13:57:19, después de la última suite de ese día. La prueba serializaba la entrada completa, y los segundos "19" de la marca de tiempo coinciden con la forma /100 redondeada de 1891 (resultado de p2_03). No es una fuga: es un número de una marca de tiempo.
+- **Arreglo:** la prueba revisa solo los campos de contenido (`clave`, `mensaje`, `ejemplo_pregunta`). De ellos, al prompt solo llega `mensaje` (`BitacoraEsquema.texto_para_prompt`), así que la prueba sigue cubriendo lo que puede filtrarse. No se tocó la bitácora del usuario.
+- **Resultado:** 134/134.

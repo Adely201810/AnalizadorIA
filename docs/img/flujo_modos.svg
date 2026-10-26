@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 1080" font-family="Segoe UI, Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#444"/>
+    </marker>
+    <style>
+      .caja { fill: #f5f7fb; stroke: #4a5a7a; stroke-width: 1.5; rx: 8; }
+      .nuevo { fill: #e6f4ea; stroke: #2e7d4f; stroke-width: 2; rx: 8; }
+      .harness { fill: #fff4e0; stroke: #c27a00; stroke-width: 2; rx: 8; }
+      .decision { fill: #fdecec; stroke: #b23b3b; stroke-width: 1.5; }
+      .t { fill: #1e2533; }
+      .s { fill: #4a5568; font-size: 12px; }
+      .tit { font-size: 20px; font-weight: 600; fill: #1e2533; }
+      .flecha { stroke: #444; stroke-width: 1.6; fill: none; marker-end: url(#f); }
+      .discont { stroke: #c27a00; stroke-width: 1.6; fill: none; stroke-dasharray: 6 4; marker-end: url(#f); }
+    </style>
+  </defs>
+  <rect width="960" height="1080" fill="#ffffff"/>
+  <text x="480" y="36" text-anchor="middle" class="tit">AnalizadorIA · flujo con modos Base / Few-shot / RAG / Harness</text>
+  <text x="480" y="58" text-anchor="middle" class="s">Verde = nuevo en esta entrega · Naranja = solo en modo Harness · Gris = pipeline existente</text>
+
+  <!-- Entrada -->
+  <rect class="caja" x="330" y="80" width="300" height="50"/>
+  <text x="480" y="102" text-anchor="middle" class="t">Pregunta del usuario (español)</text>
+  <text x="480" y="120" text-anchor="middle" class="s">TEXT2SQL_MODO_CONTEXTO · selector en la app</text>
+  <path class="flecha" d="M480,130 L480,160"/>
+
+  <!-- Recuperación -->
+  <rect class="nuevo" x="140" y="160" width="680" height="120"/>
+  <text x="480" y="184" text-anchor="middle" class="t" font-weight="600">Recuperación de ejemplos del banco de necesidades negativas (35, verificadas)</text>
+  <rect class="caja" x="160" y="198" width="190" height="66"/>
+  <text x="255" y="222" text-anchor="middle" class="t">Base</text>
+  <text x="255" y="242" text-anchor="middle" class="s">sin ejemplos del banco</text>
+  <rect class="caja" x="370" y="198" width="200" height="66"/>
+  <text x="470" y="222" text-anchor="middle" class="t">Few-shot</text>
+  <text x="470" y="242" text-anchor="middle" class="s">N fijos, uno por familia</text>
+  <rect class="caja" x="590" y="198" width="210" height="66"/>
+  <text x="695" y="218" text-anchor="middle" class="t">RAG / Harness</text>
+  <text x="695" y="236" text-anchor="middle" class="s">top-k por embeddings</text>
+  <text x="695" y="252" text-anchor="middle" class="s">(nomic-embed-text) + umbral</text>
+  <path class="flecha" d="M480,280 L480,310"/>
+
+  <!-- Prompt -->
+  <rect class="caja" x="230" y="310" width="500" height="70"/>
+  <text x="480" y="334" text-anchor="middle" class="t">Prompt: system = esquema compacto (cacheable)</text>
+  <text x="480" y="354" text-anchor="middle" class="t">usuario = pregunta + ejemplos ("adapta, no copies")</text>
+  <text x="480" y="372" text-anchor="middle" class="s">guarda de presupuesto: recorta ejemplos para caber en num_ctx 8192</text>
+  <path class="flecha" d="M480,380 L480,410"/>
+
+  <!-- LLM -->
+  <rect class="caja" x="330" y="410" width="300" height="50"/>
+  <text x="480" y="432" text-anchor="middle" class="t">LLM local (Ollama)</text>
+  <text x="480" y="450" text-anchor="middle" class="s">qwen2.5-coder 7B · llama3.1 8B</text>
+  <path class="flecha" d="M480,460 L480,490"/>
+
+  <!-- Validación -->
+  <rect class="caja" x="280" y="490" width="400" height="50"/>
+  <text x="480" y="512" text-anchor="middle" class="t">Validación (sql_guard): solo SELECT, tablas y</text>
+  <text x="480" y="530" text-anchor="middle" class="t">columnas reales, uniones del mismo dominio</text>
+  <path class="flecha" d="M480,540 L480,570"/>
+
+  <!-- Ejecución -->
+  <rect class="caja" x="330" y="570" width="300" height="46"/>
+  <text x="480" y="598" text-anchor="middle" class="t">Ejecución en solo lectura (límite 60 s)</text>
+  <path class="flecha" d="M480,616 L480,646"/>
+
+  <!-- Decisión error -->
+  <polygon class="decision" points="480,646 600,686 480,726 360,686"/>
+  <text x="480" y="682" text-anchor="middle" class="t">¿error, 0 filas</text>
+  <text x="480" y="700" text-anchor="middle" class="t">o rechazo?</text>
+
+  <!-- Reintento -->
+  <rect class="caja" x="660" y="650" width="270" height="74"/>
+  <text x="795" y="674" text-anchor="middle" class="t">Reintento con el error real</text>
+  <text x="795" y="694" text-anchor="middle" class="t">+ reparación con esquema real</text>
+  <text x="795" y="712" text-anchor="middle" class="s">2 intentos · Harness: hasta 5</text>
+  <path class="flecha" d="M600,686 L660,686"/>
+  <text x="628" y="678" class="s">sí</text>
+  <path class="flecha" d="M795,650 L795,435 L630,435"/>
+
+  <!-- Verificador harness -->
+  <rect class="harness" x="30" y="640" width="300" height="92"/>
+  <text x="180" y="664" text-anchor="middle" class="t" font-weight="600">Verificador sin oráculo (Harness)</text>
+  <text x="180" y="684" text-anchor="middle" class="s">chequeos de sensatez (% &gt; 100, todo NULL,</text>
+  <text x="180" y="700" text-anchor="middle" class="s">división entera) + juez-LLM de sensatez;</text>
+  <text x="180" y="716" text-anchor="middle" class="s">si rechaza: pista y nuevo intento</text>
+  <path class="discont" d="M360,686 L330,686"/>
+  <path class="discont" d="M180,640 L180,435 L330,435"/>
+
+  <text x="480" y="746" text-anchor="middle" class="s">no</text>
+  <path class="flecha" d="M480,726 L480,770"/>
+
+  <!-- Síntesis -->
+  <rect class="caja" x="280" y="770" width="400" height="50"/>
+  <text x="480" y="792" text-anchor="middle" class="t">Síntesis en lenguaje natural</text>
+  <text x="480" y="810" text-anchor="middle" class="s">sin cifras inventadas, sin SQL</text>
+  <path class="flecha" d="M480,820 L480,850"/>
+
+  <!-- Texto confiable -->
+  <rect class="caja" x="230" y="850" width="500" height="50"/>
+  <text x="480" y="872" text-anchor="middle" class="t">Chequeo de "texto confiable": cada cifra sale del resultado</text>
+  <text x="480" y="890" text-anchor="middle" class="s">o de la pregunta (umbrales, D-40)</text>
+  <path class="flecha" d="M480,900 L480,930"/>
+
+  <!-- Respuesta -->
+  <rect class="caja" x="230" y="930" width="500" height="56"/>
+  <text x="480" y="954" text-anchor="middle" class="t">Respuesta + detalle técnico: SQL, filas, modo,</text>
+  <text x="480" y="974" text-anchor="middle" class="t">ejemplos usados con su similitud, intentos · JSON</text>
+
+  <text x="480" y="1030" text-anchor="middle" class="s">Evaluación (fuera del chat): árbitro determinista contra la referencia; el juez con oráculo solo existe en eval/.</text>
+  <text x="480" y="1050" text-anchor="middle" class="s">El banco no contiene preguntas de evaluación: anti-contaminación por texto, SQL y resultado (D-41).</text>
+</svg>

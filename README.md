@@ -46,6 +46,23 @@ En la barra lateral del chat (`streamlit run app.py`), activa **"🧪 Modo evalu
 - Cada intento se muestra en vivo con su SQL, su error o sus filas, y la pista que recibió el modelo. Al final aparece la respuesta de referencia del dashboard.
 - Desde la terminal, lo mismo: `python -m eval.run_juez --max-iter 5 --reintento-temp --reparar-esquema --etiqueta demo`.
 
+## Modos de contexto: Base / Few-shot / RAG / Harness (mejoras del profesor)
+Resumen y resultados en [docs/INFORME_MEJORAS_PROFESOR.md](docs/INFORME_MEJORAS_PROFESOR.md). El diagrama del flujo está en [docs/img/flujo_modos.svg](docs/img/flujo_modos.svg).
+
+**Resultado** (3 repeticiones, mismas semillas, T = 0.3): RAG y Harness mejoran las necesidades del dashboard con los dos modelos (6 casos del juez: qwen 1.00 → 2.33; llama3.1 1.33 → 2.67 / 3.00). Pero **ningún modo supera a Base en DESARROLLO 30** (qwen: 14.67 / 14.33 / 13.67 / 14.67; llama3.1: 14.67 / 6.67 / 10.33 / 11.33), porque los ejemplos se copian en preguntas de otras familias. **Base sigue siendo el modo por defecto** (D-47).
+
+| Modo | Qué hace |
+|---|---|
+| **Base** (por defecto) | El chat de siempre: esquema compacto, 2 intentos, reparación con esquema y texto con umbrales. Sin ejemplos del banco. |
+| **Few-shot** | + N ejemplos FIJOS del banco de necesidades negativas (pregunta → SQL), uno por familia. |
+| **RAG** | + los k ejemplos del banco más parecidos a la pregunta (embeddings `nomic-embed-text` por Ollama; respaldo TF-IDF), solo si superan el umbral. |
+| **Harness** | RAG + hasta 5 intentos con un verificador sin oráculo (chequeos de sensatez + juez de sensatez). |
+
+- **En la app:** selector "Modo de contexto" en la barra lateral. El "Detalle técnico" muestra los ejemplos inyectados y su similitud, y el JSON exportado incluye `modo`, `ejemplos_usados`, `modelo`, `temperatura` e `intentos`.
+- **Banco:** `data/necesidades_negativas.json`, con 35 necesidades parecidas a las necesidades 2, 4, 5, 6 y 8 pero distintas. Cada SQL está ejecutado contra la base y la respuesta sale del resultado. Se regenera con `python -m llm.banco_ejemplos.construir`.
+- **Índice RAG:** `data/indice_rag/`, que se reconstruye solo si cambia el banco. Calibración con `python -m eval.calibrar_rag`. Requiere `ollama pull nomic-embed-text` (~274 MB); sin él, usa TF-IDF.
+- **Comparación:** `python -m eval.run_comparacion_modos --modelos qwen2.5-coder:7b-instruct-q4_K_M llama3.1:8b-instruct-q4_K_M` (resultados en `eval/resultados_modos/`) y `--resumir` para la tabla.
+
 ## Reproducir desde cero
 
 ### Versiones fijadas (las usadas para las cifras de arriba)
@@ -81,7 +98,7 @@ git diff --exit-code eval/ground_truth_olist.json eval/split_oraculo.json && ech
 python -m dashboard.verify_pandas                  # todas las líneas deben decir [OK]
 
 # 3) Pruebas automáticas (no necesitan Ollama)
-python -m unittest discover -s tests -t .          # Ran 110 tests ... OK
+python -m unittest discover -s tests -t .          # Ran 134 tests ... OK
 
 # 4) Ollama 0.40.3 y el modelo (instálalo antes desde el enlace de la tabla)
 ollama --version                                   # ollama version is 0.40.3
@@ -113,6 +130,9 @@ Notas:
 | `TEXT2SQL_AUTOCONSISTENCIA` | 1 (apagada) | k SQL por pregunta con votación; 5 en la configuración evaluada de la etapa 3 | D-30 |
 | `TEXT2SQL_ESQUEMA` | `compacto` | `completo` = esquema largo (no ayudó) | D-33 |
 | `TEXT2SQL_JUEZ_CHAT` | 1 | Revisión de sensatez del SQL en el chat (no verifica cifras) | Fase 10 |
+| `TEXT2SQL_MODO_CONTEXTO` | `base` | `base` / `fewshot` / `rag` / `harness` (ver "Modos de contexto") | D-42 |
+| `TEXT2SQL_FEWSHOT_N` / `TEXT2SQL_FEWSHOT_RESPUESTA` | 3 / 0 | Ejemplos fijos del modo few-shot y si llevan la respuesta | D-43 |
+| `TEXT2SQL_RAG_MOTOR` / `TEXT2SQL_RAG_K` | `embeddings` / 3 | Motor de recuperación (`embeddings` o `tfidf`) y k | D-44 |
 
   Los experimentos revertidos siguen apagados detrás de su flag:
   - etapa 2: `TEXT2SQL_REGLA_DENOMINADOR`, `TEXT2SQL_VISTAS_DOC`, `TEXT2SQL_VISTAS_OCULTAS`, `TEXT2SQL_REGLA_MULTIPLICIDAD`;
