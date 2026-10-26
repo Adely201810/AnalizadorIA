@@ -1,0 +1,279 @@
+{
+ "modelo": "qwen2.5-coder:7b-instruct-q4_K_M",
+ "modo": "base",
+ "conjunto": "casos_juez",
+ "repeticion": 2,
+ "seed": 43,
+ "temperatura": 0.3,
+ "num_ctx": 8192,
+ "fecha": "2026-10-25T18:17:54",
+ "aciertos": 1,
+ "preguntas": 6,
+ "segundos_totales": 250.9,
+ "resultados": [
+  {
+   "id": "c01_total_pedidos",
+   "correcto": true,
+   "motivo": "criterio del caso",
+   "sql": "SELECT COUNT(order_id) AS total_pedidos FROM orders",
+   "intentos": 1,
+   "error": null,
+   "filas_modelo": [
+    [
+     99441
+    ]
+   ],
+   "segundos": 8.05,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 1,
+    "tokens_prompt_sql": 3380,
+    "tokens_prompt_total": 3928,
+    "tokens_generados_total": 51,
+    "caracteres_prompt_sql_max": 13111,
+    "segundos_llm": 8.04
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT COUNT(order_id) AS total_pedidos FROM orders",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3380,
+     "segundos_generacion": 3.591
+    }
+   ]
+  },
+  {
+   "id": "n02_quiebre_retraso_calificacion",
+   "correcto": false,
+   "motivo": "no cumple el criterio del caso",
+   "sql": "SELECT \n    CASE \n        WHEN dias_retraso <= 0 THEN 'a_tiempo'\n        WHEN dias_retraso BETWEEN 1 AND 3 THEN '1-3'\n        WHEN dias_retraso BETWEEN 4 AND 7 THEN '4-7'\n        WHEN dias_retraso BETWEEN 8 AND 14 THEN '8-14'\n        ELSE '15+'\n    END AS rango_retraso,\n    COUNT(*) AS pedidos,\n    ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos,\n    (SELECT ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) \n     FROM vw_entregas_retrasos e\n     JOIN order_reviews rv ON e.order_id = rv.order_id\n     WHERE e.dias_retraso <= 0) AS pct_2_o_menos_a_tiempo\nFROM vw_entregas_retrasos e\nJOIN order_reviews rv ON e.order_id = rv.order_id\nWHERE entrega_con_retraso = 1\nGROUP BY rango_retraso\nHAVING pct_2_o_menos >= 2 * (SELECT pct_2_o_menos_a_tiempo FROM (SELECT ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos_a_tiempo \n                             FROM vw_entregas_retrasos e",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 54.03,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7662,
+    "tokens_prompt_total": 7662,
+    "tokens_generados_total": 686,
+    "caracteres_prompt_sql_max": 15442,
+    "segundos_llm": 54.02
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n    CASE \n        WHEN dias_retraso <= 0 THEN 'a_tiempo'\n        WHEN dias_retraso BETWEEN 1 AND 3 THEN '1-3'\n        WHEN dias_retraso BETWEEN 4 AND 7 THEN '4-7'\n        WHEN dias_retraso BETWEEN 8 AND 14 THEN '8-14'\n        ELSE '15+'\n    END AS rango_retraso,\n    COUNT(*) AS pedidos,\n    ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos,\n    (SELECT ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) \n     FROM vw_entregas_retrasos \n     WHERE dias_retraso <= 0) AS pct_2_o_menos_a_tiempo\nFROM vw_entregas_retrasos\nWHERE entrega_con_retraso = 1\nGROUP BY rango_retraso\nHAVING pct_2_o_menos >= 2 * (SELECT pct_2_o_menos_a_tiempo FROM (SELECT ROUND(100.0 * SUM(CASE WHEN review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos_a_tiempo \n                             FROM vw_entregas_retrasos \n                             WHERE dias_retraso <= 0))\nORDER BY rango_retraso",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: review_score",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: review_score Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna review_score existe en las tablas order_reviews. Ruta por tablas base para llegar a review_score desde vw_entregas_retrasos: vw_entregas_retrasos → order_reviews (por order_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3586,
+     "segundos_generacion": 25.106
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n    CASE \n        WHEN dias_retraso <= 0 THEN 'a_tiempo'\n        WHEN dias_retraso BETWEEN 1 AND 3 THEN '1-3'\n        WHEN dias_retraso BETWEEN 4 AND 7 THEN '4-7'\n        WHEN dias_retraso BETWEEN 8 AND 14 THEN '8-14'\n        ELSE '15+'\n    END AS rango_retraso,\n    COUNT(*) AS pedidos,\n    ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos,\n    (SELECT ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) \n     FROM vw_entregas_retrasos e\n     JOIN order_reviews rv ON e.order_id = rv.order_id\n     WHERE e.dias_retraso <= 0) AS pct_2_o_menos_a_tiempo\nFROM vw_entregas_retrasos e\nJOIN order_reviews rv ON e.order_id = rv.order_id\nWHERE entrega_con_retraso = 1\nGROUP BY rango_retraso\nHAVING pct_2_o_menos >= 2 * (SELECT pct_2_o_menos_a_tiempo FROM (SELECT ROUND(100.0 * SUM(CASE WHEN rv.review_score <= 2 THEN 1 ELSE 0 END) / COUNT(*), 2) AS pct_2_o_menos_a_tiempo \n                             FROM vw_entregas_retrasos e",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: incomplete input",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 4076,
+     "segundos_generacion": 28.918
+    }
+   ]
+  },
+  {
+   "id": "n04_vendedores_a_revisar",
+   "correcto": false,
+   "motivo": "no cumple el criterio del caso",
+   "sql": "WITH vendedores AS (\n    SELECT \n        i.seller_id,\n        SUM(i.price) AS ingresos,\n        AVG(r.review_score) AS calificacion,\n        SUM(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos\n    FROM \n        order_items i\n    JOIN \n        vw_entregas_retrasos e ON i.order_id = e.order_id\n    JOIN \n        order_reviews r ON i.order_id = r.order_id\n    WHERE \n        i.seller_id IN (\n            SELECT seller_id \n            FROM order_items \n            GROUP BY seller_id \n            HAVING COUNT(DISTINCT order_id) >= 30\n        )\n    GROUP BY \n        i.seller_id\n),\nvendedores_ordenados AS (\n    SELECT \n        seller_id,\n        ingresos,\n        calificacion,\n        pct_retrasos,\n        ROW_NUMBER() OVER (ORDER BY ingresos DESC) AS rank_ingresos,\n        ROW_NUMBER() OVER (ORDER BY pct_retrasos DESC) AS rank_retrasos\n    FROM \n        vendedores\n)\nSELECT \n    COUNT(*) AS num_vendedores,\n    SUM(ingresos) AS ingresos_totales\nFROM \n    vendedores_ordenados\nWHERE \n    rank_ingresos <= CEIL(COUNT(*) * 0.25) \n    AND (calificacion < 3.5 OR rank_retrasos <= CEIL(COUNT(*) * 0.15))",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 51.25,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7656,
+    "tokens_prompt_total": 7656,
+    "tokens_generados_total": 633,
+    "caracteres_prompt_sql_max": 15723,
+    "segundos_llm": 51.25
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH vendedores AS (\n    SELECT \n        seller_id,\n        SUM(price) AS ingresos,\n        AVG(review_score) AS calificacion,\n        SUM(CASE WHEN entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos\n    FROM \n        vw_ingresos_por_vendedor\n    JOIN \n        vw_entregas_retrasos ON vw_ingresos_por_vendedor.seller_id = vw_entregas_retrasos.seller_id\n    WHERE \n        pedidos >= 30\n    GROUP BY \n        seller_id\n),\nvendedores_ordenados AS (\n    SELECT \n        seller_id,\n        ingresos,\n        calificacion,\n        pct_retrasos,\n        ROW_NUMBER() OVER (ORDER BY ingresos DESC) AS rank_ingresos,\n        ROW_NUMBER() OVER (ORDER BY pct_retrasos DESC) AS rank_retrasos\n    FROM \n        vendedores\n)\nSELECT \n    COUNT(*) AS num_vendedores,\n    SUM(ingresos) AS ingresos_totales\nFROM \n    vendedores_ordenados\nWHERE \n    rank_ingresos <= CEIL(COUNT(*) * 0.25) \n    AND (calificacion < 3.5 OR rank_retrasos <= CEIL(COUNT(*) * 0.15))",
+     "tipo": "ejecucion",
+     "error": "La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista.",
+     "pista_siguiente": "La consulta usa columnas que no existen en la tabla indicada: 'vw_entregas_retrasos.seller_id': la tabla/vista 'vw_entregas_retrasos' no tiene la columna 'seller_id'. Esa columna sí existe en: order_items, sellers, vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Revisa las columnas de cada tabla y las 'Columnas de unión' del esquema, o usa una vista. Reparación con el esquema real: columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna seller_id existe en las tablas order_items, sellers y en las vistas vw_articulos_vendidos, vw_ingresos_por_vendedor, vw_ventas_pedido. Ruta por tablas base para llegar a seller_id desde vw_entregas_retrasos: vw_entregas_retrasos → order_items (por order_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3544,
+     "segundos_generacion": 22.212
+    },
+    {
+     "intento": 2,
+     "sql": "WITH vendedores AS (\n    SELECT \n        i.seller_id,\n        SUM(i.price) AS ingresos,\n        AVG(r.review_score) AS calificacion,\n        SUM(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) AS pct_retrasos\n    FROM \n        order_items i\n    JOIN \n        vw_entregas_retrasos e ON i.order_id = e.order_id\n    JOIN \n        order_reviews r ON i.order_id = r.order_id\n    WHERE \n        i.seller_id IN (\n            SELECT seller_id \n            FROM order_items \n            GROUP BY seller_id \n            HAVING COUNT(DISTINCT order_id) >= 30\n        )\n    GROUP BY \n        i.seller_id\n),\nvendedores_ordenados AS (\n    SELECT \n        seller_id,\n        ingresos,\n        calificacion,\n        pct_retrasos,\n        ROW_NUMBER() OVER (ORDER BY ingresos DESC) AS rank_ingresos,\n        ROW_NUMBER() OVER (ORDER BY pct_retrasos DESC) AS rank_retrasos\n    FROM \n        vendedores\n)\nSELECT \n    COUNT(*) AS num_vendedores,\n    SUM(ingresos) AS ingresos_totales\nFROM \n    vendedores_ordenados\nWHERE \n    rank_ingresos <= CEIL(COUNT(*) * 0.25) \n    AND (calificacion < 3.5 OR rank_retrasos <= CEIL(COUNT(*) * 0.15))",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: misuse of aggregate: COUNT()",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 4112,
+     "segundos_generacion": 29.033
+    }
+   ]
+  },
+  {
+   "id": "n05_categorias_peso_flete",
+   "correcto": false,
+   "motivo": "no cumple el criterio del caso",
+   "sql": "SELECT \n    COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,\n    ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete\nFROM \n    vw_ingresos_por_categoria i\nLEFT JOIN \n    product_category_translation t ON t.product_category_name = i.categoria_ingles\nLEFT JOIN \n    products p ON p.product_category_name = t.product_category_name\nLEFT JOIN \n    order_items oi ON oi.product_id = p.product_id\nWHERE \n    i.ingresos >= 5000\nGROUP BY \n    categoria\nORDER BY \n    porcentaje_flete DESC\nLIMIT 3",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "market_place",
+     19.23
+    ],
+    [
+     "pet_shop",
+     18.46
+    ],
+    [
+     "cool_stuff",
+     13.23
+    ]
+   ],
+   "segundos": 38.03,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7211,
+    "tokens_prompt_total": 8007,
+    "tokens_generados_total": 370,
+    "caracteres_prompt_sql_max": 14565,
+    "segundos_llm": 34.41
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n    COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,\n    ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete\nFROM \n    vw_ingresos_por_categoria i\nLEFT JOIN \n    product_category_translation t ON t.product_category_name = i.categoria_ingles\nWHERE \n    i.ingresos >= 5000\nORDER BY \n    porcentaje_flete DESC\nLIMIT 3",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: oi.freight_value",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: oi.freight_value Reparación con el esquema real: columnas reales de vw_ingresos_por_categoria: categoria_ingles, flete_total, ingresos, pedidos, ratio_flete_ingresos. columnas reales de product_category_translation: product_category_name, product_category_name_english. La columna freight_value existe en las tablas order_items y en las vistas vw_articulos_vendidos, vw_ventas_pedido. Ruta por tablas base para llegar a freight_value desde product_category_translation: product_category_translation → products (por product_category_name) → order_items (por product_id).",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3461,
+     "segundos_generacion": 10.41
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n    COALESCE(t.product_category_name_english, 'sin_categoria') AS categoria,\n    ROUND(SUM(oi.freight_value) * 100.0 / SUM(oi.price), 2) AS porcentaje_flete\nFROM \n    vw_ingresos_por_categoria i\nLEFT JOIN \n    product_category_translation t ON t.product_category_name = i.categoria_ingles\nLEFT JOIN \n    products p ON p.product_category_name = t.product_category_name\nLEFT JOIN \n    order_items oi ON oi.product_id = p.product_id\nWHERE \n    i.ingresos >= 5000\nGROUP BY \n    categoria\nORDER BY \n    porcentaje_flete DESC\nLIMIT 3",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3750,
+     "segundos_generacion": 14.77
+    }
+   ]
+  },
+  {
+   "id": "n06_categoria_mas_a_plazos",
+   "correcto": false,
+   "motivo": "no cumple el criterio del caso",
+   "sql": "SELECT \n    COALESCE(t.product_category_name_english, p.product_category_name) AS categoria,\n    ROUND(SUM(CASE WHEN pai.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT oi.order_id), 2) AS pct_pagos_a_plazos\nFROM \n    order_items oi\nJOIN \n    products p ON oi.product_id = p.product_id\nLEFT JOIN \n    product_category_translation t ON t.product_category_name = p.product_category_name\nJOIN \n    order_payments pai ON oi.order_id = pai.order_id\nJOIN \n    vw_pedidos_validos pv ON oi.order_id = pv.order_id\nWHERE \n    pai.payment_type != 'not_defined'\nGROUP BY \n    categoria\nHAVING \n    COUNT(DISTINCT oi.order_id) >= 100\nORDER BY \n    pct_pagos_a_plazos DESC\nLIMIT 1",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [
+    [
+     "computers",
+     91.16
+    ]
+   ],
+   "segundos": 42.63,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 3,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7264,
+    "tokens_prompt_total": 8134,
+    "tokens_generados_total": 438,
+    "caracteres_prompt_sql_max": 14539,
+    "segundos_llm": 39.1
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "SELECT \n    COALESCE(t.product_category_name_english, p.product_category_name) AS categoria,\n    ROUND(SUM(CASE WHEN MAX(pai.payment_installments) > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT oi.order_id), 2) AS pct_pagos_a_plazos\nFROM \n    order_items oi\nJOIN \n    products p ON oi.product_id = p.product_id\nLEFT JOIN \n    product_category_translation t ON t.product_category_name = p.product_category_name\nJOIN \n    order_payments pai ON oi.order_id = pai.order_id\nJOIN \n    vw_pedidos_validos pv ON oi.order_id = pv.order_id\nWHERE \n    pai.payment_type != 'not_defined'\nGROUP BY \n    categoria\nHAVING \n    COUNT(DISTINCT oi.order_id) >= 100\nORDER BY \n    pct_pagos_a_plazos DESC\nLIMIT 1",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: misuse of aggregate function MAX()",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: misuse of aggregate function MAX()",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3507,
+     "segundos_generacion": 16.338
+    },
+    {
+     "intento": 2,
+     "sql": "SELECT \n    COALESCE(t.product_category_name_english, p.product_category_name) AS categoria,\n    ROUND(SUM(CASE WHEN pai.payment_installments > 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT oi.order_id), 2) AS pct_pagos_a_plazos\nFROM \n    order_items oi\nJOIN \n    products p ON oi.product_id = p.product_id\nLEFT JOIN \n    product_category_translation t ON t.product_category_name = p.product_category_name\nJOIN \n    order_payments pai ON oi.order_id = pai.order_id\nJOIN \n    vw_pedidos_validos pv ON oi.order_id = pv.order_id\nWHERE \n    pai.payment_type != 'not_defined'\nGROUP BY \n    categoria\nHAVING \n    COUNT(DISTINCT oi.order_id) >= 100\nORDER BY \n    pct_pagos_a_plazos DESC\nLIMIT 1",
+     "tipo": "ok",
+     "error": null,
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 3757,
+     "segundos_generacion": 17.005
+    }
+   ]
+  },
+  {
+   "id": "n08_categorias_problema_producto",
+   "correcto": false,
+   "motivo": "no cumple el criterio del caso",
+   "sql": "WITH categorias AS (\n    SELECT \n        t.product_category_name_english AS categoria,\n        AVG(rv.review_score) AS calificacion_promedio\n    FROM \n        products p\n    LEFT JOIN \n        product_category_translation t ON t.product_category_name = p.product_category_name\n    LEFT JOIN \n        order_items oi ON oi.product_id = p.product_id\n    LEFT JOIN \n        order_reviews rv ON rv.order_id = oi.order_id\n    WHERE \n        oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)\n    GROUP BY \n        t.product_category_name_english\n    HAVING \n        COUNT(rv.review_id) >= 100\n),\ncalificacion_global AS (\n    SELECT \n        AVG(review_score) AS calificacion_global\n    FROM \n        order_reviews\n    WHERE \n        order_id IN (SELECT order_id FROM vw_pedidos_validos)\n),\nentregas_tardias AS (\n    SELECT \n        t.product_category_name_english AS categoria,\n        AVG(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) AS pct_tardias\n    FROM \n        products p\n    LEFT JOIN \n        product_category_translation t ON t.product_category_name = p.product_category_name\n    LEFT JOIN \n        order_items oi ON oi.product_id = p.product_id\n    LEFT JOIN \n        vw_entregas_retrasos e ON e.order_id = oi.order_id\n    WHERE \n        oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)\n    GROUP BY \n        t.product_category_name_english\n)\nSELECT \n    c.categoria,\n    c.calificacion_promedio,\n    e",
+   "intentos": 2,
+   "error": null,
+   "filas_modelo": [],
+   "segundos": 56.89,
+   "ejemplos_usados": [],
+   "tokens": {
+    "llamadas": 2,
+    "llamadas_sql": 2,
+    "tokens_prompt_sql": 7798,
+    "tokens_prompt_total": 7798,
+    "tokens_generados_total": 700,
+    "caracteres_prompt_sql_max": 16703,
+    "segundos_llm": 56.88
+   },
+   "registro_por_intento": [
+    {
+     "intento": 1,
+     "sql": "WITH categorias AS (\n    SELECT \n        t.product_category_name_english AS categoria,\n        AVG(rv.review_score) AS calificacion_promedio\n    FROM \n        products p\n    LEFT JOIN \n        product_category_translation t ON t.product_category_name = p.product_category_name\n    LEFT JOIN \n        order_items oi ON oi.product_id = p.product_id\n    LEFT JOIN \n        order_reviews rv ON rv.order_id = oi.order_id\n    WHERE \n        oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)\n    GROUP BY \n        t.product_category_name_english\n    HAVING \n        COUNT(rv.review_id) >= 100\n),\ncalificacion_global AS (\n    SELECT \n        AVG(review_score) AS calificacion_global\n    FROM \n        order_reviews\n    WHERE \n        order_id IN (SELECT order_id FROM vw_pedidos_validos)\n),\nentregas_tardias AS (\n    SELECT \n        t.product_category_name_english AS categoria,\n        AVG(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) AS pct_tardias\n    FROM \n        products p\n    LEFT JOIN \n        product_category_translation t ON t.product_category_name = p.product_category_name\n    LEFT JOIN \n        order_items oi ON oi.product_id = p.product_id\n    LEFT JOIN \n        vw_entregas_retrasos e ON e.order_id = oi.order_id\n    WHERE \n        oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)\n    GROUP BY \n        t.product_category_name_english\n)\nSELECT \n    c.categoria,\n    c.calificacion_promedio,\n    e",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: c.categoria",
+     "pista_siguiente": "Error de SQLite al ejecutar la consulta: no such column: c.categoria Reparación con el esquema real: columnas reales de products: product_category_name, product_description_lenght, product_height_cm, product_id, product_length_cm, product_name_lenght, product_photos_qty, product_weight_g, product_width_cm. columnas reales de product_category_translation: product_category_name, product_category_name_english. columnas reales de order_items: freight_value, order_id, order_item_id, price, product_id, seller_id, shipping_limit_date. columnas reales de order_reviews: id, order_id, review_answer_timestamp, review_comment_message, review_comment_title, review_creation_date, review_id, review_score. columnas reales de vw_pedidos_validos: customer_id, customer_state, customer_unique_id, order_approved_at, order_delivered_carrier_date, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status. columnas reales de vw_entregas_retrasos: dias_retraso, entrega_con_retraso, order_delivered_customer_date, order_estimated_delivery_date, order_id, order_purchase_timestamp, order_status, review_score_promedio. La columna categoria existe en las tablas (ninguna) y en las vistas vw_articulos_vendidos.",
+     "ejemplos_usados": [],
+     "tokens_prompt": 3566,
+     "segundos_generacion": 25.739
+    },
+    {
+     "intento": 2,
+     "sql": "WITH categorias AS (\n    SELECT \n        t.product_category_name_english AS categoria,\n        AVG(rv.review_score) AS calificacion_promedio\n    FROM \n        products p\n    LEFT JOIN \n        product_category_translation t ON t.product_category_name = p.product_category_name\n    LEFT JOIN \n        order_items oi ON oi.product_id = p.product_id\n    LEFT JOIN \n        order_reviews rv ON rv.order_id = oi.order_id\n    WHERE \n        oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)\n    GROUP BY \n        t.product_category_name_english\n    HAVING \n        COUNT(rv.review_id) >= 100\n),\ncalificacion_global AS (\n    SELECT \n        AVG(review_score) AS calificacion_global\n    FROM \n        order_reviews\n    WHERE \n        order_id IN (SELECT order_id FROM vw_pedidos_validos)\n),\nentregas_tardias AS (\n    SELECT \n        t.product_category_name_english AS categoria,\n        AVG(CASE WHEN e.entrega_con_retraso = 1 THEN 1 ELSE 0 END) AS pct_tardias\n    FROM \n        products p\n    LEFT JOIN \n        product_category_translation t ON t.product_category_name = p.product_category_name\n    LEFT JOIN \n        order_items oi ON oi.product_id = p.product_id\n    LEFT JOIN \n        vw_entregas_retrasos e ON e.order_id = oi.order_id\n    WHERE \n        oi.order_id IN (SELECT order_id FROM vw_pedidos_validos)\n    GROUP BY \n        t.product_category_name_english\n)\nSELECT \n    c.categoria,\n    c.calificacion_promedio,\n    e",
+     "tipo": "ejecucion",
+     "error": "Error de SQLite al ejecutar la consulta: no such column: c.categoria",
+     "pista_siguiente": null,
+     "ejemplos_usados": [],
+     "tokens_prompt": 4232,
+     "segundos_generacion": 31.144
+    }
+   ]
+  }
+ ]
+}
